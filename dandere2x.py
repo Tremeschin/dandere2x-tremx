@@ -53,6 +53,9 @@ class Dandere2x():
         
         # # # Here's the core logic for Dandere2x # # #
 
+        # Set and verify Waifu2x
+        self.waifu2x.set_corresponding_verify()
+
         # Check dirs
         self.utils.log(color, debug_prefix, "Checking directories")
         self.utils.check_dirs()
@@ -62,21 +65,17 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Getting video info")
         self.video.configure_video_file()
 
-        
-        # Show the info for easier debugging?
         self.utils.log(color, debug_prefix, "Showing video info")
         self.video.show_info()
 
 
+        # Set block size and a valid input resolution
         self.utils.log(color, debug_prefix, "Setting block_size")
         self.math.set_block_size()
-
 
         self.utils.log(color, debug_prefix, "Getting valid input resolution")
         self.math.get_a_valid_input_resolution()
 
-
-        # have self.context.valid_resolution that fits to block_size
         
 
         

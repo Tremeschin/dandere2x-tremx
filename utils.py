@@ -47,21 +47,18 @@ class Utils():
         # Not really specific but should work?
         if os.name == "posix":
             os_name = "linux"
-        else:
-            os_name = False
 
-        if not os_name == False:
-            self.log(color, debug_prefix, "Got operating system:", os_name)
-            return os_name
-
-        else:
-            self.log(fg.li_red + debug_prefix, "[ERROR] Os not supported:", os_name)
-            exit(-1)
+        self.log(color, debug_prefix, "Got operating system:", os_name)
+        return os_name
 
 
     # Return OS environment var like XDG_SESSION_TYPE or PATH
     def env_var(self, var):
         return os.environ[var]
+
+    
+    def command_output(self, command):
+        return os.popen(command).read()
         
 
     # Wipe out logs.log file and set a self.logfile
@@ -69,12 +66,19 @@ class Utils():
 
         debug_prefix = "[Utils.clean_set_log]"
 
-        with open(self.ROOT + os.path.sep + "logs.log", "w") as f:
+        logfile = "logs.log"
+
+        with open(self.ROOT + os.path.sep + logfile, "w") as f:
             f.write("")
 
-        self.logfile = open("logs.log", "a")
+        self.logfile = open(logfile, "a")
 
         self.log(color, debug_prefix, "Reseted log file")
+    
+    
+    def exit(self):
+        self.logfile.close()
+        exit(-1)
 
 
     def log(self, color, *message):
@@ -89,7 +93,7 @@ class Utils():
             else:
                 processed_message += str(item) + " "
 
-        # As we add that extra space at the end
+        # As we add that extra space at the end, gotta remove it
         processed_message = processed_message[:-1]
 
         print (color + processed_message + fg.rs)

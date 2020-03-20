@@ -1,4 +1,5 @@
 session_name: "default"
+waifu2x_type: "vulkan"
 
 basic:
   input_file: "test.mp4"
@@ -7,3 +8,6 @@ basic:
 processing:
   block_size: "auto"
   bleed: 2
+
+specific:
+  colors_output: true # doesn't work yet

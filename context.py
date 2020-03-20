@@ -1,4 +1,7 @@
-# variables
+"""
+Context() is likewise a builder in C or C++, it's supposed to
+store and make communication between files better
+"""
 
 from sty import fg, bg, ef, rs
 
@@ -27,6 +30,9 @@ class Context():
 
         # For absolute-reffering
         self.ROOT = self.utils.ROOT
+        self.os = self.utils.get_os()
+
+        self.utils.log(fg.li_red, debug_prefix, "Got operating system: " + self.os)
 
 
         # Load up the yaml file        
@@ -51,6 +57,7 @@ class Context():
 
         # "Global" or non-indented options as they're "major"
         self.session_name = self.yaml["session_name"]
+        self.waifu2x_type = self.yaml["waifu2x_type"]
 
 
         # Create default variables, gotta assign them
