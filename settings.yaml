@@ -1,0 +1,9 @@
+session_name: "default"
+
+basic:
+  input_file: "test.mp4"
+  output_file: "asidjasio"
+
+processing:
+  block_size: "auto"
+  bleed: 2
