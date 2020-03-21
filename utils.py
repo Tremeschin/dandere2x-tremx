@@ -1,6 +1,10 @@
+# Utils is a file with mostly helpers and utilities hence its name
+
 from sty import fg, bg, ef, rs
 
+import threading
 import yaml
+import time
 import os
 
 
@@ -13,10 +17,13 @@ class Utils():
         self.ROOT = self.get_root()
         self.clean_set_log()
 
+
+    # As utils and context are two separate classes
     def set_context(self, context):
         self.context = context
 
 
+    # Get this file "absolute" path for relative reference
     def get_root(self):
         return os.path.dirname(os.path.abspath(__file__))
     
@@ -27,16 +34,25 @@ class Utils():
         debug_prefix = "[Utils.mkdir_dne]"
 
         if not os.path.isdir(directory):
-            self.log(color, debug_prefix, "Directory does NOT exist, creating: %s" % directory)
+            self.log(color, debug_prefix, "Directory does NOT exist, creating: [%s]" % directory)
             os.makedirs(directory)
         else:
-            self.log(color, debug_prefix, "Directory already exists: %s" % directory)
+            self.log(color, debug_prefix, "Directory already exists: [%s]" % directory)
 
 
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
     def check_dirs(self):
         for directory in self.context.plain_dirs:
             self.mkdir_dne(directory)
+
+
+    # Debugging, show context static files
+    def show_static_files(self):
+
+        debug_prefix = "[Utils.show_static_files]"
+
+        for item in self.context.plain_files:
+            self.log(color, debug_prefix, "Static file: [%s]" % item)
 
 
     # Get operating system
@@ -56,7 +72,8 @@ class Utils():
     def env_var(self, var):
         return os.environ[var]
 
-    
+
+    # Get the output of a commnd
     def command_output(self, command):
         return os.popen(command).read()
         
@@ -74,8 +91,9 @@ class Utils():
         self.logfile = open(logfile, "a")
 
         self.log(color, debug_prefix, "Reseted log file")
-    
-    
+
+
+    # As we gotta close the file for exiting and potentially save session here?
     def exit(self):
         self.logfile.close()
         exit(-1)
@@ -100,9 +118,38 @@ class Utils():
         self.logfile.write(processed_message + "\n")
 
 
+    # Safely load yaml file, just for cleaness of code
     def load_yaml(self, filename):
+
+        debug_prefix = "[Utils.load_yaml]"
+
+        self.log(color, debug_prefix, "Loading YAML file: [%s]" % filename)
+
         with open(filename, "r") as f:
             data = yaml.safe_load(f)
         return data
+
+
+    # Save data to filename in yaml syntax
+    def save_yaml(self, data, filename):
+
+        debug_prefix = "[Utils.save_yaml]"
+
+        self.log(color, debug_prefix, "Saving to YAML file: [%s]" % filename)
+
+        with open(filename, "w") as f:
+            yaml.dump(data, f)
+
+
+    # This "follows" updating files, yields the new stuff written
+    def updating_file(filename):
+        ufile = open(filename, "r")
+        ufile.seek(0,2)
+        while True:
+            line = ufile.readline()
+            if not line:
+                time.sleep(0.1)
+                continue
+            yield line
 
             

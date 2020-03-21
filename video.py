@@ -31,7 +31,7 @@ class Video():
 
         videofile = self.ROOT + os.path.sep + self.input_file
 
-        self.utils.log(color, debug_prefix, "Video file is: " + videofile)
+        self.utils.log(color, debug_prefix, "Video file is: [%s]" % videofile)
 
 
         # FFprobe looks like it have some issues on Linux so we're gonna use mediainfo

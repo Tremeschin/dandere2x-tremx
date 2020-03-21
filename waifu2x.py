@@ -109,7 +109,7 @@ class Waifu2xLinuxVulkan():
 
         self.binary = LinuxVerify_GetBinary(self.utils, "waifu2x-ncnn-vulkan")
 
-        self.utils.log(color, debug_prefix, "Got binary: " + self.binary)
+        self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
 
 # Waifu2x Linux CPP (converter-cp) wrapper
@@ -132,7 +132,7 @@ class Waifu2xLinuxCPP():
 
         self.binary = LinuxVerify_GetBinary(self.utils, "waifu2x-converter-cpp")
 
-        self.utils.log(color, debug_prefix, "Got binary: " + self.binary)
+        self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
 
 

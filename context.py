@@ -68,7 +68,7 @@ class Context():
         self.frame_rate = None
 
 
-        self.utils.log(color, debug_prefix, "Configuring context.* directories")
+        self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
     
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
@@ -77,39 +77,88 @@ class Context():
             "iframes": "workspace|SESSION|workspace|iframes"
         }
 
-        self.plain_dirs = []
+        # If we happen to need some static files
+        files = {
+            "d2x_cpp_out": "workspace|SESSION|plugins_input.d2x",
+            "context_vars": "workspace|SESSION|context_vars.yaml" # So CPP can load these vars we set here 
+        }
 
+        self.plain_dirs = []
+        self.plain_files = []
         
 
         # This is a really neat way of micromanaging lots of self vars, we basically
-        # set the self.$name$ with setattr, not much else is happening here
-        for name in dirs:
+        # set the self.$name$ with setattr, not much else is happening here other than
+        # replacing SESSION with self.session_name and | with os.path.sep and
+        # enumarating both dictionaries to save double the lines of code for dirs and files
 
-            # # # Getting the full directory and add it to plain_dirs list # # #
+        dir_and_file = [("dirs", dirs), ("files", files)]
 
-            # Replace SESSION with self.session_name and | with os.path.sep
+        for i, reference in enumerate(dir_and_file):
+            '''
+            print(i, reference)
 
-            dirname = dirs[name]
+            0 ('dirs', {'residual': 'wor...
+            1 ('files', {'d2x_cpp_ou...
 
-            replace = {
-                '|': os.path.sep,
-                'SESSION': self.session_name
-            }
-            
-            for item in replace:
-                dirname = dirname.replace(item, replace[item])
+            This way we can have the reference[0] which is the name and reference[1]
+            which is the full dictionary
+            '''
+
+            name = reference[0]
+            dic = reference[1]
+        
+            for category in dic:
+
+                # # # Getting the full directory and add it to plain_{dirs,files} list # # #
+
+                # Replace our syntax with system-specific one, you'll know
+                # seeing the dictionary in the next line:
+                replace = {
+                    '|': os.path.sep,
+                    'SESSION': self.session_name
+                }
+
+                subname = dic[category] # The "path" itself, with the "|" and "SESSION"
+                
+                for item in replace:
+                    subname = subname.replace(item, replace[item])
 
 
-            # Build the full dir with replaces syntax
-            directory = self.ROOT + os.path.sep + dirname
-            self.plain_dirs.append(directory)
+                # Build the full dir with replaces syntax
+                directory_or_file = self.ROOT + os.path.sep + subname
 
-            # Set the value
-            setattr(self, name, directory)
+                if name == "dirs":
+                    self.plain_dirs.append(directory_or_file)
+                    name = "directory"
 
-            self.utils.log(color, "  > self.%s --> %s" % (name, directory))
+                elif name == "files":
+                    self.plain_files.append(directory_or_file)
+                    name = "static files"
+
+                # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
+                setattr(self, category, directory_or_file)
+
+                self.utils.log(color, "  > (%s) self.%s --> %s" % (name, category, directory_or_file))
 
 
 
+    # We save some selected vars for dandere2x_cpp to read them and work
+    # properly based on where stuff actually is
+    def save_vars(self):
 
+        debug_prefix = "[Context.save_vars]"
+
+        self.utils.log(color, debug_prefix, "Generating data dictionary")
+
+        # Build up the data directory
+        data = {
+            "residual_dir": self.residual
+        }
+
+        self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
+
+        self.utils.save_yaml(data, self.context_vars)
+
+        self.utils.log(color, debug_prefix, "Saved")
 
