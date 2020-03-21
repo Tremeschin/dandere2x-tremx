@@ -2,7 +2,7 @@ session_name: "default"
 waifu2x_type: "vulkan"
 
 basic:
-  input_file: "test.mp4"
+  input_file: "test1080p.mkv"
   output_file: "asidjasio"
 
 processing:

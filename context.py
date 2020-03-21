@@ -65,6 +65,7 @@ class Context():
         self.valid_resolution = []
         self.fps = None
         self.frame_count = None
+        self.frame_rate = None
 
 
         self.utils.log(color, debug_prefix, "Configuring context.* directories")

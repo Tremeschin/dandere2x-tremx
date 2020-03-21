@@ -13,7 +13,7 @@ from utils import Utils
 import os
 
 
-color = fg.green
+color = fg(200, 255, 80)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -63,7 +63,7 @@ class Dandere2x():
 
         # Get video info
         self.utils.log(color, debug_prefix, "Getting video info")
-        self.video.configure_video_file()
+        self.video.video_info()
 
         self.utils.log(color, debug_prefix, "Showing video info")
         self.video.show_info()

@@ -88,7 +88,8 @@ def LinuxVerify_GetBinary(utils, waifu2x):
     # This is the binary from where we're going to execute waifu2x
     return out
 
-    
+
+# Waifu2x Linux Vulkan (ncnn) wrapper
 class Waifu2xLinuxVulkan():
 
     def __init__(self, context, utils):
@@ -111,8 +112,7 @@ class Waifu2xLinuxVulkan():
         self.utils.log(color, debug_prefix, "Got binary: " + self.binary)
 
 
-
-
+# Waifu2x Linux CPP (converter-cp) wrapper
 class Waifu2xLinuxCPP():
     
     def __init__(self, context, utils):
@@ -143,6 +143,7 @@ class Waifu2xLinuxCPP():
 # Windows
 
 
+# Waifu2x Windows Vulkan (ncnn) wrapper
 class Waifu2xWindowsVulkan():
     def __init__(self, context, utils):
         self.context = context
@@ -151,8 +152,9 @@ class Waifu2xWindowsVulkan():
         debug_prefix = "[Waifu2xWindowsVulkan.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
-        
 
+
+# Waifu2x Windows CPP (converter-cpp) wrapper
 class Waifu2xWindowsCPP():
     def __init__(self, context, utils):
         self.context = context
@@ -162,6 +164,8 @@ class Waifu2xWindowsCPP():
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
+
+# Waifu2x Windows Caffe wrapper
 class Waifu2xWindowsCaffe():
     def __init__(self, context, utils):
         self.context = context
