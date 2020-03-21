@@ -40,10 +40,29 @@ class Utils():
             self.log(color, debug_prefix, "Directory already exists: [%s]" % directory)
 
 
+    # Reset file (write empty) or create it
+    def reset_file(self, filename):
+        
+        debug_prefix = "[Utils.reset_file]"
+
+        if os.path.isfile(filename):
+            self.log(color, debug_prefix, "File exists, reseting it: [%s]" % filename)
+        else:
+            self.log(color, debug_prefix, "File don't exist, creating empty: [%s]" % filename)
+        
+        with open(filename, "w") as f:
+                f.write("")
+
+
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
     def check_dirs(self):
         for directory in self.context.plain_dirs:
             self.mkdir_dne(directory)
+
+    # Wrapper for self.reset_file, resets the plain files from context
+    def reset_files(self):
+        for item in self.context.plain_files:
+            self.reset_file(item)
 
 
     # Debugging, show context static files
@@ -142,7 +161,7 @@ class Utils():
 
 
     # This "follows" updating files, yields the new stuff written
-    def updating_file(filename):
+    def updating_file(self, filename):
         ufile = open(filename, "r")
         ufile.seek(0,2)
         while True:

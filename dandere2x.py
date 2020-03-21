@@ -19,14 +19,22 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 class Dandere2x():
+
     def __init__(self):
 
         debug_prefix = "[Dandere2x.__init__]"
-
+        
         self.utils = Utils()
-
-        self.utils.log(color,  "\n # # [Welcome to Dandere2x] # #\n")
         self.utils.log(color, debug_prefix, "Created Utils()")
+
+
+    # This function loads up the "core" variables and objects
+    def load(self):
+
+        debug_prefix = "[Dandere2x.load]"
+
+        self.utils.log(color,  "\n # # [Load phase] # #\n")
+        
 
         self.utils.log(color, debug_prefix, "Creating Context()")
         self.context = Context(self.utils)
@@ -50,12 +58,15 @@ class Dandere2x():
         self.math = D2XMath(self.context, self.utils)
 
         self.utils.log(color, debug_prefix, "Creating CoreLoop()")
-        self.core = CoreLoop(self.context, self.utils)
+        self.core = CoreLoop(self.context, self.utils, self.plugins)
         
 
+    # This function mainly configures things before upscaling and verifies stuff
+    def setup(self):
 
-        
-        # # # Here's the core logic for Dandere2x # # #
+        self.utils.log(color,  "\n # # [Setup phase] # #\n")
+
+        debug_prefix = "[Dandere2x.setup]"
 
         # Set and verify Waifu2x
         self.waifu2x.set_corresponding_verify()
@@ -64,10 +75,13 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Checking directories")
         self.utils.check_dirs()
 
+        # Reset files
+        self.utils.log(color, debug_prefix, "Reseting files")
+        self.utils.reset_files()
+
         # Debugging, show static files
         self.utils.log(color, debug_prefix, "Showing static files")
         self.utils.show_static_files()
-
 
         # Get video info
         self.utils.log(color, debug_prefix, "Getting video info")
@@ -76,14 +90,12 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Showing video info")
         self.video.show_info()
 
-
         # Set block size and a valid input resolution
         self.utils.log(color, debug_prefix, "Setting block_size")
         self.math.set_block_size()
 
         self.utils.log(color, debug_prefix, "Getting valid input resolution")
         self.math.get_a_valid_input_resolution()
-
 
         # 
         #
@@ -93,13 +105,17 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Saving Context vars to file")
         self.context.save_vars()
 
+
+    # Here's the core logic for Dandere2x, starts threading and whatnot
+    def run(self):
+
+        self.utils.log(color,  "\n # # [Run phase] # #\n")
+
         self.core.start()
 
-        
 
-        
-        
-
-
-Dandere2x()
-
+if __name__ == "__main__":
+    d2x = Dandere2x()
+    d2x.load()
+    d2x.setup()
+    d2x.run()

@@ -114,6 +114,7 @@ class Context():
 
                 # Replace our syntax with system-specific one, you'll know
                 # seeing the dictionary in the next line:
+                
                 replace = {
                     '|': os.path.sep,
                     'SESSION': self.session_name
@@ -130,16 +131,16 @@ class Context():
 
                 if name == "dirs":
                     self.plain_dirs.append(directory_or_file)
-                    name = "directory"
+                    printname = "directory"
 
                 elif name == "files":
                     self.plain_files.append(directory_or_file)
-                    name = "static files"
+                    printname = "static files"
 
                 # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
                 setattr(self, category, directory_or_file)
 
-                self.utils.log(color, "  > (%s) self.%s --> %s" % (name, category, directory_or_file))
+                self.utils.log(color, "  > (%s) self.%s --> %s" % (printname, category, directory_or_file))
 
 
 
