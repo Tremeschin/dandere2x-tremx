@@ -1,6 +1,6 @@
 # main wrapper, abstracts everything else
 
-from sty import fg, bg, ef, rs
+from color import *
 
 from processing import Processing
 from d2xmath import D2XMath
@@ -14,7 +14,7 @@ from utils import Utils
 import os
 
 
-color = fg(200, 255, 80)
+color = rgb(200, 255, 80)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -31,11 +31,10 @@ class Dandere2x():
     # This function loads up the "core" variables and objects
     def load(self):
 
-        debug_prefix = "[Dandere2x.load]"
-
         self.utils.log(color,  "\n # # [Load phase] # #\n")
-        
 
+        debug_prefix = "[Dandere2x.load]"
+        
         self.utils.log(color, debug_prefix, "Creating Context()")
         self.context = Context(self.utils)
 
@@ -71,39 +70,53 @@ class Dandere2x():
         # Set and verify Waifu2x
         self.waifu2x.set_corresponding_verify()
 
-        # Check dirs
-        self.utils.log(color, debug_prefix, "Checking directories")
-        self.utils.check_dirs()
 
-        # Reset files
-        self.utils.log(color, debug_prefix, "Reseting files")
-        self.utils.reset_files()
+        # NOT RESUME SESSION, delete previous session, load up and check directories
+        if not self.context.resume:
 
-        # Debugging, show static files
-        self.utils.log(color, debug_prefix, "Showing static files")
-        self.utils.show_static_files()
+            self.utils.log(fg.li_red, debug_prefix, "NOT RESUME SESSION")
+            self.utils.reset_dir(self.context.session)
 
-        # Get video info
-        self.utils.log(color, debug_prefix, "Getting video info")
-        self.video.video_info()
+            # Check dirs
+            self.utils.log(color, debug_prefix, "Checking directories")
+            self.utils.check_dirs()
 
-        self.utils.log(color, debug_prefix, "Showing video info")
-        self.video.show_info()
+            # Reset files
+            self.utils.log(color, debug_prefix, "Reseting files")
+            self.utils.reset_files()
 
-        # Set block size and a valid input resolution
-        self.utils.log(color, debug_prefix, "Setting block_size")
-        self.math.set_block_size()
+            # Debugging, show static files
+            self.utils.log(color, debug_prefix, "Showing static files")
+            self.utils.show_static_files()
 
-        self.utils.log(color, debug_prefix, "Getting valid input resolution")
-        self.math.get_a_valid_input_resolution()
+            # Get video info
+            self.utils.log(color, debug_prefix, "Getting video info")
+            self.video.video_info()
 
-        # 
-        #
-        #
+            self.utils.log(color, debug_prefix, "Showing video info")
+            self.video.show_info()
 
-        # Save vars of context so d2x_cpp can use them
-        self.utils.log(color, debug_prefix, "Saving Context vars to file")
-        self.context.save_vars()
+            # Set block size and a valid input resolution
+            self.utils.log(color, debug_prefix, "Setting block_size")
+            self.math.set_block_size()
+
+            self.utils.log(color, debug_prefix, "Getting valid input resolution")
+            self.math.get_a_valid_input_resolution()
+
+            # 
+            #
+            #
+
+            # Save vars of context so d2x_cpp can use them and we can resume it later
+            self.utils.log(color, debug_prefix, "Saving Context vars to file")
+            self.context.save_vars()
+        
+        
+        # IS RESUME SESSION, basically load instructions from the context saved vars
+        else: 
+            self.utils.log(fg.li_red, debug_prefix, "IS RESUME SESSION")
+
+            self.context.load_vars_from_file(self.context.context_vars)
 
 
     # Here's the core logic for Dandere2x, starts threading and whatnot

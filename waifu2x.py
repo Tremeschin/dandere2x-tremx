@@ -1,9 +1,9 @@
 # waifu2x wrappers
 
-from sty import fg, bg, ef, rs
+from color import *
 
 
-color = fg(255, 200, 10)
+color = rgb(255, 200, 10)
 
 
 class Waifu2x():

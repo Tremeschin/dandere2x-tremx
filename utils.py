@@ -1,14 +1,15 @@
 # Utils is a file with mostly helpers and utilities hence its name
 
-from sty import fg, bg, ef, rs
+from color import *
 
 import threading
+import shutil
 import yaml
 import time
 import os
 
 
-color = fg.li_blue
+color = color_by_name("li_blue")
 
 
 class Utils():
@@ -16,6 +17,13 @@ class Utils():
     def __init__(self):
         self.ROOT = self.get_root()
         self.clean_set_log()
+
+
+    # As we gotta close the file for exiting and potentially save session here?
+    def exit(self):
+        self.logfile.close()
+        self.context.stop = True
+        exit()
 
 
     # As utils and context are two separate classes
@@ -48,7 +56,7 @@ class Utils():
         if os.path.isfile(filename):
             self.log(color, debug_prefix, "File exists, reseting it: [%s]" % filename)
         else:
-            self.log(color, debug_prefix, "File don't exist, creating empty: [%s]" % filename)
+            self.log(color, debug_prefix, "File does NOT exist, creating empty: [%s]" % filename)
         
         with open(filename, "w") as f:
                 f.write("")
@@ -59,10 +67,32 @@ class Utils():
         for directory in self.context.plain_dirs:
             self.mkdir_dne(directory)
 
+
     # Wrapper for self.reset_file, resets the plain files from context
     def reset_files(self):
         for item in self.context.plain_files:
             self.reset_file(item)
+
+    
+    # Deletes an directory, fail safe? Quits if 
+    def reset_dir(self, directory):
+        
+        debug_prefix = "[Utils.reset_dir]"
+
+        self.log(color, debug_prefix, "Removing dir: [%s]" % directory)
+
+        shutil.rmtree(directory, ignore_errors=True)
+
+        if os.path.isdir(directory):
+            self.log(color, debug_prefix, "Error removing directory with ignore_errors=True, trying again")
+            
+            shutil.rmtree(directory, ignore_errors=False)
+
+            if os.path.isdir(directory):
+                self.log(fg.li_red, debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
+                self.exit()
+        
+        self.log(color, debug_prefix, "Removed successfully")
 
 
     # Debugging, show context static files
@@ -110,12 +140,6 @@ class Utils():
         self.logfile = open(logfile, "a")
 
         self.log(color, debug_prefix, "Reseted log file")
-
-
-    # As we gotta close the file for exiting and potentially save session here?
-    def exit(self):
-        self.logfile.close()
-        exit(-1)
 
 
     def log(self, color, *message):

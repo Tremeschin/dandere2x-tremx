@@ -1,7 +1,7 @@
 
-from sty import fg, bg, ef, rs
+from color import *
 
-color = fg.li_blue
+color = color_by_name("li_blue")
 
 class D2XMath():
     def __init__(self, context, utils):

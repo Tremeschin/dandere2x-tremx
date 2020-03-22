@@ -2,12 +2,12 @@
 # ffprobe vid info
 # frame_compressor.py
 
-from sty import fg, bg, ef, rs
+from color import *
 
 import os
 
 
-color = fg(30, 200, 60)
+color = rgb(30, 200, 60)
 
 
 class Video():

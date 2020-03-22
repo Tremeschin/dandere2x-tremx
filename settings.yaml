@@ -11,3 +11,7 @@ processing:
 
 specific:
   colors_output: true # doesn't work yet
+  log_full_path: false # Log full path instead of relative path to D2X's ROOT folder
+
+developer:
+  debug: true

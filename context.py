@@ -3,13 +3,13 @@ Context() is likewise a builder in C or C++, it's supposed to
 store and make communication between files better
 """
 
-from sty import fg, bg, ef, rs
+from color import *
 
 import sys
 import os
 
 
-color = fg.li_yellow
+color = color_by_name("li_yellow")
 
 
 class Context():
@@ -20,6 +20,28 @@ class Context():
 
         self.utils = utils
 
+        # For absolute-reffering
+        self.ROOT = self.utils.ROOT
+        self.os = self.utils.get_os()
+
+        self.utils.log(fg.li_red, debug_prefix, "Got operating system: " + self.os)
+
+        # Load up the yaml file        
+        self.utils.log(color, debug_prefix, "Loading settings YAML file")
+
+        self.yaml = self.utils.load_yaml(self.ROOT + os.path.sep + "settings.yaml")
+
+
+        # Global controls, used for stopping d2x's threads
+        self.stop = False
+        self.debug = self.yaml["developer"]["debug"]
+
+
+        if self.debug:
+            self.utils.log(fg.li_red, debug_prefix, "DEBUG: ON")
+        else:
+            self.utils.log(fg.li_red, debug_prefix, "DEBUG: OFF")
+
 
         # Create context dict
         self.utils.log(color, debug_prefix, "Creating Context dictionary")
@@ -27,18 +49,7 @@ class Context():
         self.context = {}
         self.context["ROOT"] = self.utils.ROOT
 
-
-        # For absolute-reffering
-        self.ROOT = self.utils.ROOT
-        self.os = self.utils.get_os()
-
-        self.utils.log(fg.li_red, debug_prefix, "Got operating system: " + self.os)
-
-
-        # Load up the yaml file        
-        self.utils.log(color, debug_prefix, "Loading settings YAML file")
-
-        self.yaml = self.utils.load_yaml(self.ROOT + os.path.sep + "settings.yaml")
+        
 
 
         # # # Static Variables # # #
@@ -67,11 +78,15 @@ class Context():
         self.frame_count = None
         self.frame_rate = None
 
+        # Resume options, TODO
+        self.resume = False
+
 
         self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
     
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
+            "session": "workspace|SESSION",
             "residual": "workspace|SESSION|residual",
             "upscaled": "workspace|SESSION|upscaled",
             "iframes": "workspace|SESSION|workspace|iframes"
@@ -154,7 +169,8 @@ class Context():
 
         # Build up the data directory
         data = {
-            "residual_dir": self.residual
+            "residual_dir": self.residual,
+            "ROOT": self.ROOT
         }
 
         self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
@@ -162,4 +178,10 @@ class Context():
         self.utils.save_yaml(data, self.context_vars)
 
         self.utils.log(color, debug_prefix, "Saved")
+
+    
+    # For resuming TODO
+    def load_vars_from_file(self, context_vars_file):
+        self.context_data = self.utils.load_yaml(context_vars_file)
+
 
