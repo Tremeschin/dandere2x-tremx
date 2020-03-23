@@ -2,7 +2,7 @@
 *.mp4
 *.mkv
 *.log
-workspace/*
+sessions/*
 test.py
 frames/*
 *.code-workspace

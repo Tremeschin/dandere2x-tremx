@@ -20,6 +20,10 @@ class Context():
 
         self.utils = utils
 
+        # Set the (static) rootfolder substitution
+        self.rootfolder_substitution = "<#ROOTFOLDER#>"
+        self.utils.log(color, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
+
         # For absolute-reffering
         self.ROOT = self.utils.ROOT
         self.os = self.utils.get_os()
@@ -84,16 +88,16 @@ class Context():
     
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
-            "session": "workspace|SESSION",
-            "residual": "workspace|SESSION|residual",
-            "upscaled": "workspace|SESSION|upscaled",
-            "iframes": "workspace|SESSION|iframes"
+            "session": "sessions|SESSION",
+            "residual": "sessions|SESSION|residual",
+            "upscaled": "sessions|SESSION|upscaled",
+            "iframes": "sessions|SESSION|iframes"
         }
 
         # If we happen to need some static files
         files = {
-            "d2x_cpp_out": "workspace|SESSION|plugins_input.d2x",
-            "context_vars": "workspace|SESSION|context_vars.yaml" # So CPP can load these vars we set here 
+            "d2x_cpp_out": "sessions|SESSION|plugins_input.d2x",
+            "context_vars": "sessions|SESSION|context_vars.yaml" # So CPP can load these vars we set here 
         }
 
         self.plain_dirs = []
@@ -165,14 +169,29 @@ class Context():
 
         self.utils.log(color, debug_prefix, "Generating data dictionary")
 
-        self.resume = True
-        
-        # Build up the data directory
-        data = {
-            "residual_dir": self.residual,
-            "ROOT": self.ROOT,
-            "resume": self.resume
-        }
+        # # Build up the ata dictionary
+
+        wanted = ["residual", "ROOT", "resume", "os", "input_file", "output_file",
+                  "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
+                  "valid_resolution", "fps", "frame_count", "frame_rate", "session",
+                  "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
+                  "plain_files"]
+
+        data = {}
+
+        for item in wanted:
+            value = getattr(self, item)
+
+            # In case the place the folder was changed
+            if isinstance(value, str):
+                value = value.replace(self.ROOT, self.rootfolder_substitution)
+
+            if isinstance(value, list):
+                if isinstance(value[0], str):
+                    value = [x.replace(self.ROOT, self.rootfolder_substitution) for x in value]
+
+            data[item] = value
+
 
         self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
 
@@ -181,8 +200,26 @@ class Context():
         self.utils.log(color, debug_prefix, "Saved")
 
     
-    # For resuming TODO
+    # For resuming, loads into self.* variables the context_vars file
     def load_vars_from_file(self, context_vars_file):
-        self.context_data = self.utils.load_yaml(context_vars_file)
 
+        debug_prefix = "[Context.load_vars_from_file]"
+        
+        context_data = self.utils.load_yaml(context_vars_file)
+
+        self.utils.log(color, debug_prefix, "Loaded yaml file, here's the setattr")
+
+        for item in context_data:
+            value = context_data[item]
+
+            # As to revert back substituting <ROOTFOLDER>
+            if isinstance(value, str):
+                value = value.replace(self.rootfolder_substitution, self.ROOT)
+
+            if isinstance(value, list):
+                if isinstance(value[0], str):
+                    value = [x.replace(self.rootfolder_substitution, self.ROOT) for x in value]
+
+            self.utils.log(color, "  >", debug_prefix, "self.%s --> %s" % (item, value))
+            setattr(self, item, value)
 

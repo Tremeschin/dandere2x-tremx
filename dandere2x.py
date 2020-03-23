@@ -88,6 +88,9 @@ class Dandere2x():
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
 
+            # As we're loading it with non-resume code logic
+            self.context.resume = True
+
             # Log and reset session directory
             self.utils.log(fg.li_red, debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
             self.utils.reset_dir(self.context.session)
@@ -118,10 +121,6 @@ class Dandere2x():
             self.utils.log(color, debug_prefix, "Getting valid input resolution")
             self.math.get_a_valid_input_resolution()
 
-            # 
-            #
-            #
-
             # Save vars of context so d2x_cpp can use them and we can resume it later
             self.utils.log(color, debug_prefix, "Saving Context vars to file")
             self.context.save_vars()
@@ -131,10 +130,12 @@ class Dandere2x():
         else: 
             self.utils.log(fg.li_red, debug_prefix, "IS RESUME SESSION")
 
+            self.utils.log(color, debug_prefix, "Loading Context vars from context_vars file")
+
             self.context.load_vars_from_file(self.context.context_vars)
 
 
-    # Here's the core logic for Dandere2x, starts threading and whatnot
+    # Here's the core logic for Dandere2x, good luck other files
     def run(self):
 
         self.utils.log(color,  "\n # # [Run phase] # #\n")
