@@ -87,7 +87,7 @@ class Context():
             "session": "workspace|SESSION",
             "residual": "workspace|SESSION|residual",
             "upscaled": "workspace|SESSION|upscaled",
-            "iframes": "workspace|SESSION|workspace|iframes"
+            "iframes": "workspace|SESSION|iframes"
         }
 
         # If we happen to need some static files
@@ -165,10 +165,13 @@ class Context():
 
         self.utils.log(color, debug_prefix, "Generating data dictionary")
 
+        self.resume = True
+        
         # Build up the data directory
         data = {
             "residual_dir": self.residual,
-            "ROOT": self.ROOT
+            "ROOT": self.ROOT,
+            "resume": self.resume
         }
 
         self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)

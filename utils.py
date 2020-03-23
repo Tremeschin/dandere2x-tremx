@@ -200,4 +200,30 @@ class Utils():
                 continue
             yield line
 
+    # Check if context_vars file exist and returns the "resume" key value
+    def check_resume(self):
+
+        debug_prefix = "[Utils.check_resume]"
+
+        self.log(color, debug_prefix, "Checking") 
+
+        vars_file = self.context.context_vars
+
+        if os.path.isfile(vars_file):
+            
+            data = self.load_yaml(vars_file)
+
+            if "resume" in data:
+                
+                text = "True" if data["resume"] else "False"
+                self.log(color, debug_prefix, "Resume key in session vars: [%s]" % text) 
+                
+                return data["resume"]
+            
+            self.log(color, debug_prefix, "Resume key not in session vars: [False]")
+            return False
+        else:
+            self.log(color, debug_prefix, "Session vars file does not exist")
+            return False
+
             

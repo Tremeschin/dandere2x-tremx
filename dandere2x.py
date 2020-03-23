@@ -11,6 +11,7 @@ from core import CoreLoop
 from video import Video
 from utils import Utils
 
+import argparse
 import os
 
 
@@ -20,9 +21,11 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class Dandere2x():
 
-    def __init__(self):
+    def __init__(self, args):
 
         debug_prefix = "[Dandere2x.__init__]"
+
+        self.args = args
         
         self.utils = Utils()
         self.utils.log(color, debug_prefix, "Created Utils()")
@@ -70,6 +73,16 @@ class Dandere2x():
         # Set and verify Waifu2x
         self.utils.log(color, debug_prefix, "Getting n' Verifying Waifu2x")
         self.waifu2x.set_corresponding_verify()
+
+
+        # Check if context_vars file exist and is set to be resume
+        # If force argument is set, force not resume session
+        if not self.args["force"]:
+            self.utils.log(color, debug_prefix, "Checking if is Resume session")
+            self.context.resume = self.utils.check_resume()
+        else:
+            self.utils.log(rgb(255,100,0), debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
+            self.context.resume = False
 
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
@@ -130,7 +143,25 @@ class Dandere2x():
 
 
 if __name__ == "__main__":
-    d2x = Dandere2x()
+
+    # Create ArgumentParser
+    args = argparse.ArgumentParser(description='Optional arguments for Dandere2x')
+
+    # # Arguments
+
+    # Force deletion of session, don't resume
+    args.add_argument('-f', '--force', required=False, action="store_true", help="Forces deletion of session")
+    
+    # Parse args and make dictionary
+    args = args.parse_args()
+
+    args = {
+        "force": args.force
+    }
+
+    # Run Dandere2x
+
+    d2x = Dandere2x(args)
     d2x.load()
     d2x.setup()
     d2x.run()
