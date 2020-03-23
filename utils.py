@@ -79,20 +79,25 @@ class Utils():
         
         debug_prefix = "[Utils.reset_dir]"
 
-        self.log(color, debug_prefix, "Removing dir: [%s]" % directory)
-
-        shutil.rmtree(directory, ignore_errors=True)
-
         if os.path.isdir(directory):
-            self.log(color, debug_prefix, "Error removing directory with ignore_errors=True, trying again")
-            
-            shutil.rmtree(directory, ignore_errors=False)
+
+            self.log(color, debug_prefix, "Removing dir: [%s]" % directory)
+
+            shutil.rmtree(directory, ignore_errors=True)
 
             if os.path.isdir(directory):
-                self.log(fg.li_red, debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
-                self.exit()
+                self.log(color, debug_prefix, "Error removing directory with ignore_errors=True, trying again")
+                
+                shutil.rmtree(directory, ignore_errors=False)
+
+                if os.path.isdir(directory):
+                    self.log(fg.li_red, debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
+                    self.exit()
+            
+            self.log(color, debug_prefix, "Removed successfully")
         
-        self.log(color, debug_prefix, "Removed successfully")
+        else:
+            self.log(color, debug_prefix, "Directory exists, skipping... [%s]" % directory)
 
 
     # Debugging, show context static files

@@ -50,8 +50,6 @@ class Context():
         self.context["ROOT"] = self.utils.ROOT
 
         
-
-
         # # # Static Variables # # #
         self.utils.log(color, debug_prefix, "Setting up static variables")
 

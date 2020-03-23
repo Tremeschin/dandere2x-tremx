@@ -7,3 +7,7 @@ def color_by_name(name):
     
 def rgb(r, g, b):
     return fg(r, g, b)
+
+
+def debug_color():
+    return rgb(0, 255, 247)

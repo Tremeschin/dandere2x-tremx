@@ -22,9 +22,9 @@ class Video():
         
 
     # Get video info with MediaInfo, don't process it yet
-    def video_info(self):
+    def get_video_info(self):
 
-        debug_prefix = "[Video.video_info]"
+        debug_prefix = "[Video.get_video_info]"
 
         self.input_file = self.context.input_file
         self.output_file = self.context.output_file 

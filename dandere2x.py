@@ -68,13 +68,15 @@ class Dandere2x():
         debug_prefix = "[Dandere2x.setup]"
 
         # Set and verify Waifu2x
+        self.utils.log(color, debug_prefix, "Getting n' Verifying Waifu2x")
         self.waifu2x.set_corresponding_verify()
 
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
 
-            self.utils.log(fg.li_red, debug_prefix, "NOT RESUME SESSION")
+            # Log and reset session directory
+            self.utils.log(fg.li_red, debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
             self.utils.reset_dir(self.context.session)
 
             # Check dirs
@@ -91,7 +93,7 @@ class Dandere2x():
 
             # Get video info
             self.utils.log(color, debug_prefix, "Getting video info")
-            self.video.video_info()
+            self.video.get_video_info()
 
             self.utils.log(color, debug_prefix, "Showing video info")
             self.video.show_info()

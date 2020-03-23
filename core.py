@@ -8,7 +8,8 @@ from color import *
 
 import threading
 
-color = rgb(0, 255, 247)
+color = rgb(0, 115, 255)
+
 
 class CoreLoop():
     def __init__(self, context, utils, plugins):
@@ -36,11 +37,11 @@ class CoreLoop():
         debug_prefix = "[CoreLoop.pipe_plugins]"
 
         if self.context.debug:
-            self.utils.log(color, debug_prefix, "[DEBUG] Printing new contents of file [%s]" % self.context.d2x_cpp_out)
+            self.utils.log(debug_color(), debug_prefix, "[DEBUG] Printing new contents of file [%s]" % self.context.d2x_cpp_out)
 
         for newstuff in self.utils.updating_file(self.context.d2x_cpp_out):
             if self.context.debug:
-                self.utils.log(color, debug_prefix, "[DEBUG]", newstuff)
+                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff)
 
 
 
