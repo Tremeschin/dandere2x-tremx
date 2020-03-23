@@ -16,13 +16,13 @@ class Waifu2x():
     def set_corresponding_verify(self):
 
         debug_prefix = "[Waifu2x.set_corresponding_verify]"
-        identation = "  >"
+        
         c = fg.li_magenta # Print this color only in this class
 
         self.utils.log(c, debug_prefix, "According to the following, ...")
 
-        self.utils.log(c, identation, "OS: " + self.context.os)
-        self.utils.log(c, identation, "Waifu2x: " + self.context.waifu2x_type)
+        self.utils.log(c, self.context.indentation, "OS: " + self.context.os)
+        self.utils.log(c, self.context.indentation, "Waifu2x: " + self.context.waifu2x_type)
 
         # Set waifu2x based on the OS and type selected
         if self.context.os == "linux":

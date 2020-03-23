@@ -16,6 +16,7 @@ class Context():
 
     def __init__(self, utils):
 
+        self.indentation = "····"
         debug_prefix = "[Context.__init__]"
 
         self.utils = utils
@@ -39,6 +40,8 @@ class Context():
         # Global controls, used for stopping d2x's threads
         self.stop = False
         self.debug = self.yaml["developer"]["debug"]
+
+        self.threads = {}
 
 
         if self.debug:
@@ -157,7 +160,7 @@ class Context():
                 # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
                 setattr(self, category, directory_or_file)
 
-                self.utils.log(color, "  > (%s) self.%s --> %s" % (printname, category, directory_or_file))
+                self.utils.log(color, self.indentation, "(%s) self.%s --> %s" % (printname, category, directory_or_file))
 
 
 
@@ -207,7 +210,7 @@ class Context():
         
         context_data = self.utils.load_yaml(context_vars_file)
 
-        self.utils.log(color, debug_prefix, "Loaded yaml file, here's the setattr")
+        self.utils.log(color, debug_prefix, "Loaded context_vars yaml file, here's the self vars and loaded values:")
 
         for item in context_data:
             value = context_data[item]
@@ -220,6 +223,6 @@ class Context():
                 if isinstance(value[0], str):
                     value = [x.replace(self.rootfolder_substitution, self.ROOT) for x in value]
 
-            self.utils.log(color, "  >", debug_prefix, "self.%s --> %s" % (item, value))
+            self.utils.log(color, self.indentation, debug_prefix, "self.%s --> %s" % (item, value))
             setattr(self, item, value)
 

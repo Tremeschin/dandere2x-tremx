@@ -16,28 +16,26 @@ import os
 
 
 color = rgb(200, 255, 80)
+phasescolor = rgb(84, 255, 87)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 class Dandere2x():
 
     def __init__(self, args):
-
-        debug_prefix = "[Dandere2x.__init__]"
-
         self.args = args
         
-        self.utils = Utils()
-        self.utils.log(color, debug_prefix, "Created Utils()")
-
 
     # This function loads up the "core" variables and objects
     def load(self):
 
-        self.utils.log(color,  "\n # # [Load phase] # #\n")
-
         debug_prefix = "[Dandere2x.load]"
-        
+
+        self.utils = Utils()
+
+        self.utils.log(phasescolor, "# # [Load phase] # #")
+        self.utils.log(color, debug_prefix, "Created Utils()")
+
         self.utils.log(color, debug_prefix, "Creating Context()")
         self.context = Context(self.utils)
 
@@ -66,7 +64,7 @@ class Dandere2x():
     # This function mainly configures things before upscaling and verifies stuff
     def setup(self):
 
-        self.utils.log(color,  "\n # # [Setup phase] # #\n")
+        self.utils.log(phasescolor, "# # [Setup phase] # #")
 
         debug_prefix = "[Dandere2x.setup]"
 
@@ -138,7 +136,7 @@ class Dandere2x():
     # Here's the core logic for Dandere2x, good luck other files
     def run(self):
 
-        self.utils.log(color,  "\n # # [Run phase] # #\n")
+        self.utils.log(phasescolor, " # # [Run phase] # #")
 
         self.core.start()
 

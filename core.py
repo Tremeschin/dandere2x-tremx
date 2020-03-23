@@ -22,13 +22,15 @@ class CoreLoop():
 
         self.ROOT = self.context.ROOT
 
-        self.utils.log(color, debug_prefix, "INIT")
-
 
     def start(self):
-        pipe_plugin_thread = threading.Thread(target=self.pipe_plugins)
 
-        pipe_plugin_thread.start()
+        debug_prefix = "[CoreLoop.start]"
+
+        self.utils.log(color, debug_prefix, "Threading pipe_plugins")
+        self.context.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
+
+        self.context.threads["pipe_plugin_thread"].start()
 
 
     # Reads and parses self.context.d2x_cpp_out file, send to plugins.py

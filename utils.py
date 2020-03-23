@@ -3,6 +3,7 @@
 from color import *
 
 import threading
+import datetime
 import shutil
 import yaml
 import time
@@ -59,7 +60,18 @@ class Utils():
             self.log(color, debug_prefix, "File does NOT exist, creating empty: [%s]" % filename)
         
         with open(filename, "w") as f:
-                f.write("")
+            f.write("")
+
+    # Delete the file if it exists
+    def delete_file(self, filename):
+
+        debug_prefix = "[Utils.delete_file]"
+
+        if os.path.isfile(filename):
+            self.log(color, debug_prefix, "File exists, deleting it: [%s]" % filename)
+            os.remove(filename)
+        else:
+            self.log(color, debug_prefix, "File does NOT exist")
 
 
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
@@ -137,19 +149,27 @@ class Utils():
 
         debug_prefix = "[Utils.clean_set_log]"
 
-        logfile = "logs.log"
+        logfilename = "logs.log"
 
-        with open(self.ROOT + os.path.sep + logfile, "w") as f:
+        self.logfile = self.ROOT + os.path.sep + logfilename
+
+        if os.path.isfile(self.logfile):
+            print(color + debug_prefix, "Log file exists, deleting it: [%s]" % self.logfile, fg.rs)
+            os.remove(self.logfile)
+        else:
+            print(color, debug_prefix, "Log file does NOT exist", fg.rs)
+
+        with open(self.logfile, "w") as f:
             f.write("")
-
-        self.logfile = open(logfile, "a")
 
         self.log(color, debug_prefix, "Reseted log file")
 
 
     def log(self, color, *message):
 
-        processed_message = ""
+        now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
+
+        processed_message = "[%s] " % now
         
         # Basically we define *message as an argument so we have to
         # "merge" it, ' '.join(everything)
@@ -163,7 +183,9 @@ class Utils():
         processed_message = processed_message[:-1]
 
         print (color + processed_message + fg.rs)
-        self.logfile.write(processed_message + "\n")
+
+        with open(self.logfile, "a") as f:
+            f.write(processed_message + "\n")
 
 
     # Safely load yaml file, just for cleaness of code
