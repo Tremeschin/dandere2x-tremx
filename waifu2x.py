@@ -7,10 +7,14 @@ color = rgb(255, 200, 10)
 
 
 class Waifu2x():
-    def __init__(self, context, utils):
+    
+    def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
+        self.controller = controller
+
         self.waifu2x = None
+
 
     # Set internal self.waifu2x to a specific wrapper based on the os and w2x selected
     def set_corresponding_verify(self):

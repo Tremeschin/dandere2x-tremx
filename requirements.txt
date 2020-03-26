@@ -1,2 +1,4 @@
 sty
 argparse
+scipy
+imageio

@@ -10,6 +10,7 @@ import time
 import os
 
 
+exitcolor = rgb(84, 209, 255)
 color = color_by_name("li_blue")
 
 
@@ -22,14 +23,36 @@ class Utils():
 
     # As we gotta close the file for exiting and potentially save session here?
     def exit(self):
-        self.logfile.close()
+
+        debug_prefix = "[Utils.exit]"
+
+        self.log(exitcolor, debug_prefix, "Exiting...")
+
+        self.log(exitcolor, debug_prefix, "Saving Context vars")
+
+        self.context.save_vars()
+
+        self.log(exitcolor, debug_prefix, "Send stop command to threads")
         self.context.stop = True
+
+        self.log(exitcolor, debug_prefix, "Joining every thread")
+        
+        for threadname in self.context.threads:
+            self.log(exitcolor, debug_prefix, "Joining thread: [%s]" % threadname)
+            self.context.threads[threadname].join()
+            self.log(exitcolor, debug_prefix, "Joined thread: [%s]" % threadname)
+        
+        self.log(exitcolor, debug_prefix, "Goodbye Dandere2x!!")
+        
         exit()
 
 
-    # As utils and context are two separate classes
+    # As utils and context, controller are two separate classes
     def set_context(self, context):
         self.context = context
+
+    def set_controller(self, controller):
+        self.controller = controller
 
 
     # Get this file "absolute" path for relative reference
@@ -248,4 +271,35 @@ class Utils():
             self.log(color, debug_prefix, "Session vars file does not exist")
             return False
 
+    
+    # Waits until file exist or controller stop var is True
+    def until_exist(self, path):
+
+        debug_prefix = "[Utils.until_exist]"
+
+        if self.context.debug:
+            self.log(color, debug_prefix, "Waiting for file or diretory: [%s]" % path)
+
+        while True:
             
+            if os.path.exists(path) or self.controller.stop:
+                if self.context.debug:
+                    if self.controller.stop:
+                        self.log(color, debug_prefix, "Quitting waiting: [%s]" % path)
+                    else:
+                        self.log(color, debug_prefix, "Waited done: [%s]" % path)
+                
+                break
+
+            time.sleep(self.context.wait_time)
+
+
+    # Rename file or directory
+    def rename(self, old, new):
+
+        debug_prefix = "[Utils.rename]"
+
+        if self.context.debug:
+            self.log(color, debug_prefix, "Renaming [%s] --> [%s]" % (old, new))
+
+        os.rename(old, new)

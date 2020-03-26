@@ -15,3 +15,4 @@ specific:
 
 developer:
   debug: true
+  wait_time_exists: 0.05

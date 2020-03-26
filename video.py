@@ -11,12 +11,13 @@ color = rgb(30, 200, 60)
 
 
 class Video():
-    def __init__(self, context, utils):
+    def __init__(self, context, utils, controller):
 
         debug_prefix = "[Video.__init__]"
 
         self.context = context
         self.utils = utils
+        self.controller = controller
 
         self.ROOT = self.context.ROOT
         
@@ -82,13 +83,12 @@ class Video():
     def show_info(self):
         
         debug_prefix = "[Video.show_info]"
-        identation = "  >"
 
         self.utils.log(color, debug_prefix, "Here's the video info:")
 
-        self.utils.log(color, identation, "Filename:", self.input_file)
-        self.utils.log(color, identation, "Resolution: (%sx%s) // (WxH)" % (self.width, self.height))     
-        self.utils.log(color, identation, "Frame count:", self.frame_count)
-        self.utils.log(color, identation, "Frame rate:", self.frame_rate)
+        self.utils.log(color, self.context.indentation, "Filename: [%s]" % self.input_file)
+        self.utils.log(color, self.context.indentation, "Resolution: (%sx%s)" % (self.width, self.height))     
+        self.utils.log(color, self.context.indentation, "Frame count: [%s]" % self.frame_count)
+        self.utils.log(color, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)
 
         

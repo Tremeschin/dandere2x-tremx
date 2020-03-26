@@ -3,15 +3,18 @@
 from color import *
 
 from processing import Processing
+from controller import Controller
 from d2xmath import D2XMath
 from plugins import Plugins
 from context import Context
 from waifu2x import Waifu2x
 from core import CoreLoop
+from frame import Frame
 from video import Video
 from utils import Utils
 
 import argparse
+import time
 import os
 
 
@@ -36,32 +39,42 @@ class Dandere2x():
         self.utils.log(phasescolor, "# # [Load phase] # #")
         self.utils.log(color, debug_prefix, "Created Utils()")
 
+        self.utils.log(color, debug_prefix, "Creating Controller()")
+        self.controller = Controller()
+
         self.utils.log(color, debug_prefix, "Creating Context()")
         self.context = Context(self.utils)
+
+        self.utils.log(color, debug_prefix, "Giving Utils, Controller")
+        self.utils.set_controller(self.controller)
 
         self.utils.log(color, debug_prefix, "Giving Utils, Context")
         self.utils.set_context(self.context)
 
         self.utils.log(color, debug_prefix, "Creating Video()")
-        self.video = Video(self.context, self.utils)
+        self.video = Video(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Creating Plugins()")
-        self.plugins = Plugins(self.context, self.utils)
+        self.plugins = Plugins(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Creating Waifu2x()")
-        self.waifu2x = Waifu2x(self.context, self.utils)
+        self.waifu2x = Waifu2x(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Creating Processing()")
-        self.processing = Processing(self.context, self.utils)
+        self.processing = Processing(self.context, self.utils, self.controller)
         
         self.utils.log(color, debug_prefix, "Creating D2XMath()")
         self.math = D2XMath(self.context, self.utils)
 
         self.utils.log(color, debug_prefix, "Creating CoreLoop()")
-        self.core = CoreLoop(self.context, self.utils, self.plugins)
+        self.core = CoreLoop(self.context, self.utils, self.controller, self.plugins)
+
+        self.utils.log(color, debug_prefix, "Creating Frame()")
+        self.frame = Frame(self.context, self.utils, self.controller)
         
 
-    # This function mainly configures things before upscaling and verifies stuff
+    # This function mainly configures things before upscaling and verifies stuff,
+    # sees if it's a resume session, etc
     def setup(self):
 
         self.utils.log(phasescolor, "# # [Setup phase] # #")
@@ -135,10 +148,36 @@ class Dandere2x():
 
     # Here's the core logic for Dandere2x, good luck other files
     def run(self):
+        
+        debug_prefix = "[Dandere2x.run]"
 
-        self.utils.log(phasescolor, " # # [Run phase] # #")
+        self.utils.log(phasescolor, "# # [Run phase] # #")
 
+        self.utils.log(phasescolor, "# # TESTING FRAME() # #")
+        frame = Frame(self.context, self.utils, self.controller)
+        frame.load_from_path(self.context.ROOT + os.path.sep + "yn.jpg")
+
+        frame2 = Frame(self.context, self.utils, self.controller)
+        frame2.new(1920, 1080)
+        frame2.duplicate(frame)
+        
+        frame2.save("yn_copy.jpg")
+
+        self.utils.log(phasescolor, "# # END FRAME() # #")
+
+        
+        
         self.core.start()
+
+        # Simulate exiting
+        self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
+
+        for i in range(3, 0, -1):
+            self.utils.log(color, debug_prefix, i)
+            time.sleep(1)
+             
+        self.controller.exit()
+        
 
 
 if __name__ == "__main__":

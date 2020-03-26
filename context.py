@@ -16,12 +16,12 @@ class Context():
 
     def __init__(self, utils):
 
-        self.indentation = "····"
+        self.indentation = "··· |"
         debug_prefix = "[Context.__init__]"
 
         self.utils = utils
 
-        # Set the (static) rootfolder substitution
+        # Set the (static) rootfolder substitution for changing paths session folders
         self.rootfolder_substitution = "<#ROOTFOLDER#>"
         self.utils.log(color, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
 
@@ -38,7 +38,6 @@ class Context():
 
 
         # Global controls, used for stopping d2x's threads
-        self.stop = False
         self.debug = self.yaml["developer"]["debug"]
 
         self.threads = {}
@@ -82,6 +81,13 @@ class Context():
         self.fps = None
         self.frame_count = None
         self.frame_rate = None
+
+
+        # # Static developer vars across files
+
+        # How much time in seconds to wait for waiting operations like until_exist()
+        self.wait_time = self.yaml["developer"]["wait_time_exists"]
+
 
         # Resume options, TODO
         self.resume = False
@@ -174,11 +180,13 @@ class Context():
 
         # # Build up the ata dictionary
 
-        wanted = ["residual", "ROOT", "resume", "os", "input_file", "output_file",
-                  "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
-                  "valid_resolution", "fps", "frame_count", "frame_rate", "session",
-                  "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
-                  "plain_files"]
+        wanted = [
+            "residual", "ROOT", "resume", "os", "input_file", "output_file",
+            "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
+            "valid_resolution", "fps", "frame_count", "frame_rate", "session",
+            "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
+            "plain_files"
+        ]
 
         data = {}
 

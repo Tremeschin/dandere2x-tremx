@@ -77,7 +77,6 @@ class D2XMath():
     def get_a_valid_input_resolution(self):
 
         debug_prefix = "[D2XMath.get_a_valid_input_resolution]"
-        identation = "  >"
 
         resolution = self.context.resolution
         width = resolution[0]
@@ -97,8 +96,8 @@ class D2XMath():
 
         self.utils.log(color, debug_prefix, "Valid output resolution:")
 
-        self.utils.log(color, identation, "Original resolution: (%sx%s) (WxH)" % (width, height))
-        self.utils.log(color, identation, "Recieved block_size: %s" % block_size)     
-        self.utils.log(color, identation, "New valid resolution: (%sx%s) (WxH)" % (closest_width, closest_height))
+        self.utils.log(color, self.context.indentation, "Original resolution: (%sx%s) (WxH)" % (width, height))
+        self.utils.log(color, self.context.indentation, "Recieved block_size: %s" % block_size)     
+        self.utils.log(color, self.context.indentation, "New valid resolution: (%sx%s) (WxH)" % (closest_width, closest_height))
 
         self.context.valid_resolution = [closest_width, closest_height]
