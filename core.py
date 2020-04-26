@@ -19,11 +19,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-# merge.py
-# residual.py
-
-# This file applies pframe, fade, corrections and calls merge
-# Basically the "core" of Dandere2x
 
 from color import rgb, debug_color
 
@@ -45,46 +40,124 @@ class CoreLoop():
 
         self.ROOT = self.context.ROOT
 
+        self.utils.log(color, debug_prefix, "Init")
 
+
+    # Calls threads and 
     def start(self):
 
         debug_prefix = "[CoreLoop.start]"
 
-        self.utils.log(color, debug_prefix, "Threading CoreLoop.pipe_plugins")
-        self.context.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
-        
-        self.context.threads["waifu2x_keep_upscaling"] = threading.Thread(
-            target=self.waifu2x.keep_upscaling,
-            args=(self.context.residual, self.context.upscaled)
-        )
+        # Get context information if it's a resume session
+        if self.context.resume:
+            self.utils.log(color, debug_prefix, "Parsing whole cpp output as IS resume session")
+            self.parse_whole_cpp_out()
 
+        self.utils.log(color, debug_prefix, "Threading CoreLoop.pipe_plugins")
+        self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
+        
+        
+        # For debugging purposes
+        if self.context.enable_waifu2x:
+            
+            # Create the waifu2x thread pointing the input into the residuals and out to the upscaled
+            self.controller.threads["waifu2x_keep_upscaling"] = threading.Thread(
+                target=self.waifu2x.keep_upscaling,
+                args=(self.context.residual, self.context.upscaled)
+            )
+
+        else:
+            self.utils.log(debug_color(), debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")
+
+
+        # Start the threads, warn the user that the output is no more linear
         self.utils.log(debug_color(), debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
 
-        for thread in self.context.threads:
+        for thread in self.controller.threads:
             self.utils.log(color, debug_prefix, "Starting thread: [\"%s\"]" % thread)
-            self.context.threads[thread].start()
+            self.controller.threads[thread].start()
         
+
+    # # # These are "parsers" for the Dandere2x C++ part that loads the stuff we need (or not) into self.cpp_data
+
+
+    # Parse newline of cpp_out, generic
+    def parse_cpp_out_newline(self, line):
+
+        debug_prefix = "[CoreLoop.parse_cpp_out_newline]"
+
+        if self.context.loglevel >= 4:
+            self.utils.log(color, debug_prefix, "[DEBUG 4] Parsing line [\"%s\"]" % line)
+
+
+        # TODO: The parse function goes here but new dandere2x_cpp isn't out so all we gotta do is wait
+        self.controller.cpp_data[self.utils.md5(line)] = line
+
+
+        if self.context.loglevel >= 5:
+            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.cpp_data:")
+            self.utils.log(color, debug_prefix, self.controller.cpp_data)
+
+        return line
         
 
+    # Decides if that line is necessary based on 
+    def is_necessary_line(self, line):
+
+        debug_prefix = "[CoreLoop.is_necessary_line]"
+
+        if self.context.loglevel >= 4:
+            self.utils.log(color, debug_prefix, "[DEBUG] Checking if line [\"%s\"] is necessary: " % line)
+
+        # If it isn't resume we gotta have everything
+        if not self.context.resume:
+
+            if self.context.loglevel >= 4:
+                self.utils.log(color, debug_prefix, "[DEBUG] YES")
+            return True
+
+        else:
+        
+            # TODO: CHECK IF NECESSARY IF NOT RESUME
+
+            if self.context.loglevel >= 4:
+                self.utils.log(color, debug_prefix, "[DEBUG] YES")
+            return True
 
 
+    # For resume sessions, parse the entire cpp_out file
+    def parse_whole_cpp_out(self):
 
-    # Reads and parses self.context.d2x_cpp_out file, send to plugins.py
+        debug_prefix = "[CoreLoop.parse_whole_cpp_out]"
+
+        self.utils.log(color, debug_prefix, "Parsing whole cpp_out file")
+
+        with open(self.context.d2x_cpp_out, "r") as cppout:
+            for line in cppout:
+                if self.is_necessary_line(line):
+                    self.parse_cpp_out_newline(line)
+    
+
+    # # #
+
+
+    # Reads new content of self.context.d2x_cpp_out file
     def pipe_plugins(self):
 
         debug_prefix = "[CoreLoop.pipe_plugins]"
 
+        # Debug
         if self.context.loglevel >= 3:
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] Printing new contents of file [%s]" % self.context.d2x_cpp_out)
-            self.utils.log(debug_color(), debug_prefix, "[DEBUG] Will exit on first input")
 
+        # Get the new stuff APPENDED into the file
         for newstuff in self.utils.updating_file(self.context.d2x_cpp_out):
+            
+            # Debug
             if self.context.loglevel >= 3:
                 self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff)
-                exit()
+                
+            self.parse_cpp_out_newline(newstuff)
 
 
-
-    def plugin_wrappers(self):
-        pass
 

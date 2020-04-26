@@ -1,3 +1,5 @@
+# DRY - Don't Repeat Yourself :)
+
 from sty import fg, bg, ef, rs
 
 

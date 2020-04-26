@@ -57,17 +57,21 @@ class Waifu2x():
         # Build a string that specifies our os and w2x type
         option = "%s-%s" % (self.context.os, self.context.waifu2x_type)
 
-        # Hacky switch case statement
+        # Hacky switch case statement, tho we do instantiate them that's why
+        # we define a init instead of a __init__ function
         self.waifu2x = {
-            "linux-vulkan":   Waifu2xLinuxVulkan(self.context, self.utils, self.controller),
-            "linux-cpp":      Waifu2xLinuxCPP(self.context, self.utils, self.controller),
-            "windows-vulkan": Waifu2xWindowsVulkan(self.context, self.utils, self.controller),
-            "windows-cpp":    Waifu2xWindowsVulkan(self.context, self.utils, self.controller),
-            "windows-caffe":  Waifu2xWindowsCaffe(self.context, self.utils, self.controller)
+            "linux-vulkan":   Waifu2xLinuxVulkan(),
+            "linux-cpp":      Waifu2xLinuxCPP(),
+            "windows-vulkan": Waifu2xWindowsVulkan(),
+            "windows-cpp":    Waifu2xWindowsVulkan(),
+            "windows-caffe":  Waifu2xWindowsCaffe()
         }.get(option, "not_found")
 
         if self.waifu2x == "not_found":
             self.utils.log(c, debug_prefix, "Chosen waifu2x and or OS not found: [%s]" % option)
+
+        self.waifu2x.init(self.context, self.utils, self.controller)
+        
 
     def verify(self):
         self.waifu2x.verify()
@@ -96,39 +100,11 @@ class Waifu2x():
 # [TODO]: This only finds waifu2x's in PATH]
 
 
-# # GetBinary just parses the output and returns the binary of the waifu2x
-
-def LinuxVerify_GetBinary(utils, waifu2x):
-
-    debug_prefix = "[waifu2x.py.LinuxVerify_GetBinary]"
-
-    # Get output of the command
-    
-    command = "type " + waifu2x
-    c = fg.li_blue
-
-    utils.log(c, debug_prefix, "Sending command to verify:", command)
-    out = utils.command_output(command).replace("\n", "")
-    utils.log(c, debug_prefix, "Got output:", out)
-
-    if ("not found" in out) or (out == ""):
-        utils.log(fg.red, debug_prefix, "Couldn't find %s Waifu2x in PATH" % waifu2x)
-        utils.exit()
-    
-
-    # out = "bash: type: waifu2x-ncnn-vulkan is /usr/bin/waifu2x-ncnn-vulkan"
-
-    # Get the last portion of text after " is "
-    out = out.split(" is ")[-1] 
-
-    # This is the binary from where we're going to execute waifu2x
-    return out
-
 
 # Waifu2x Linux Vulkan (ncnn) wrapper
 class Waifu2xLinuxVulkan():
 
-    def __init__(self, context, utils, controller):
+    def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
         self.controller = controller
@@ -145,7 +121,7 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Verifying and getting binary")
 
-        self.binary = LinuxVerify_GetBinary(self.utils, "waifu2x-ncnn-vulkan")
+        self.binary = self.utils.get_binary("waifu2x-ncnn-vulkan")
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
@@ -210,7 +186,7 @@ class Waifu2xLinuxVulkan():
 # Waifu2x Linux CPP (converter-cpp) wrapper
 class Waifu2xLinuxCPP():
     
-    def __init__(self, context, utils, controller):
+    def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
         self.controller = controller
@@ -226,7 +202,7 @@ class Waifu2xLinuxCPP():
 
         self.utils.log(color, debug_prefix, "Verifying and getting binary")
 
-        self.binary = LinuxVerify_GetBinary(self.utils, "waifu2x-converter-cpp")
+        self.binary = self.utils.get_binary("waifu2x-converter-cpp")
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
@@ -241,7 +217,7 @@ class Waifu2xLinuxCPP():
 
 # Waifu2x Windows Vulkan (ncnn) wrapper
 class Waifu2xWindowsVulkan():
-    def __init__(self, context, utils, controller):
+    def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
         self.controller = controller
@@ -253,7 +229,7 @@ class Waifu2xWindowsVulkan():
 
 # Waifu2x Windows CPP (converter-cpp) wrapper
 class Waifu2xWindowsCPP():
-    def __init__(self, context, utils, controller):
+    def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
         self.controller = controller
@@ -265,7 +241,7 @@ class Waifu2xWindowsCPP():
 
 # Waifu2x Windows Caffe wrapper
 class Waifu2xWindowsCaffe():
-    def __init__(self, context, utils, controller):
+    def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
         self.controller = controller

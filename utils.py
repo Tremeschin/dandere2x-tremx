@@ -25,13 +25,21 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from inspect import currentframe
 from color import color_by_name, rgb, fg, bg
 
+import subprocess
 import threading
 import datetime
+import random
 import shutil
 import yaml
 import time
 import os
 
+
+try:
+    import hashlib
+    use_hashlib = True
+except ModuleNotFoundError:
+    use_hashlib = False
 
 exitcolor = rgb(84, 209, 255)
 color = color_by_name("li_blue")
@@ -203,9 +211,13 @@ class Utils():
         return os.environ[var]
 
 
-    # Get the output of a commnd
+    # Get the output of a command with os module
     def command_output(self, command):
         return os.popen(command).read()
+
+    # Get the output of a command with subprocess module
+    def command_output_subprocess(self, command):
+        return subprocess.check_output(command, stderr=subprocess.STDOUT).decode("utf-8")
         
 
     # Wipe out logs.log file and set a self.logfile
@@ -370,3 +382,59 @@ class Utils():
             self.log(color, debug_prefix, "Replaced string: [\"%s\"]" % replaced) 
         
         return replaced
+
+
+    # Get the md5 hash of a string or a pseudo-random number, just for unique identifying things in the future?
+    def md5(self, string):
+        if use_hashlib:
+            return hashlib.md5(string.encode()).hexdigest()
+        else:
+            a = 10e20
+            return random.randint(a, 9*a)
+
+    # f("abc def ggf", 3) -> "ggf"  
+    def get_nth_word(self, string, N):
+        return string.split(' ')[N-1]
+
+
+    def get_binary(self, wanted):
+
+        debug_prefix = "[Utils.get_binary]"
+
+
+        # Linux way of life
+        if self.context.os == "linux":
+            
+            command = "whereis " + wanted
+        
+            self.log(color, debug_prefix, "Sending command to verify:", command)
+
+            out = self.command_output(command).replace("\n", "")
+
+            self.log(color, debug_prefix, "Got output:", out)
+
+            if out == wanted + ":":
+                self.log(fg.red, debug_prefix, "Couldn't find %s binary in PATH" % wanted)
+                self.exit()
+
+            # out = "ls: /usr/bin/ls /usr/share/man/man1/ls.1p.gz /usr/share/man/man1/ls.1.gz"
+            # out = "asdasd:"
+
+            # Get the first binary pointed by whereis TODO: is this right?
+            out = self.get_nth_word(out, 2)
+
+            # This is the binary from where we're going to execute waifu2x
+            return out
+
+
+        # Search for "ROOT/externals/$wanted$.exe"
+        elif self.context.os == "windows":
+            
+            executable = self.context.ROOT + os.path.sep + "externals" + os.path.sep + wanted + ".exe"
+            
+            if os.path.exists(executable):
+                self.log(color, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (wanted, executable))
+            else:
+                self.log(color, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, executable))
+                self.exit()
+

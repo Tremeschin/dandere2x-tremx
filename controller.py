@@ -4,6 +4,8 @@
 Purpose: Non constant and runtime dependent variables for communicating
 between Python scripts
 
+Holds for example the cpp_data we parse with core.py and a signal to stop d2x
+
 ===============================================================================
 
 This program is free software: you can redistribute it and/or modify it under
@@ -24,8 +26,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 class Controller():
     def __init__(self):
         self.stop = False
+        self.cpp_data = {}
+        self.threads = {}
 
     def exit(self):
         print("Controller exit called")
         self.stop = True
-

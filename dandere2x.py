@@ -234,16 +234,16 @@ class Dandere2x():
 
         
     
-        for i in range(4, 0, -1):
+        for i in range(60, 0, -1):
             self.utils.log(color, debug_prefix, i)
             time.sleep(1)
 
 
         self.controller.exit()
 
-        for thread in self.context.threads:
+        for thread in self.controller.threads:
             self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
-            self.context.threads[thread].join()
+            self.controller.threads[thread].join()
         
 
 

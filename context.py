@@ -64,13 +64,8 @@ class Context():
         # Global controls, used for stopping d2x's threads
         self.loglevel = self.yaml["developer"]["loglevel"]
 
-        self.threads = {}
-
-
-        if self.loglevel >= 3:
-            self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s], DEBUG: ON" % self.loglevel)
-        else:
-            self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
+        
+        self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
 
         # Create context dict
@@ -116,12 +111,23 @@ class Context():
         self.tile_size = self.yaml["waifu2x"]["tile_size"]
 
 
-        # Create default variables, gotta assign them
+        # Create default variables
         self.resolution = []
         self.valid_resolution = []
         self.fps = None
         self.frame_count = None
         self.frame_rate = None
+
+
+
+        # Video related variables
+        self.use_mediainfo = self.yaml["video"]["use_mediainfo"]
+
+
+        # FFmpeg / FFprobe related
+        self.get_frame_count_method = self.yaml["ffmpeg"]["get_frame_count_method"]
+        self.get_frame_rate_method = self.yaml["ffmpeg"]["get_frame_rate_method"]
+        self.get_resolution_method = self.yaml["ffmpeg"]["get_resolution_method"]
 
 
         # # Static developer vars across files
@@ -132,6 +138,14 @@ class Context():
 
         # Resume options, TODO
         self.resume = False
+        self.last_processing_frame = None
+
+
+        ## Debug stuff
+
+        # This might sound dumb but it's good to debug as waifu2x doens't upscale and mindisk remove stuff
+        self.enable_waifu2x = self.yaml["debug"]["enable_waifu2x"]
+
 
 
         self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
@@ -151,6 +165,13 @@ class Context():
             "temp_vpy_script": "sessions|SESSION|temp_vpy_script.vpy"
         }
 
+        # # # We declare these as none just for annoying errors on this dynamic variable setting
+
+        self.session = self.residual = self.upscaled = self.iframes = self.d2x_cpp_out \
+            = self.context_vars = self.temp_vpy_script = None
+
+        # # #
+
         self.plain_dirs = []
         self.plain_files = []
         
@@ -167,7 +188,7 @@ class Context():
             print(i, reference)
 
             0 ('dirs', {'residual': 'wor...
-            1 ('files', {'d2x_cpp_ou...
+            1 ('files', {'d2x_cpp_out...
 
             This way we can have the reference[0] which is the name and reference[1]
             which is the full dictionary
@@ -227,12 +248,15 @@ class Context():
             "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
             "valid_resolution", "fps", "frame_count", "frame_rate", "session",
             "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
-            "plain_files", "denoise_level", "tile_size"
+            "plain_files", "denoise_level", "tile_size", "last_processing_frame",
+            "get_frame_count_method", "get_frame_rate_method"
         ]
 
         data = {}
 
         for item in wanted:
+
+            # Get the self value of the item as variable name
             value = getattr(self, item)
 
             # In case the place the folder was changed
@@ -246,6 +270,7 @@ class Context():
                 except Exception as e:
                     self.utils.log(color_by_name("li_red"), debug_prefix, "Exception ocurred on line [%s]: " % self.utils.get_linenumber(), e)
 
+            # Atribute
             data[item] = value
             
 
@@ -277,6 +302,7 @@ class Context():
                 if isinstance(value[0], str):
                     value = [x.replace(self.rootfolder_substitution, self.ROOT) for x in value]
 
+            # Log and set self var "self.item" as value
             self.utils.log(color, self.indentation, debug_prefix, "self.%s = \"%s\"" % (item, value))
             setattr(self, item, value)
 

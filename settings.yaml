@@ -19,7 +19,6 @@
 
 
 
-
 session_name: "auto"
 waifu2x_type: "vulkan"
 
@@ -31,22 +30,35 @@ waifu2x:
   denoise_level: 3
   tile_size: 200
 
-vapoursynth:
-  enabled: true
-  pre: transpose
-  pos: transpose
+video:
+  use_mediainfo: false # defaults to FFmpeg / FFprobe if false
+
+ffmpeg:
+  # These functions are overrided if use_mediainfo is true
+  get_frame_count_method: null_copy # only option available right now
+  get_frame_rate_method: ffprobe # only option available right now
+  get_resolution_method: ffprobe # only option available right now
+  #
 
 processing:
   block_size: "auto"
   bleed: 2
 
-specific:
+vapoursynth:
+  enabled: false
+  pre: transpose
+  pos: transpose
+
+developer:
+  loglevel: 5
+  wait_time_exists: 0.05
+
+specific: # just ideas at the moment
   colors_output: true # doesn't work yet
   log_full_path: false # Log full path instead of relative path to D2X's ROOT folder
 
-developer:
-  loglevel: 3
-  wait_time_exists: 0.05
+debug:
+  enable_waifu2x: true
 
 
 

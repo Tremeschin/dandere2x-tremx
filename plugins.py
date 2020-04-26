@@ -1,5 +1,11 @@
 
 
+# merge.py
+# residual.py
+
+# This file applies pframe, fade, corrections and calls merge
+# Basically the "core" of Dandere2x
+
 # mindisk
 
 
