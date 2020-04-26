@@ -1,7 +1,5 @@
 
-# correction.py
-# fade.py
-# pframe.py
+
 # mindisk
 
 

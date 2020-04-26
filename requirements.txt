@@ -2,3 +2,5 @@ sty
 argparse
 scipy
 imageio
+playsound
+gitpython

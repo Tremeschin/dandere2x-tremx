@@ -1,5 +1,8 @@
 # merge.py
 # residual.py
+# correction.py
+# fade.py
+# pframe.py
 # merge - abstracting image.py
 
 

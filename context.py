@@ -1,9 +1,33 @@
 """
-Context() is likewise a builder in C or C++, it's supposed to
-store and make communication between files better
+===============================================================================
+
+Purpose: Class Context() deals with multiple file communications and mostly
+"static" variables, or "global constants", think context as in "session settings"
+
+Yes that is very dangerous and not recommended however this works really really
+good as basically this class is accessible on almost all Dandere2x Python scripts
+files and it's used as a reference on the current state of the program. Also we
+save this variables here and load them up when resuming sessions, so it's a way of
+making persistent session based variables without much trouble
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
 """
 
-from color import *
+
+from color import color_by_name, fg, rgb
 
 import sys
 import os
@@ -38,15 +62,15 @@ class Context():
 
 
         # Global controls, used for stopping d2x's threads
-        self.debug = self.yaml["developer"]["debug"]
+        self.loglevel = self.yaml["developer"]["loglevel"]
 
         self.threads = {}
 
 
-        if self.debug:
-            self.utils.log(fg.li_red, debug_prefix, "DEBUG: ON")
+        if self.loglevel >= 3:
+            self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s], DEBUG: ON" % self.loglevel)
         else:
-            self.utils.log(fg.li_red, debug_prefix, "DEBUG: OFF")
+            self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
 
         # Create context dict
@@ -73,6 +97,23 @@ class Context():
         # "Global" or non-indented options as they're "major"
         self.session_name = self.yaml["session_name"]
         self.waifu2x_type = self.yaml["waifu2x_type"]
+
+
+        # Vapoursynth settings
+        self.use_vapoursynth = self.yaml["vapoursynth"]["enabled"]
+        self.vapoursynth_pre = self.yaml["vapoursynth"]["pre"]
+        self.vapoursynth_pos = self.yaml["vapoursynth"]["pos"]
+
+
+        # # The special case where the session name is "auto",
+        # so we set it according to the input file "a.mkv" -> "a"
+        if self.session_name == "auto":
+            self.session_name = self.utils.get_auto_session_name(self.input_file)
+
+
+        # Waifu2x settings
+        self.denoise_level = self.yaml["waifu2x"]["denoise_level"]
+        self.tile_size = self.yaml["waifu2x"]["tile_size"]
 
 
         # Create default variables, gotta assign them
@@ -106,7 +147,8 @@ class Context():
         # If we happen to need some static files
         files = {
             "d2x_cpp_out": "sessions|SESSION|plugins_input.d2x",
-            "context_vars": "sessions|SESSION|context_vars.yaml" # So CPP can load these vars we set here 
+            "context_vars": "sessions|SESSION|context_vars.yaml", # So Python / CPP can load these vars we set here on resume session
+            "temp_vpy_script": "sessions|SESSION|temp_vpy_script.vpy"
         }
 
         self.plain_dirs = []
@@ -120,7 +162,7 @@ class Context():
 
         dir_and_file = [("dirs", dirs), ("files", files)]
 
-        for i, reference in enumerate(dir_and_file):
+        for _, reference in enumerate(dir_and_file):
             '''
             print(i, reference)
 
@@ -166,7 +208,7 @@ class Context():
                 # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
                 setattr(self, category, directory_or_file)
 
-                self.utils.log(color, self.indentation, "(%s) self.%s --> %s" % (printname, category, directory_or_file))
+                self.utils.log(color, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, directory_or_file))
 
 
 
@@ -185,7 +227,7 @@ class Context():
             "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
             "valid_resolution", "fps", "frame_count", "frame_rate", "session",
             "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
-            "plain_files"
+            "plain_files", "denoise_level", "tile_size"
         ]
 
         data = {}
@@ -198,10 +240,14 @@ class Context():
                 value = value.replace(self.ROOT, self.rootfolder_substitution)
 
             if isinstance(value, list):
-                if isinstance(value[0], str):
-                    value = [x.replace(self.ROOT, self.rootfolder_substitution) for x in value]
+                try:
+                    if isinstance(value[0], str):
+                        value = [x.replace(self.ROOT, self.rootfolder_substitution) for x in value]
+                except Exception as e:
+                    self.utils.log(color_by_name("li_red"), debug_prefix, "Exception ocurred on line [%s]: " % self.utils.get_linenumber(), e)
 
             data[item] = value
+            
 
 
         self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
@@ -231,6 +277,6 @@ class Context():
                 if isinstance(value[0], str):
                     value = [x.replace(self.rootfolder_substitution, self.ROOT) for x in value]
 
-            self.utils.log(color, self.indentation, debug_prefix, "self.%s --> %s" % (item, value))
+            self.utils.log(color, self.indentation, debug_prefix, "self.%s = \"%s\"" % (item, value))
             setattr(self, item, value)
 

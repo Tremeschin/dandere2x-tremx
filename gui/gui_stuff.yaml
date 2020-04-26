@@ -1,0 +1,46 @@
+gtk_gui:
+  first_time_ffmpeg_pipe: false
+  first_time_greetings: false
+  first_time_minimal_disk: false
+  first_time_use_temp: false
+  messages:
+    ffmpeg_pipe:
+    - FFmpeg Pipe is an advanced option!!
+    - 'ON: Dandere2x "pipes" the merged (quadruple resolution) images directly into
+      FFmpeg''s STDIN (input) so there''s no need for saving the merged files on disk
+
+
+      OFF: Dandere2x saves all merged images into the workspace.
+
+
+      WARNING: Huge disk usage if option is OFF, as example, 1080p videos each frame
+      will be around 3 MB of data.'
+    greetings:
+    - Greetings to the Dandere2x project!!
+    - 'Looks like it''s your first time opening the program.
+
+
+      Feel free to read the docs or ask for help in our Telegram, GitHub or Subreddit
+      as they''re linked in the "Help" tab in the main window.'
+    minimal_disk:
+    - Minimal Disk is an advanced option!!
+    - 'ON: Dandere2x deletes already used files in the workspace and limits how much
+      next frames are being processed at a current time.
+
+
+      OFF: Dandere2x extracts all frames into the workspace and Dandere2x_cpp does
+      its job all in once.
+
+
+      WARNING: Extreme concurrent disk usage if this option is OFF
+
+
+      DEFAULT: ON'
+    use_temp:
+    - Use TEMP dir is an advanced option!!
+    - 'ON: Dandere2x will set its workspace into your OS''s temp directory, LINUX:
+      /usr/tmp (def), WINDOWS: %temp%
+
+
+      OFF: Dandere2x will set its workspace based on the configured YAML file according
+      to yout OS, defaults to the path dandere2x/src/workspace/default/'

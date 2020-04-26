@@ -1,6 +1,29 @@
+"""
+===============================================================================
+
+Purpose: Set of utilities for Dandere2x, miscellaneous functions, algo logging
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+
+
 # Utils is a file with mostly helpers and utilities hence its name
 
-from color import *
+from inspect import currentframe
+from color import color_by_name, rgb, fg, bg
 
 import threading
 import datetime
@@ -46,6 +69,18 @@ class Utils():
         
         exit()
 
+    
+    # On where the session name is set to "auto"
+    def get_auto_session_name(self, input_file):
+
+        debug_prefix = "[Utils.get_auto_session_name]"
+        
+        session_name = ''.join(input_file.split(".")[:-1])
+
+        self.log(color, debug_prefix, "Session name is AUTO, setting it to: [%s]" % session_name)
+
+        return session_name
+
 
     # As utils and context, controller are two separate classes
     def set_context(self, context):
@@ -58,6 +93,11 @@ class Utils():
     # Get this file "absolute" path for relative reference
     def get_root(self):
         return os.path.dirname(os.path.abspath(__file__))
+
+
+    # Get line number which this function is called, debugging
+    def get_linenumber(self):
+        return currentframe().f_back.f_lineno
     
 
     # Make directory if it does not exist
@@ -84,6 +124,7 @@ class Utils():
         
         with open(filename, "w") as f:
             f.write("")
+
 
     # Delete the file if it exists
     def delete_file(self, filename):
@@ -239,11 +280,13 @@ class Utils():
         ufile = open(filename, "r")
         ufile.seek(0,2)
         while True:
+            if self.controller.stop: break
             line = ufile.readline()
             if not line:
                 time.sleep(0.1)
                 continue
             yield line
+            
 
     # Check if context_vars file exist and returns the "resume" key value
     def check_resume(self):
@@ -277,13 +320,13 @@ class Utils():
 
         debug_prefix = "[Utils.until_exist]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.log(color, debug_prefix, "Waiting for file or diretory: [%s]" % path)
 
         while True:
             
             if os.path.exists(path) or self.controller.stop:
-                if self.context.debug:
+                if self.context.loglevel >= 3:
                     if self.controller.stop:
                         self.log(color, debug_prefix, "Quitting waiting: [%s]" % path)
                     else:
@@ -299,7 +342,31 @@ class Utils():
 
         debug_prefix = "[Utils.rename]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.log(color, debug_prefix, "Renaming [%s] --> [%s]" % (old, new))
 
         os.rename(old, new)
+
+
+    # Utility for string.replace(old, new) that substitutes with a dictionary
+    def replace_by_dictionary(self, dictionary, replaced):
+
+        # Debug info, show the original string to be replaced and the dictionary
+        if self.context.loglevel >= 3:
+            debug_prefix = "[Utils.replace_by_dictionary]"
+            
+            self.log(color, debug_prefix, "Replacing string [\"%s\"] with dictionary:" % replaced)
+
+            for key in list(dictionary.keys()):
+                self.log(color, "··· |", debug_prefix, "[\"%s\"] = [\"%s\"]" % (key, dictionary[key]))
+
+
+        # Actually replace the string we want
+        for key in list( dictionary.keys() ):
+            replaced = replaced.replace(key, dictionary[key])
+
+
+        if self.context.loglevel >= 3:
+            self.log(color, debug_prefix, "Replaced string: [\"%s\"]" % replaced) 
+        
+        return replaced

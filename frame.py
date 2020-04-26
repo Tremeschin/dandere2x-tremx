@@ -1,6 +1,29 @@
+"""
+===============================================================================
+
+Purpose: Wrapper for Numpy arrays and PIL Image, we call images Frames
+
+Can load, copy, duplicate, save and substitute vectors of pixels
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+
+from color import rgb, color_by_name
 from scipy import misc
 from PIL import Image
-from color import *
 
 import numpy as np
 
@@ -11,9 +34,6 @@ import os
 
 
 color = rgb(196, 255, 33)
-
-
-
 
 
 
@@ -66,7 +86,7 @@ class Frame():
             A_slices = tuple(map(slice, A_start, A_start + shape + 1))
             B[B_slices] = A[A_slices]
 
-            if self.context.debug:
+            if self.context.loglevel >= 3:
                 self.utils.log(color, debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
 
         except ValueError:
@@ -95,7 +115,7 @@ class Frame():
             int_copy = numpy.copy(A[A_slices]).astype(int)  # use 'int_copy' instead of raw array to prevent overflow
             B[B_slices] = numpy.clip(int_copy + scalar, 0, 255).astype(np.uint8)
 
-            if self.context.debug:
+            if self.context.loglevel >= 3:
                 self.utils.log(color, debug_prefix, "Copied from fade, args = {%s, %s, %s, %s}" % (A_start,B_start,B_end,scalar))
 
         except ValueError:
@@ -114,7 +134,7 @@ class Frame():
         self.resolution = (width, height)
         self.name = ''
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (width, height))
 
 
@@ -123,7 +143,7 @@ class Frame():
 
         debug_prefix = "[Frame.load_from_path]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Name: [%s]" % filename)
 
         self.frame = imageio.imread(filename).astype(np.uint8)
@@ -132,7 +152,7 @@ class Frame():
         self.resolution = (self.width, self.height)
         self.name = filename
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (self.width, self.height))
 
 
@@ -141,7 +161,7 @@ class Frame():
 
         debug_prefix = "[Frame.load_from_path_wait]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Waiting for: [%s]" % filename)
 
         self.utils.until_exists()
@@ -155,7 +175,7 @@ class Frame():
 
         extension = os.path.splitext(os.path.basename(directory))[1]
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Saving to file: [%s], extension is: [%s]" % (directory, extension))
 
         if 'jpg' in extension:
@@ -187,7 +207,7 @@ class Frame():
 
         debug_prefix = "[Frame.save_image_temp]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Saving to dir [%s] with temp dir [%s]" % (directory, temp_location))
 
         self.save_image(temp_location)
@@ -207,7 +227,7 @@ class Frame():
 
         debug_prefix = "[Frame.duplicate]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Duplicating from other_frame")
 
         height_matches = self.height == other_frame.height
@@ -239,7 +259,7 @@ class Frame():
 
         debug_prefix = "[Frame.copy_block]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Copy block, from [%s] to [%s], checking valid" % (self.name, other_frame.name))
 
         # Check if inputs are valid before calling numpy self.copy_from
@@ -258,7 +278,7 @@ class Frame():
 
         debug_prefix = "[Frame.fade_block]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Copy from fade: [%s]" % self.name)
 
         self.copy_from_fade(self.frame, self.frame,
@@ -274,7 +294,7 @@ class Frame():
 
         debug_prefix = "[Frame.check_valid]"
 
-        if self.context.debug:
+        if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Checking valid, this frame: [%s], other frame: [%s]" % (self.name, other_frame.name))
 
         if this_x + block_size - 1 > self.width or this_y + block_size - 1 > self.height:

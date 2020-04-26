@@ -1,6 +1,32 @@
-# waifu2x wrappers
+"""
+===============================================================================
 
-from color import *
+Purpose: Python wrappers for using Waifu2x independent of the OS
+
+Main wrapper Waifu2x gets the according Waifu2x class based on OS and Context()
+set Waifu2x type and abstracts their functions acting as a global wrapper
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+
+
+from color import rgb, fg
+
+import time
+import os
 
 
 color = rgb(255, 200, 10)
@@ -17,9 +43,9 @@ class Waifu2x():
 
 
     # Set internal self.waifu2x to a specific wrapper based on the os and w2x selected
-    def set_corresponding_verify(self):
+    def set_corresponding(self):
 
-        debug_prefix = "[Waifu2x.set_corresponding_verify]"
+        debug_prefix = "[Waifu2x.set_corresponding]"
         
         c = fg.li_magenta # Print this color only in this class
 
@@ -28,26 +54,32 @@ class Waifu2x():
         self.utils.log(c, self.context.indentation, "OS: " + self.context.os)
         self.utils.log(c, self.context.indentation, "Waifu2x: " + self.context.waifu2x_type)
 
-        # Set waifu2x based on the OS and type selected
-        if self.context.os == "linux":
-            
-            if self.context.waifu2x_type == "vulkan":
-                self.waifu2x = Waifu2xLinuxVulkan(self.context, self.utils)
+        # Build a string that specifies our os and w2x type
+        option = "%s-%s" % (self.context.os, self.context.waifu2x_type)
 
-            if self.context.waifu2x_type == "cpp":
-                self.waifu2x = Waifu2xLinuxCPP(self.context, self.utils)
+        # Hacky switch case statement
+        self.waifu2x = {
+            "linux-vulkan":   Waifu2xLinuxVulkan(self.context, self.utils, self.controller),
+            "linux-cpp":      Waifu2xLinuxCPP(self.context, self.utils, self.controller),
+            "windows-vulkan": Waifu2xWindowsVulkan(self.context, self.utils, self.controller),
+            "windows-cpp":    Waifu2xWindowsVulkan(self.context, self.utils, self.controller),
+            "windows-caffe":  Waifu2xWindowsCaffe(self.context, self.utils, self.controller)
+        }.get(option, "not_found")
 
-        # Windows os, so Windows Waifu2x wrapper classes
-        elif self.context.os == "windows":
-            if self.context.waifu2x_type == "vulkan":
-                self.waifu2x = Waifu2xWindowsVulkan(self.context, self.utils)
+        if self.waifu2x == "not_found":
+            self.utils.log(c, debug_prefix, "Chosen waifu2x and or OS not found: [%s]" % option)
 
-            if self.context.waifu2x_type == "cpp":
-                self.waifu2x = Waifu2xWindowsVulkan(self.context, self.utils)
-
-        
+    def verify(self):
         self.waifu2x.verify()
 
+    def generate_run_command(self):
+        self.waifu2x.generate_run_command()
+
+    def upscale(self, input_path, output_path):
+        self.waifu2x.upscale(input_path, output_path)
+
+    def keep_upscaling(self, input_path, output_path):
+        self.waifu2x.keep_upscaling(input_path, output_path)
 
 
 
@@ -79,7 +111,7 @@ def LinuxVerify_GetBinary(utils, waifu2x):
     out = utils.command_output(command).replace("\n", "")
     utils.log(c, debug_prefix, "Got output:", out)
 
-    if "not found" in out:
+    if ("not found" in out) or (out == ""):
         utils.log(fg.red, debug_prefix, "Couldn't find %s Waifu2x in PATH" % waifu2x)
         utils.exit()
     
@@ -96,15 +128,17 @@ def LinuxVerify_GetBinary(utils, waifu2x):
 # Waifu2x Linux Vulkan (ncnn) wrapper
 class Waifu2xLinuxVulkan():
 
-    def __init__(self, context, utils):
+    def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
+        self.controller = controller
 
         debug_prefix = "[Waifu2xLinuxVulkan.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
 
+    # Get the binary if it exist
     def verify(self):
 
         debug_prefix = "[Waifu2xLinuxVulkan.verify]"
@@ -116,12 +150,70 @@ class Waifu2xLinuxVulkan():
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
 
-# Waifu2x Linux CPP (converter-cp) wrapper
+    # Creates the raw command for upscaling a file / directory
+    def generate_run_command(self):
+
+        debug_prefix = "[Waifu2xLinuxVulkan.generate_run_command]"
+
+        self.utils.log(color, debug_prefix, "Generating run command")
+
+        # The raw command
+        self.command = self.binary + " -n [DENOISE_LEVEL] -t [TILE_SIZE] -i [INPUT] -o [OUTPUT]"
+
+        # Substitute accordingly
+        self.command = self.utils.replace_by_dictionary({
+            "[DENOISE_LEVEL]": str(self.context.denoise_level),
+            "[TILE_SIZE]": str(self.context.tile_size)
+        }, self.command)
+    
+        self.utils.log(color, debug_prefix, "Run command is: [\"%s\"]" % self.command)
+
+
+    # Call the command and upscale a file or directory
+    def upscale(self, input_path, output_path):
+
+        debug_prefix = "[Waifu2xLinuxVulkan.upscale]"
+
+        # Substitute the command
+        command = self.utils.replace_by_dictionary({
+            "[INPUT]": input_path,
+            "[OUTPUT]": output_path
+        }, self.command)
+
+        if self.context.loglevel >= 3:
+            self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"] - Command: [\"%s\"]" % (input_path, output_path, command))
+
+        os.system(command)
+
+
+    # Persistent upscaling 
+    def keep_upscaling(self, input_path, output_path):
+
+        debug_prefix = "[Waifu2xLinuxVulkan.keep_upscaling]"
+
+        self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+
+        while not self.controller.stop:
+
+            if len(os.listdir(input_path)) > 0:
+                self.upscale(input_path, output_path)
+
+                if self.context.loglevel >= 3:
+                    self.utils.log(color, debug_prefix, "Upscaled everything, looping again..")
+            else:
+                if self.context.loglevel >= 3:
+                    self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
+            
+            time.sleep(1)
+
+
+# Waifu2x Linux CPP (converter-cpp) wrapper
 class Waifu2xLinuxCPP():
     
-    def __init__(self, context, utils):
+    def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
+        self.controller = controller
 
         debug_prefix = "[Waifu2xLinuxCPP.__init__]"
 
@@ -149,9 +241,10 @@ class Waifu2xLinuxCPP():
 
 # Waifu2x Windows Vulkan (ncnn) wrapper
 class Waifu2xWindowsVulkan():
-    def __init__(self, context, utils):
+    def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
+        self.controller = controller
 
         debug_prefix = "[Waifu2xWindowsVulkan.__init__]"
 
@@ -160,9 +253,10 @@ class Waifu2xWindowsVulkan():
 
 # Waifu2x Windows CPP (converter-cpp) wrapper
 class Waifu2xWindowsCPP():
-    def __init__(self, context, utils):
+    def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
+        self.controller = controller
 
         debug_prefix = "[Waifu2xWindowsCPP.__init__]"
 
@@ -171,9 +265,10 @@ class Waifu2xWindowsCPP():
 
 # Waifu2x Windows Caffe wrapper
 class Waifu2xWindowsCaffe():
-    def __init__(self, context, utils):
+    def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
+        self.controller = controller
 
         debug_prefix = "[Waifu2xWindowsCaffe.__init__]"
 

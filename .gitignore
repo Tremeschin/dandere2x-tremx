@@ -8,6 +8,9 @@ sessions/*
 test.py
 frames/*
 *.code-workspace
+prototype.py
+vsrepo
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
