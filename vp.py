@@ -39,9 +39,12 @@ class VapourSynthWrapper():
 
         debug_prefix = "[VapourSynthWrapper.__init__]"
 
-        vsrepo_path = self.context.ROOT + os.path.sep + "vsrepo"
-
+        # Windows users install packages with vsrepo
         if self.context.os == "windows":
+
+            # This is a repo name which is cloned in the externals folder
+            vsrepo_path = self.context.ROOT + os.path.sep + "externals" + os.path.sep + "vsrepo"
+
             if not os.path.exists(vsrepo_path):
 
                 self.utils.log(color, debug_prefix, "vsrepo not found in [\"%s\"], cloning it" % vsrepo_path)

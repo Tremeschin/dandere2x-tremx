@@ -37,7 +37,7 @@ color = rgb(30, 200, 60)
 class FFmpegWrapper():
     def __init__(self, context, utils, controller):
 
-        debug_prefix = "[Video.FFmpegWrapper]"
+        debug_prefix = "[FFmpegWrapper.__init__]"
 
         self.context = context
         self.utils = utils
@@ -58,7 +58,7 @@ class FFmpegWrapper():
         
         # ffmpeg -i input.mkv -map 0:v:0 -c copy -f null -
 
-        debug_prefix = "[Video.get_frame_count_with_null_copy]"
+        debug_prefix = "[FFmpegWrapper.get_frame_count_with_null_copy]"
 
         self.utils.log(color, debug_prefix, "[WARNING] CHECKING VIDEO FRAME COUNT SAFE WAY, MAY TAKE A WHILE DEPENDING ON CPU AND VIDEO LENGTH")
 
@@ -108,7 +108,7 @@ class FFmpegWrapper():
 
         # ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=nw=1 input.mp4
 
-        debug_prefix = "[Video.get_resolution_with_ffprobe]"
+        debug_prefix = "[FFmpegWrapper.get_resolution_with_ffprobe]"
         
         wanted = {
             "width": None,
@@ -159,7 +159,7 @@ class FFmpegWrapper():
 
         # ffprobe -v 0 -of csv=p=0 -select_streams v:0 -show_entries stream=r_frame_rate infile
 
-        debug_prefix = "[Video.get_resolution_with_ffprobe]"
+        debug_prefix = "[FFmpegWrapper.get_resolution_with_ffprobe]"
 
         command = [self.ffprobe_binary, "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", video_file]
 
@@ -182,7 +182,7 @@ class FFmpegWrapper():
 
     def get_video_info(self, video_file):
 
-        debug_prefix = "[Video.get_video_info]"
+        debug_prefix = "[FFmpegWrapper.get_video_info]"
 
         video_info = {
             "frame_count": None,
@@ -217,17 +217,31 @@ class FFmpegWrapper():
             video_info["frame_rate"] = self.get_frame_rate_with_ffprobe(video_file)
 
 
-        self.frame_count = video_info["frame_count"]
-        self.frame_rate = video_info["frame_rate"]
-
-        # Resolution
-        self.width = video_info["width"]
-        self.height = video_info["height"]
-
         return video_info
 
 
     # # # # # # # # # # # # END SESSION DEDICATED TO GETTING VIDEO INFO # # # # # # # # # # # #
+
+
+    # # # # # # # # # # # # # # # SESSION DEDICATED TO VIDEO UTILS # # # # # # # # # # # # # # #
+
+
+    def extract_video_audio(self, video_file, output):
+        pass
+    
+    # This maps video A video and video B audio to a target video+audio
+    def copy_videoA_audioB_to_other_videoC(self, get_video, get_audio, target):
+        
+        # ffmpeg -loglevel panic -i input_0.mp4 -i input_1.mp4 -c copy -map 0:0 -map 1:1 -shortest out.mp4
+
+        debug_prefix = "[FFmpegWrapper.copy_video_audio_to_other_video]"
+        
+        command = "\"%s\" -loglevel panic -i \"%s\" -i \"%s\" -c copy -map 0:0 -map 1:1 -shortest \"%s\"" % \
+            (self.ffmpeg_binary, get_video, get_audio, target)
+
+        self.utils.log(color, debug_prefix, "Command to map video [A video] and video [B audio] to a [Target V+A]: [%s]" % command)
+
+        os.system(command)
 
 
 
@@ -254,7 +268,7 @@ class Video():
         self.utils.log(color, debug_prefix, "Init")
     
 
-
+    # TODO: Should be moved into its own class?
     def get_video_info_with_mediainfo(self, video_path):
 
         debug_prefix = "[Video.get_video_info_with_mediainfo]"

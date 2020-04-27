@@ -1,3 +1,14 @@
-packages:
 
-mediainfo
+Install these packages from your distro package manager and 
+make sure they're acessible within the shell (ie. they're in the PATH)
+
+Packages:
+    mediainfo
+    ffmpeg
+
+
+If you want to use VapourSynth make sure you have the modules
+installed and [INPUT] as the input videos in your script
+(which if you're using that you might know how to do that)
+
+

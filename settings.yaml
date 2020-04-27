@@ -23,8 +23,8 @@ session_name: "auto"
 waifu2x_type: "vulkan"
 
 basic:
-  input_file: "demo.mkv"
-  output_file: "asidjasio"
+  input_file: "samples/demo.mkv"
+  output_file: "samples/demo2x.mkv"
 
 waifu2x:
   denoise_level: 3

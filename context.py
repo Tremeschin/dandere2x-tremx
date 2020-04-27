@@ -114,7 +114,7 @@ class Context():
         # Create default variables
         self.resolution = []
         self.valid_resolution = []
-        self.fps = None
+        self.frame_rate = None
         self.frame_count = None
         self.frame_rate = None
 
@@ -152,17 +152,18 @@ class Context():
     
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
-            "session": "sessions|SESSION",
             "residual": "sessions|SESSION|residual",
             "upscaled": "sessions|SESSION|upscaled",
-            "iframes": "sessions|SESSION|iframes"
+            "iframes": "sessions|SESSION|iframes",
+            "session": "sessions|SESSION"
         }
 
         # If we happen to need some static files
         files = {
             "d2x_cpp_out": "sessions|SESSION|plugins_input.d2x",
             "context_vars": "sessions|SESSION|context_vars.yaml", # So Python / CPP can load these vars we set here on resume session
-            "temp_vpy_script": "sessions|SESSION|temp_vpy_script.vpy"
+            "temp_vpy_script": "sessions|SESSION|temp_vpy_script.vpy",
+            "original_audio_file": "sessions|SESSION|original_audio.aac"
         }
 
         # # # We declare these as none just for annoying errors on this dynamic variable setting
@@ -176,10 +177,11 @@ class Context():
         self.plain_files = []
         
 
-        # This is a really neat way of micromanaging lots of self vars, we basically
+        # This is a really neat* way of micromanaging lots of self vars, we basically
         # set the self.$name$ with setattr, not much else is happening here other than
         # replacing SESSION with self.session_name and | with os.path.sep and
         # enumarating both dictionaries to save double the lines of code for dirs and files
+        # *and weird?
 
         dir_and_file = [("dirs", dirs), ("files", files)]
 
@@ -246,7 +248,7 @@ class Context():
         wanted = [
             "residual", "ROOT", "resume", "os", "input_file", "output_file",
             "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
-            "valid_resolution", "fps", "frame_count", "frame_rate", "session",
+            "valid_resolution", "frame_rate", "frame_count", "frame_rate", "session",
             "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
             "plain_files", "denoise_level", "tile_size", "last_processing_frame",
             "get_frame_count_method", "get_frame_rate_method"

@@ -34,15 +34,17 @@ import yaml
 import time
 import os
 
-
 try:
     import hashlib
     use_hashlib = True
 except ModuleNotFoundError:
     use_hashlib = False
 
+
+
 exitcolor = rgb(84, 209, 255)
 color = color_by_name("li_blue")
+
 
 
 class Utils():
@@ -58,7 +60,6 @@ class Utils():
         debug_prefix = "[Utils.exit]"
 
         self.log(exitcolor, debug_prefix, "Exiting...")
-
         self.log(exitcolor, debug_prefix, "Saving Context vars")
 
         self.context.save_vars()
@@ -77,25 +78,30 @@ class Utils():
         
         exit()
 
+
     
     # On where the session name is set to "auto"
     def get_auto_session_name(self, input_file):
 
         debug_prefix = "[Utils.get_auto_session_name]"
         
-        session_name = ''.join(input_file.split(".")[:-1])
+        session_name = ''.join(input_file.split(".")[:-1]).split("/")[-1]
 
         self.log(color, debug_prefix, "Session name is AUTO, setting it to: [%s]" % session_name)
 
         return session_name
 
 
+
     # As utils and context, controller are two separate classes
     def set_context(self, context):
         self.context = context
 
+
+
     def set_controller(self, controller):
         self.controller = controller
+
 
 
     # Get this file "absolute" path for relative reference
@@ -103,10 +109,12 @@ class Utils():
         return os.path.dirname(os.path.abspath(__file__))
 
 
+
     # Get line number which this function is called, debugging
     def get_linenumber(self):
         return currentframe().f_back.f_lineno
     
+
 
     # Make directory if it does not exist
     def mkdir_dne(self, directory):
@@ -118,6 +126,7 @@ class Utils():
             os.makedirs(directory)
         else:
             self.log(color, debug_prefix, "Directory already exists: [%s]" % directory)
+
 
 
     # Reset file (write empty) or create it
@@ -134,6 +143,7 @@ class Utils():
             f.write("")
 
 
+
     # Delete the file if it exists
     def delete_file(self, filename):
 
@@ -146,16 +156,19 @@ class Utils():
             self.log(color, debug_prefix, "File does NOT exist")
 
 
+
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
     def check_dirs(self):
         for directory in self.context.plain_dirs:
             self.mkdir_dne(directory)
 
 
+
     # Wrapper for self.reset_file, resets the plain files from context
     def reset_files(self):
         for item in self.context.plain_files:
             self.reset_file(item)
+
 
     
     # Deletes an directory, fail safe? Quits if 
@@ -184,6 +197,7 @@ class Utils():
             self.log(color, debug_prefix, "Directory exists, skipping... [%s]" % directory)
 
 
+
     # Debugging, show context static files
     def show_static_files(self):
 
@@ -191,6 +205,7 @@ class Utils():
 
         for item in self.context.plain_files:
             self.log(color, debug_prefix, "Static file: [%s]" % item)
+
 
 
     # Get operating system
@@ -206,19 +221,24 @@ class Utils():
         return os_name
 
 
+
     # Return OS environment var like XDG_SESSION_TYPE or PATH
     def env_var(self, var):
         return os.environ[var]
+
 
 
     # Get the output of a command with os module
     def command_output(self, command):
         return os.popen(command).read()
 
+
+
     # Get the output of a command with subprocess module
     def command_output_subprocess(self, command):
         return subprocess.check_output(command, stderr=subprocess.STDOUT).decode("utf-8")
         
+
 
     # Wipe out logs.log file and set a self.logfile
     def clean_set_log(self):
@@ -239,6 +259,7 @@ class Utils():
             f.write("")
 
         self.log(color, debug_prefix, "Reseted log file")
+
 
 
     def log(self, color, *message):
@@ -264,6 +285,7 @@ class Utils():
             f.write(processed_message + "\n")
 
 
+
     # Safely load yaml file, just for cleaness of code
     def load_yaml(self, filename):
 
@@ -276,6 +298,7 @@ class Utils():
         return data
 
 
+
     # Save data to filename in yaml syntax
     def save_yaml(self, data, filename):
 
@@ -285,6 +308,7 @@ class Utils():
 
         with open(filename, "w") as f:
             yaml.dump(data, f)
+
 
 
     # This "follows" updating files, yields the new stuff written
@@ -299,6 +323,7 @@ class Utils():
                 continue
             yield line
             
+
 
     # Check if context_vars file exist and returns the "resume" key value
     def check_resume(self):
@@ -326,6 +351,7 @@ class Utils():
             self.log(color, debug_prefix, "Session vars file does not exist")
             return False
 
+
     
     # Waits until file exist or controller stop var is True
     def until_exist(self, path):
@@ -349,6 +375,7 @@ class Utils():
             time.sleep(self.context.wait_time)
 
 
+
     # Rename file or directory
     def rename(self, old, new):
 
@@ -358,6 +385,7 @@ class Utils():
             self.log(color, debug_prefix, "Renaming [%s] --> [%s]" % (old, new))
 
         os.rename(old, new)
+
 
 
     # Utility for string.replace(old, new) that substitutes with a dictionary
@@ -384,6 +412,7 @@ class Utils():
         return replaced
 
 
+
     # Get the md5 hash of a string or a pseudo-random number, just for unique identifying things in the future?
     def md5(self, string):
         if use_hashlib:
@@ -392,9 +421,12 @@ class Utils():
             a = 10e20
             return random.randint(a, 9*a)
 
+
+
     # f("abc def ggf", 3) -> "ggf"  
     def get_nth_word(self, string, N):
         return string.split(' ')[N-1]
+
 
 
     def get_binary(self, wanted):
@@ -427,14 +459,55 @@ class Utils():
             return out
 
 
+
         # Search for "ROOT/externals/$wanted$.exe"
         elif self.context.os == "windows":
+
+            # As our searches should be OS independent we only "ask" for the file name
+            executable = wanted + ".exe"
+
+            self.log(color, debug_prefix, "Searching [%s] in ROOT/externals/*" % executable)
+
+            full_path_executable = None
             
-            executable = self.context.ROOT + os.path.sep + "externals" + os.path.sep + wanted + ".exe"
+
+            # Iterate into externals file tree
+            for root, dirs, files in os.walk(self.context.ROOT + os.path.sep + "externals"):
+                
+                # Exit loop as the file was found as we're inside two loops
+                if not full_path_executable == None:
+                    break
+                
+                # For every file in a folder
+                for f in files:
+
+                    # Hard debug
+                    if self.context.loglevel >= 5:
+                        self.log(color, debug_prefix, "Scanning [%s] == [%s]" % (executable, f))
+                    
+                    # If executable matches some file name we're looping
+                    if executable in f.lower():
+
+                        # Get the full path by joining the root search and the target executable
+                        full_path_executable = os.path.join(root, executable)
+
+                        self.log(rgb(0, 255, 0), debug_prefix, "Got executable, full path: [%s]" % full_path_executable)
+                        
+                        # Exit "for every file in a folder" loop
+                        break
             
-            if os.path.exists(executable):
-                self.log(color, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (wanted, executable))
-            else:
+
+            # Nothing was found, exit
+            if full_path_executable == None:
                 self.log(color, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, executable))
                 self.exit()
+            
+
+            # This will yield false on Linux if forcing windows mode for debugging
+            # because Windows is case insensitive and Linux case sensitive
+            if os.path.exists(full_path_executable):
+                self.log(color, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (executable, full_path_executable))
+                return full_path_executable
+
+            
 

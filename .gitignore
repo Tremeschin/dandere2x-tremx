@@ -4,13 +4,20 @@
 *.log
 *.jpg
 *.png
-sessions/*
-test.py
-frames/*
 *.code-workspace
-prototype.py
-vsrepo
+
 .vscode
+
+sessions/*
+frames/*
+externals/*
+
+test.py
+prototype.py
+
+vsrepo
+samples
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

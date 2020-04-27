@@ -201,6 +201,19 @@ class Dandere2x():
     # Here's the core logic for Dandere2x, good luck other files
     def run(self):
         
+        self.video.ffmpeg.copy_videoA_audioB_to_other_videoC(
+            "/home/tremeschin/github/clone/dandere2x-new/samples/demo.mkv",
+            "/home/tremeschin/github/clone/dandere2x-new/samples/away.mkv",
+            "/home/tremeschin/github/clone/dandere2x-new/samples/target.mkv"
+        )
+
+        exit()
+        '''
+        self.context.os = "windows"
+        self.utils.get_binary("mediainfo")
+        exit()
+        '''
+        
         debug_prefix = "[Dandere2x.run]"
 
         self.utils.log(phasescolor, "# # [Run phase] # #")
