@@ -40,6 +40,14 @@ class Context():
 
     def __init__(self, utils):
 
+
+        # # # Developer constants
+
+        # Default zero padding level for saving files
+        self.zero_padding = 6
+
+        # # #
+
         self.indentation = "··· |"
         debug_prefix = "[Context.__init__]"
 
@@ -83,8 +91,12 @@ class Context():
         self.input_file = self.yaml["basic"]["input_file"]
         self.output_file = self.yaml["basic"]["output_file"]
 
+        self.input_filename = self.utils.get_basename(self.input_file)
+        self.output_filename = self.utils.get_basename(self.output_file)
+
 
         # Load processing variables
+        self.extracted_images_extension = self.yaml["processing"]["extracted_images_extension"]
         self.block_size = self.yaml["processing"]["block_size"]
         self.bleed = self.yaml["processing"]["bleed"]
 
@@ -92,6 +104,7 @@ class Context():
         # "Global" or non-indented options as they're "major"
         self.session_name = self.yaml["session_name"]
         self.waifu2x_type = self.yaml["waifu2x_type"]
+        self.mindisk = self.yaml["mindisk"]
 
 
         # Vapoursynth settings
@@ -121,7 +134,9 @@ class Context():
 
 
         # Video related variables
-        self.use_mediainfo = self.yaml["video"]["use_mediainfo"]
+        self.apply_pre_noise = self.yaml["video"]["apply_pre_noise"]
+        self.frame_extractor_method = self.yaml["video"]["frame_extractor_method"]
+        self.get_video_info_method = self.yaml["video"]["get_video_info_method"]
 
 
         # FFmpeg / FFprobe related
@@ -138,7 +153,7 @@ class Context():
 
         # Resume options, TODO
         self.resume = False
-        self.last_processing_frame = None
+        self.last_processing_frame = 0
 
 
         ## Debug stuff
@@ -155,21 +170,34 @@ class Context():
             "residual": "sessions|SESSION|residual",
             "upscaled": "sessions|SESSION|upscaled",
             "iframes": "sessions|SESSION|iframes",
+            "processing": "sessions|SESSION|processing",
             "session": "sessions|SESSION"
         }
 
         # If we happen to need some static files
         files = {
             "d2x_cpp_out": "sessions|SESSION|plugins_input.d2x",
-            "context_vars": "sessions|SESSION|context_vars.yaml", # So Python / CPP can load these vars we set here on resume session
+            "context_vars": "sessions|SESSION|context_vars.yaml", # So Python / (CPP?) can load these vars we set here on resume session
             "temp_vpy_script": "sessions|SESSION|temp_vpy_script.vpy",
-            "original_audio_file": "sessions|SESSION|original_audio.aac"
+            "original_audio_file": "sessions|SESSION|processing|original_audio.aac",
+            "noisy_video": "sessions|SESSION|processing|noisy_INPUTVIDEOFILENAME",
+            "vapoursynth_processing": "sessions|SESSION|processing|vapoursynth_INPUTVIDEOFILENAME",
+            "logfile": "sessions|SESSION|log.log"
         }
 
-        # # # We declare these as none just for annoying errors on this dynamic variable setting
-
-        self.session = self.residual = self.upscaled = self.iframes = self.d2x_cpp_out \
-            = self.context_vars = self.temp_vpy_script = None
+        # # # We declare these as none just for annoying errors on this dynamic variable setting and autocompleting
+        
+        self.residual = None
+        self.upscaled = None
+        self.iframes = None
+        self.session = None
+        
+        self.d2x_cpp_out = None
+        self.context_vars = None
+        self.temp_vpy_script = None
+        self.noisy_video = None
+        self.vapoursynth_processing = None
+        self.logfile = None
 
         # # #
 
@@ -207,8 +235,9 @@ class Context():
                 # seeing the dictionary in the next line:
                 
                 replace = {
-                    '|': os.path.sep,
-                    'SESSION': self.session_name
+                    "|": os.path.sep,
+                    "SESSION": self.session_name,
+                    "INPUTVIDEOFILENAME": self.input_filename
                 }
 
                 subname = dic[category] # The "path" itself, with the "|" and "SESSION"

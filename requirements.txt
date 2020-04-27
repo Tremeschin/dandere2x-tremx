@@ -4,3 +4,4 @@ scipy
 imageio
 playsound
 gitpython
+opencv-python

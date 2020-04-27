@@ -28,6 +28,7 @@ from color import rgb, color_by_name
 
 import subprocess
 import threading
+import cv2
 import os
 
 
@@ -226,22 +227,200 @@ class FFmpegWrapper():
     # # # # # # # # # # # # # # # SESSION DEDICATED TO VIDEO UTILS # # # # # # # # # # # # # # #
 
 
-    def extract_video_audio(self, video_file, output):
-        pass
+
+    # Extracts raw video audio into a file, copy the original stream is what it is
+    def extract_raw_video_audio(self, video_file, target_output):
+
+        # ffmpeg -i input.mkv -vn -acodec copy audio.aac
+
+        debug_prefix = "[FFmpegWrapper.extract_video_audio]"
+        
+        command = [self.ffmpeg_binary, "-i", video_file, "-vn", "-acodec", "copy", target_output]
+
+        #command = "\"%s\" -i \"%s\" -vn -acodec copy \"%s\"" % (self.ffmpeg_binary, video_file, target_output)
+
+        self.utils.log(color, debug_prefix, "Extracting video audio [%s] to [%s]" % (video_file, target_output))
+        self.utils.log(color, debug_prefix, "Command do do that: [%s]" % command)
+
+        self.utils.run_subprocess(command)
+
+
     
     # This maps video A video and video B audio to a target video+audio
-    def copy_videoA_audioB_to_other_videoC(self, get_video, get_audio, target):
+    def copy_videoA_audioB_to_other_videoC(self, get_video, get_audio, target_output):
         
         # ffmpeg -loglevel panic -i input_0.mp4 -i input_1.mp4 -c copy -map 0:0 -map 1:1 -shortest out.mp4
 
         debug_prefix = "[FFmpegWrapper.copy_video_audio_to_other_video]"
         
-        command = "\"%s\" -loglevel panic -i \"%s\" -i \"%s\" -c copy -map 0:0 -map 1:1 -shortest \"%s\"" % \
-            (self.ffmpeg_binary, get_video, get_audio, target)
+        command = [self.ffmpeg_binary, "-loglevel", "panic", "-i", get_video,
+                  "-i", get_audio, "-c", "copy", "-map", "0:0", "-map", "1:1",
+                  "-shortest", target_output]
 
-        self.utils.log(color, debug_prefix, "Command to map video [A video] and video [B audio] to a [Target V+A]: [%s]" % command)
+        #command = "\"%s\" -loglevel panic -i \"%s\" -i \"%s\" -c copy -map 0:0 -map 1:1 -shortest \"%s\"" % (self.ffmpeg_binary, get_video, get_audio, target_output)
 
-        os.system(command)
+        self.utils.log(color, debug_prefix, "Map video [A video] and video [B audio] to a [Target C = V+A]: Video From: [%s] / Audio From: [%s] / Target to: [%s]" % (get_video, get_audio, target_output))
+        self.utils.log(color, debug_prefix, "Command do do that: %s" % command)
+
+        self.utils.run_subprocess(command)
+
+
+
+    def apply_noise(self, input_video, output_noisey, noise):
+        
+        # ffmpeg -i input noise=c1s=8:c0f=u
+
+        debug_prefix = "[FFmpegWrapper.apply_noise]"
+
+        command = [self.ffmpeg_binary, "-loglevel", "warning", "-stats", "-y", "-i", input_video] + noise.split(" ") + [output_noisey]
+        
+        #command = "\"%s\" -y -i \"%s\" %s \"%s\"" % (self.ffmpeg_binary, input_video, noise, output_noisey)
+
+        self.utils.log(color, debug_prefix, "Apply noise [%s] to [%s] and save [%s]" % (noise, input_video, output_noisey))
+        self.utils.log(color, debug_prefix, "Command do do that: %s" % command)
+
+        self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] MAY TAKE A WHILE DEPENDING ON CPU / VIDEO LENGHT / VIDEO RESOLUTION")
+
+        self.utils.run_subprocess(command)
+
+
+
+
+
+
+
+
+
+
+class VideoFrameExtractor():
+    def __init__(self, context, utils, controller):
+
+        debug_prefix = "[VideoFrameExtractor.__init__]"
+
+        self.context = context
+        self.utils = utils
+        self.controller = controller
+
+        if self.context.frame_extractor_method == "cv2":
+            self.utils.log(color, debug_prefix, "Method is CV2")
+            self.extract = VideoFrameExtractorCV2(self.context, self.utils, self.controller)
+
+        elif self.context.frame_extractor_method == "ffmpeg":
+            self.utils.log(color, debug_prefix, "Method is FFmpeg")
+            self.extract = VideoFrameExtractorFFMPEG(self.context, self.utils, self.controller)
+
+
+    # Do the setup required to extract the video frames, mostly useful for CV2 method
+    def setup_video_input(self, video_file):
+        self.extract.setup_video_input(video_file)
+
+    # Seek to that frame, mostly used on CV2
+    def set_current_frame(self, frame_number):
+        self.extract.set_current_frame(frame_number)
+
+    # Extract the next frame on CV2, FFmpeg [TODO]
+    def next_frame(self, save_location):
+        self.extract.next_frame(save_location)
+
+
+
+
+
+
+
+class VideoFrameExtractorCV2():
+    def __init__(self, context, utils, controller):
+
+        debug_prefix = "[VideoFrameExtractorCV2.__init__]"
+
+        self.context = context
+        self.utils = utils
+        self.controller = controller
+
+        self.cap = None
+
+        
+    # Do the setup required to extract the video frames, mostly useful for this class
+    def setup_video_input(self, video_file):
+
+        debug_prefix = "[VideoFrameExtractorCV2.setup_video_input]"
+
+        self.cap = cv2.VideoCapture(video_file)
+
+        if self.cap.isOpened() == False:
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] Couldn't open video capture")
+            self.utils.exit()
+
+        if self.context.extracted_images_extension == ".png":
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] PNG SET TO EXTRACTED IMAGES WITH OPENCV, IT'S ABOUT 4X SLOWER THAN JPG") 
+
+
+
+    # Seek to that frame_number
+    def set_current_frame(self, frame_number):
+
+        debug_prefix = "[VideoFrameExtractorCV2.set_current_frame]"
+
+        self.utils.log(color, debug_prefix, "Setting current frame to [%s]" % frame_number)
+
+        self.cap.set(1, frame_number)
+
+
+
+    # Extract the next frame
+    def next_frame(self, save_location):
+
+        debug_prefix = "[VideoFrameExtractorCV2.next_frame]"
+
+        # Cap not set
+        if self.cap == None:
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] No video cap set")
+            self.utils.exit()
+
+        # Hard debug
+        if self.context.loglevel >= 4:
+            self.utils.log(color, debug_prefix, "Asking new frame, N=[%s], saving to [%s]" % (self.context.last_processing_frame, save_location))
+
+        # Actually get the frame
+        sucess, frame = self.cap.read()
+
+
+        if sucess == False:
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] Cannot read more frames or out of frames??")
+
+        else:
+            if self.context.extracted_images_extension == ".png":
+                cv2.imwrite(save_location, frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+            
+            if self.context.extracted_images_extension == ".jpg":
+                cv2.imwrite(save_location, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+
+            self.context.last_processing_frame += 1
+
+    
+
+
+
+
+
+
+class VideoFrameExtractorFFMPEG():
+    def __init__(self, context, utils, controller):
+
+        debug_prefix = "[VideoFrameExtractorFFMPEG.__init__]"
+
+        self.context = context
+        self.utils = utils
+        self.controller = controller
+
+    def setup_video_input(self, video_file):
+        pass
+
+
+
+
+
+
 
 
 
@@ -264,6 +443,7 @@ class Video():
         self.ROOT = self.context.ROOT
 
         self.ffmpeg = FFmpegWrapper(self.context, self.utils, self.controller)
+        self.frame_extractor = VideoFrameExtractor(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Init")
     
@@ -340,10 +520,15 @@ class Video():
 
         # Get the video info
 
-        if self.context.use_mediainfo:
+        if self.context.get_video_info_method == "mediainfo":
             self.get_video_info_with_mediainfo(video_path)
-        else:
+
+        elif self.context.get_video_info_method == "ffmpeg":
             self.get_video_info_with_ffmpeg(video_path)
+        
+        else:
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] NO VALID get_video_info_method SET: [%s]" % self.context.get_video_info_method)
+            self.utils.exit()
 
 
         # # Save info to context
@@ -372,4 +557,7 @@ class Video():
         self.utils.log(color, self.context.indentation, "Frame count: [%s]" % self.frame_count)
         self.utils.log(color, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)
 
-        
+
+
+    def apply_noise(self, input_video, output_noisey, noise):
+        self.ffmpeg.apply_noise(input_video, output_noisey, noise)

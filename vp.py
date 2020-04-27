@@ -97,6 +97,9 @@ class VapourSynthWrapper():
             with open(self.context.temp_vpy_script, "w") as temp:
                 temp.write(sc.read().replace("[INPUT]", input_video))
         
+        # Couldn't get it working with subprocess...?
+        # command = [self.vspipe_bin, "--y4m", self.context.temp_vpy_script, "-", "|", self.x264_bin, "--demuxer", "y4m", "-", "-o", output_video]
+
         command = "\"%s\" --y4m \"%s\" - | \"%s\" --demuxer y4m - -o \"%s\"" % \
                     (self.vspipe_bin, self.context.temp_vpy_script, self.x264_bin, output_video)
 

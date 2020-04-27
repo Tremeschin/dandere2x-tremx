@@ -2,9 +2,10 @@
 Install these packages from your distro package manager and 
 make sure they're acessible within the shell (ie. they're in the PATH)
 
-Packages:
+Packages (on pacman based distros):
     mediainfo
     ffmpeg
+    opencv2
 
 
 If you want to use VapourSynth make sure you have the modules

@@ -21,17 +21,20 @@
 
 session_name: "auto"
 waifu2x_type: "vulkan"
+mindisk: false
 
 basic:
-  input_file: "samples/demo.mkv"
-  output_file: "samples/demo2x.mkv"
+  input_file: "samples/yn_moving.mkv"
+  output_file: "samples/yn_moving_2x.mkv"
 
 waifu2x:
   denoise_level: 3
   tile_size: 200
 
 video:
-  use_mediainfo: false # defaults to FFmpeg / FFprobe if false
+  apply_pre_noise: false
+  get_video_info_method: "ffmpeg" # defaults to FFmpeg / FFprobe if false
+  frame_extractor_method: "cv2" 
 
 ffmpeg:
   # These functions are overrided if use_mediainfo is true
@@ -41,6 +44,7 @@ ffmpeg:
   #
 
 processing:
+  extracted_images_extension: ".jpg"
   block_size: "auto"
   bleed: 2
 

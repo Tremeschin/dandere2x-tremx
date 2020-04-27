@@ -1,7 +1,7 @@
 """
 ===============================================================================
 
-Purpose: Set of utilities for Dandere2x, miscellaneous functions, algo logging
+Purpose: Set of utilities for Dandere2x, miscellaneous functions, also logging
 
 ===============================================================================
 
@@ -49,6 +49,7 @@ color = color_by_name("li_blue")
 
 class Utils():
 
+    # Init the log file
     def __init__(self):
         self.ROOT = self.get_root()
         self.clean_set_log()
@@ -69,7 +70,7 @@ class Utils():
 
         self.log(exitcolor, debug_prefix, "Joining every thread")
         
-        for threadname in self.context.threads:
+        for threadname in self.controller.threads:
             self.log(exitcolor, debug_prefix, "Joining thread: [%s]" % threadname)
             self.context.threads[threadname].join()
             self.log(exitcolor, debug_prefix, "Joined thread: [%s]" % threadname)
@@ -97,8 +98,6 @@ class Utils():
     def set_context(self, context):
         self.context = context
 
-
-
     def set_controller(self, controller):
         self.controller = controller
 
@@ -114,6 +113,14 @@ class Utils():
     def get_linenumber(self):
         return currentframe().f_back.f_lineno
     
+
+    # Transform eg. zero_padded(23, 5) -> 00023
+    def zero_padded(self, number, digits):
+        return str(number).zfill(digits)
+
+    # Returns with default value of zero padding total digits
+    def pad_zeros(self, number):
+        return self.zero_padded(number, self.context.zero_padding)
 
 
     # Make directory if it does not exist
@@ -155,6 +162,17 @@ class Utils():
         else:
             self.log(color, debug_prefix, "File does NOT exist")
 
+
+    # /some/dir/file.ext -> "file.ext"
+    def get_basename(self, path):
+
+        debug_prefix = "[Utils.get_basename]"
+
+        basename = os.path.basename(path)
+
+        self.log(color, debug_prefix, "Getting basename of [%s] = [%s]" % (path, basename))
+
+        return basename
 
 
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
@@ -227,17 +245,25 @@ class Utils():
         return os.environ[var]
 
 
+    # Simply run a subprocess
+    def run_subprocess(self, command):
+        subprocess.run(command)
+
 
     # Get the output of a command with os module
     def command_output(self, command):
         return os.popen(command).read()
 
 
-
-    # Get the output of a command with subprocess module
+    # Get the output of a command with subprocess module with check_output
     def command_output_subprocess(self, command):
         return subprocess.check_output(command, stderr=subprocess.STDOUT).decode("utf-8")
         
+
+    # "Pipe" subprocess stdout to python
+    def command_output_subprocess_with_stdout(self, command):
+        out = subprocess.run(command, capture_output=True).stdout
+        return out.decode("utf-8")
 
 
     # Wipe out logs.log file and set a self.logfile
@@ -245,9 +271,8 @@ class Utils():
 
         debug_prefix = "[Utils.clean_set_log]"
 
-        logfilename = "logs.log"
-
-        self.logfile = self.ROOT + os.path.sep + logfilename
+        # The default position of the logfile, we move it in a bit when we create Context
+        self.logfile = self.ROOT + os.path.sep + "logs.log"
 
         if os.path.isfile(self.logfile):
             print(color + debug_prefix, "Log file exists, deleting it: [%s]" % self.logfile, fg.rs)
@@ -259,7 +284,31 @@ class Utils():
             f.write("")
 
         self.log(color, debug_prefix, "Reseted log file")
+    
 
+    # Move file with shutil
+    def move(self, source, destination):
+
+        debug_prefix = "[Utils.move]"
+
+        self.log(color, debug_prefix, "Moving file [%s] to [%s]" % (source, destination))
+
+        shutil.move(source, destination)
+
+
+    # Set new path to logfile and move the old one TODO can be problematic?
+    def move_log_file(self, new_logfile):
+
+        debug_prefix = "[Utils.move_log_file]"
+
+        self.log(color, debug_prefix, "Moving log file from [%s] to [%s]" % (self.logfile, new_logfile))
+
+        self.move(self.logfile, new_logfile)
+
+        self.logfile = new_logfile
+
+        self.log(color, debug_prefix, "Setted logfile to [%s]" % new_logfile)
+        
 
 
     def log(self, color, *message):
@@ -423,7 +472,7 @@ class Utils():
 
 
 
-    # f("abc def ggf", 3) -> "ggf"  
+    # f("abc def ggf", 3) -> "ggf"
     def get_nth_word(self, string, N):
         return string.split(' ')[N-1]
 
@@ -466,13 +515,14 @@ class Utils():
             # As our searches should be OS independent we only "ask" for the file name
             executable = wanted + ".exe"
 
-            self.log(color, debug_prefix, "Searching [%s] in ROOT/externals/*" % executable)
+            self.log(color, debug_prefix, "Searching [%s] in ./externals/*" % executable)
 
             full_path_executable = None
             
 
             # Iterate into externals file tree
-            for root, dirs, files in os.walk(self.context.ROOT + os.path.sep + "externals"):
+            # for root, dirs, files (annoying warning messages and "_" is ignore as we don't use dirs)
+            for root, _, files in os.walk(self.context.ROOT + os.path.sep + "externals"):
                 
                 # Exit loop as the file was found as we're inside two loops
                 if not full_path_executable == None:
@@ -483,7 +533,7 @@ class Utils():
 
                     # Hard debug
                     if self.context.loglevel >= 5:
-                        self.log(color, debug_prefix, "Scanning [%s] == [%s]" % (executable, f))
+                        self.log(color, debug_prefix, "[DEBUG] Scanning [%s] == [%s]" % (executable, f))
                     
                     # If executable matches some file name we're looping
                     if executable in f.lower():

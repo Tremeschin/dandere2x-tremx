@@ -367,7 +367,7 @@ class Frame():
         out_image = np.zeros([x, y, 3], dtype=np.uint8)
         self.copy_from(self.frame, out_image, (0, 0), (bleed, bleed), (shape[0] + bleed - 1, shape[1] + bleed - 1))
 
-        im_out = Frame()
+        im_out = Frame(self.context, self.utils, self.controller)
         im_out.frame = out_image
         im_out.width = out_image.shape[1]
         im_out.height = out_image.shape[0]
