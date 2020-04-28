@@ -53,8 +53,9 @@ class CoreLoop():
             self.utils.log(color, debug_prefix, "Parsing whole cpp output as IS resume session")
             self.parse_whole_cpp_out()
 
-        self.utils.log(color, debug_prefix, "Threading CoreLoop.pipe_plugins")
+
         self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
+        self.utils.log(color, debug_prefix, "Created thread CoreLoop.pipe_plugins")
         
         
         # For debugging purposes
@@ -65,6 +66,8 @@ class CoreLoop():
                 target=self.waifu2x.keep_upscaling,
                 args=(self.context.residual, self.context.upscaled)
             )
+
+            self.utils.log(color, debug_prefix, "Created thread Waifu2x.keep_upscaling")
 
         else:
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")

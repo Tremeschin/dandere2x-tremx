@@ -73,7 +73,7 @@ class Dandere2x():
 
         # Communication between files, depends on runtime
         self.utils.log(color, debug_prefix, "Creating Controller()")
-        self.controller = Controller()
+        self.controller = Controller(self.utils, self.context)
 
 
         # Let Utils access Controller
@@ -168,8 +168,7 @@ class Dandere2x():
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
 
-            # As we're loading it with non-resume code logic
-            self.context.resume = True
+            
 
             # Log and reset session directory
             self.utils.log(color_by_name("li_red"), debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
@@ -210,7 +209,7 @@ class Dandere2x():
             if any([self.context.apply_pre_noise, self.context.use_vapoursynth]):
                 self.utils.log(phasescolor, "# # [Filter phase] # #")
 
-
+            
             # If user chose to do so
             if self.context.apply_pre_noise:
 
@@ -221,6 +220,7 @@ class Dandere2x():
                 self.context.input_file = self.context.noisy_video
 
 
+            
             # Apply pre vapoursynth filter
             if self.context.use_vapoursynth:
 
@@ -233,6 +233,16 @@ class Dandere2x():
 
                 # As we applied pre filter, our input video is now the processed one by vapoursynth
                 self.context.input_file = self.context.vapoursynth_processing
+                
+                # # As something like a transpose can modify the video resolution we get the new info
+
+                # Get video info
+                self.utils.log(color, debug_prefix, "Getting new video info [Vapoursynth can modify resolution]")
+                self.video.get_video_info()
+
+                self.utils.log(color, debug_prefix, "Showing new video info")
+                self.video.show_info()
+
 
                 # If we have already applied pre noise with ffmpeg, delete the old noisy file
                 if self.context.apply_pre_noise:
@@ -258,6 +268,7 @@ class Dandere2x():
     def run(self):
 
         debug_prefix = "[Dandere2x.run]"
+        
 
         # As now we get into the run part of Dandere2x, we don't really want to log
         # within the "global" log on the root folder so we move the logfile to session/log.log
@@ -268,6 +279,8 @@ class Dandere2x():
         self.video.frame_extractor.setup_video_input(self.context.input_file)
         
         self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
+
+        print(self.context.last_processing_frame)
 
         for _ in range(5):
             self.video.frame_extractor.next_frame(
@@ -287,33 +300,19 @@ class Dandere2x():
         #    self.utils.log(color, debug_prefix, i)
         #    time.sleep(1)
 
-        self.controller.exit()
+        
 
         for thread in self.controller.threads:
             self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
             self.controller.threads[thread].join()
 
 
-        self.context.save_vars()
+        
 
 
 
-        self.utils.log(color, debug_prefix, "APPLYING POST FILTER")
 
-
-        # FIXME NOTE HARD DEGUG, STUFF NOT IMPLEMENTED
-        self.context.upscaled_video = self.context.noisy_video
-
-
-        if self.context.use_vapoursynth:
-            self.vapoursynth_wrapper.apply_filter(
-                self.context.vapoursynth_pos,
-                self.context.upscaled_video,
-                self.context.output_file
-            )
-
-
-        exit()
+        
 
 
         '''
@@ -323,6 +322,7 @@ class Dandere2x():
             "/home/tremeschin/github/clone/dandere2x-new/samples/target.mkv"
         )
         '''
+
 
         '''
         self.context.os = "windows"
@@ -350,13 +350,38 @@ class Dandere2x():
         
         
         self.core.start()
+
+
+
      
         # Simulate exiting
-        #self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
+        self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
 
-        #for i in range(3, 0, -1):
-        #    self.utils.log(color, debug_prefix, i)
-        #    time.sleep(1)
+        for i in range(2, 0, -1):
+            self.utils.log(color, debug_prefix, i)
+            time.sleep(1)
+
+        
+
+        self.controller.exit()
+        
+        self.context.save_vars()
+
+        if self.context.use_vapoursynth:
+
+            self.utils.log(color, debug_prefix, "APPLYING POST FILTER")
+            
+
+            # FIXME NOTE HARD DEGUG, STUFF NOT IMPLEMENTED
+            self.context.upscaled_video = self.context.noisy_video
+
+
+            if self.context.use_vapoursynth:
+                self.vapoursynth_wrapper.apply_filter(
+                    self.context.vapoursynth_pos,
+                    self.context.upscaled_video,
+                    self.context.output_file
+                )
 
 
         #self.waifu2x.upscale(self.context.ROOT + "/img.png", self.context.ROOT + "/img2x.png")

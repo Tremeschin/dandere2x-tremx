@@ -22,13 +22,28 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from color import rgb
+
+color = rgb(240, 100, 64)
 
 class Controller():
-    def __init__(self):
+    def __init__(self, utils, context):
+
+        self.utils = utils
+        self.context = context
+
         self.stop = False
         self.cpp_data = {}
         self.threads = {}
 
     def exit(self):
-        print("Controller exit called")
+
+        debug_prefix = "[Controller.exit]"
+
+        self.utils.log(color, debug_prefix, "Controller exit called")
+
+        if not self.context.resume:
+            self.utils.log(color, debug_prefix, "Setting resume=True as we're closing")
+            self.context.resume = True
+
         self.stop = True

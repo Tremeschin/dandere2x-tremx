@@ -183,7 +183,9 @@ class Waifu2xLinuxVulkan():
                     self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
             
             # Do not call it 
-            time.sleep(1)
+            time.sleep(self.context.waifu2x_wait_for_residuals)
+        
+        self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
 
 
 # Waifu2x Linux CPP (converter-cpp) wrapper

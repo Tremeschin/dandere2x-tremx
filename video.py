@@ -551,7 +551,7 @@ class Video():
 
         self.utils.log(color, debug_prefix, "Here's the video info:")
 
-        self.utils.log(color, self.context.indentation, "Filename: [%s]" % self.context.input_file)
+        self.utils.log(color, self.context.indentation, "ABS Path: [%s]" % self.context.input_file)
         self.utils.log(color, self.context.indentation, "Resolution: (%sx%s)" % (self.width, self.height))     
         self.utils.log(color, self.context.indentation, "Frame count: [%s]" % self.frame_count)
         self.utils.log(color, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)

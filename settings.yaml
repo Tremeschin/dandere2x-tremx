@@ -32,7 +32,7 @@ waifu2x:
   tile_size: 200
 
 video:
-  apply_pre_noise: true
+  apply_pre_noise: false
   get_video_info_method: ffmpeg # ffmpeg or mediainfo
   frame_extractor_method: cv2 # only option available right now
 
@@ -47,7 +47,7 @@ processing:
   bleed: 2
 
 vapoursynth:
-  enabled: true
+  enabled: false
 
   # To disable these filters set them to "null" or "none"
   pre: transpose # name of filter within ./vpys/$NAME$, applied BEFORE ffmpeg noise and upscaled

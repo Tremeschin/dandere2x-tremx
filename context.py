@@ -46,7 +46,7 @@ class Context():
         self.utils = utils
 
         # Set the (static) rootfolder substitution for changing paths session folders
-        self.rootfolder_substitution = "<#ROOTFOLDER#>"
+        self.rootfolder_substitution = "//ROOTFOLDER//"
         self.utils.log(color, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
 
         # For absolute-reffering
@@ -181,26 +181,27 @@ class Context():
     
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
-            "residual": "ROOT|sessions|SESSION|residual",
-            "upscaled": "ROOT|sessions|SESSION|upscaled",
-            "iframes": "ROOT|sessions|SESSION|iframes",
-            "processing": "ROOT|sessions|SESSION|processing",
-            "session": "ROOT|sessions|SESSION"
+            "residual": "//ROOT//|sessions|//SESSION//|residual",
+            "upscaled": "//ROOT//|sessions|//SESSION//|upscaled",
+            "iframes": "//ROOT//|sessions|//SESSION//|iframes",
+            "processing": "//ROOT//|sessions|//SESSION//|processing",
+            "session": "//ROOT//|sessions|//SESSION//"
         }
 
-        # If we happen to need some static files
+        # "Static" files location
         files = {
-            "d2x_cpp_out": "ROOT|sessions|SESSION|plugins_input.d2x",
-            "upscaled_video": "ROOT|sessions|SESSION|upscaled_INPUTVIDEOFILENAME",
-            "context_vars": "ROOT|sessions|SESSION|context_vars.yaml", # So Python / (CPP?) can load these vars we set here on resume session
-            "temp_vpy_script": "ROOT|sessions|SESSION|temp_vpy_script.vpy",
-            "original_audio_file": "ROOT|sessions|SESSION|processing|original_audio.aac",
-            "noisy_video": "ROOT|sessions|SESSION|processing|noisy_INPUTVIDEOFILENAME",
-            "vapoursynth_processing": "ROOT|sessions|SESSION|processing|vapoursynth_INPUTVIDEOFILENAME",
-            "logfile": "ROOT|sessions|SESSION|log.log"
+            "d2x_cpp_out": "//ROOT//|sessions|//SESSION//|plugins_input.d2x",
+            "upscaled_video": "//ROOT//|sessions|//SESSION//|upscaled_//INPUTVIDEOFILENAME//",
+            "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
+            "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
+            "original_audio_file": "//ROOT//|sessions|//SESSION//|processing|original_audio.aac",
+            "noisy_video": "//ROOT//|sessions|//SESSION//|processing|noisy_//INPUTVIDEOFILENAME//",
+            "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
+            "logfile": "//ROOT//|sessions|//SESSION//|log.log"
         }
 
-        # # # We declare these as none just for annoying errors on this dynamic variable setting and autocompleting
+        # # # We declare these as none just for annoying errors on this
+        # dynamic variable setting workaround and for autocompleting
         
         self.residual = None
         self.upscaled = None
@@ -250,11 +251,15 @@ class Context():
                 # Replace our syntax with system-specific one, you'll know
                 # seeing the dictionary in the next line:
                 
+                # We use //NAME// because either on Windows or Linux dirs can't have this name
+                # so instead of using a nullbyte or something else for replacing the "dynamic stuff"
+                # se simply use this workaround, note the "|" = os.path.sep MUST BE THE LAST
                 replace = {
-                    "|": os.path.sep,
-                    "SESSION": self.session_name,
-                    "INPUTVIDEOFILENAME": self.input_filename,
-                    "ROOT": self.ROOT
+                    "//SESSION//": self.session_name,
+                    "//INPUTVIDEOFILENAME//": self.input_filename,
+                    "//ROOT//": self.ROOT,
+
+                    "|": os.path.sep, # THIS MUST BE THE LAST
                 }
 
                 subname = dic[category] # The "path" itself, with the "|" and "SESSION"
@@ -263,6 +268,7 @@ class Context():
                     subname = subname.replace(item, replace[item])
 
 
+                # # Pretty logging
 
                 if name == "dirs":
                     self.plain_dirs.append(subname)
@@ -271,6 +277,8 @@ class Context():
                 elif name == "files":
                     self.plain_files.append(subname)
                     printname = "static files"
+
+                # #
 
                 # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
                 setattr(self, category, subname)
@@ -304,6 +312,8 @@ class Context():
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
             "processing"
         ]
+
+
 
         data = {}
 
