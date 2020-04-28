@@ -169,8 +169,10 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
 
+        # If we get a message to stop (ie. finished or panic)
         while not self.controller.stop:
 
+            # See if there is any file to upscale
             if len(os.listdir(input_path)) > 0:
                 self.upscale(input_path, output_path)
 
@@ -180,6 +182,7 @@ class Waifu2xLinuxVulkan():
                 if self.context.loglevel >= 3:
                     self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
             
+            # Do not call it 
             time.sleep(1)
 
 

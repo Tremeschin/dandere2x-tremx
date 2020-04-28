@@ -40,14 +40,6 @@ class Context():
 
     def __init__(self, utils):
 
-
-        # # # Developer constants
-
-        # Default zero padding level for saving files
-        self.zero_padding = 6
-
-        # # #
-
         self.indentation = "··· |"
         debug_prefix = "[Context.__init__]"
 
@@ -69,9 +61,8 @@ class Context():
         self.yaml = self.utils.load_yaml(self.ROOT + os.path.sep + "settings.yaml")
 
 
-        # Global controls, used for stopping d2x's threads
+        # Loglevel
         self.loglevel = self.yaml["developer"]["loglevel"]
-
         
         self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
@@ -88,12 +79,25 @@ class Context():
 
 
         # Load basic variables
+
+
+        # # Video I/O
+
         self.input_file = self.yaml["basic"]["input_file"]
         self.output_file = self.yaml["basic"]["output_file"]
+
+        # If the user did not sent us a absolute path
+        if not os.path.isabs(self.input_file):
+            self.input_file = self.ROOT + os.path.sep + self.input_file
+        
+        if not os.path.isabs(self.output_file):
+            self.output_file = self.ROOT + os.path.sep + self.output_file
 
         self.input_filename = self.utils.get_basename(self.input_file)
         self.output_filename = self.utils.get_basename(self.output_file)
 
+        # #
+        
 
         # Load processing variables
         self.extracted_images_extension = self.yaml["processing"]["extracted_images_extension"]
@@ -149,6 +153,16 @@ class Context():
 
         # How much time in seconds to wait for waiting operations like until_exist()
         self.wait_time = self.yaml["developer"]["wait_time_exists"]
+        self.waifu2x_wait_for_residuals = self.yaml["developer"]["waifu2x_wait_for_residuals"]
+
+
+        # # # Literal constants
+
+        # Default zero padding level for saving files,
+        # we change it based on the frame count as it fullfils our necessity
+        self.zero_padding = 8
+
+        # # # # # # # # # # # # # # # # # # # #
 
 
         # Resume options, TODO
@@ -167,22 +181,23 @@ class Context():
     
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
-            "residual": "sessions|SESSION|residual",
-            "upscaled": "sessions|SESSION|upscaled",
-            "iframes": "sessions|SESSION|iframes",
-            "processing": "sessions|SESSION|processing",
-            "session": "sessions|SESSION"
+            "residual": "ROOT|sessions|SESSION|residual",
+            "upscaled": "ROOT|sessions|SESSION|upscaled",
+            "iframes": "ROOT|sessions|SESSION|iframes",
+            "processing": "ROOT|sessions|SESSION|processing",
+            "session": "ROOT|sessions|SESSION"
         }
 
         # If we happen to need some static files
         files = {
-            "d2x_cpp_out": "sessions|SESSION|plugins_input.d2x",
-            "context_vars": "sessions|SESSION|context_vars.yaml", # So Python / (CPP?) can load these vars we set here on resume session
-            "temp_vpy_script": "sessions|SESSION|temp_vpy_script.vpy",
-            "original_audio_file": "sessions|SESSION|processing|original_audio.aac",
-            "noisy_video": "sessions|SESSION|processing|noisy_INPUTVIDEOFILENAME",
-            "vapoursynth_processing": "sessions|SESSION|processing|vapoursynth_INPUTVIDEOFILENAME",
-            "logfile": "sessions|SESSION|log.log"
+            "d2x_cpp_out": "ROOT|sessions|SESSION|plugins_input.d2x",
+            "upscaled_video": "ROOT|sessions|SESSION|upscaled_INPUTVIDEOFILENAME",
+            "context_vars": "ROOT|sessions|SESSION|context_vars.yaml", # So Python / (CPP?) can load these vars we set here on resume session
+            "temp_vpy_script": "ROOT|sessions|SESSION|temp_vpy_script.vpy",
+            "original_audio_file": "ROOT|sessions|SESSION|processing|original_audio.aac",
+            "noisy_video": "ROOT|sessions|SESSION|processing|noisy_INPUTVIDEOFILENAME",
+            "vapoursynth_processing": "ROOT|sessions|SESSION|processing|vapoursynth_INPUTVIDEOFILENAME",
+            "logfile": "ROOT|sessions|SESSION|log.log"
         }
 
         # # # We declare these as none just for annoying errors on this dynamic variable setting and autocompleting
@@ -193,6 +208,7 @@ class Context():
         self.session = None
         
         self.d2x_cpp_out = None
+        self.upscaled_video = None
         self.context_vars = None
         self.temp_vpy_script = None
         self.noisy_video = None
@@ -237,7 +253,8 @@ class Context():
                 replace = {
                     "|": os.path.sep,
                     "SESSION": self.session_name,
-                    "INPUTVIDEOFILENAME": self.input_filename
+                    "INPUTVIDEOFILENAME": self.input_filename,
+                    "ROOT": self.ROOT
                 }
 
                 subname = dic[category] # The "path" itself, with the "|" and "SESSION"
@@ -246,21 +263,19 @@ class Context():
                     subname = subname.replace(item, replace[item])
 
 
-                # Build the full dir with replaces syntax
-                directory_or_file = self.ROOT + os.path.sep + subname
 
                 if name == "dirs":
-                    self.plain_dirs.append(directory_or_file)
+                    self.plain_dirs.append(subname)
                     printname = "directory"
 
                 elif name == "files":
-                    self.plain_files.append(directory_or_file)
+                    self.plain_files.append(subname)
                     printname = "static files"
 
                 # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
-                setattr(self, category, directory_or_file)
+                setattr(self, category, subname)
 
-                self.utils.log(color, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, directory_or_file))
+                self.utils.log(color, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, subname))
 
 
 
@@ -277,10 +292,17 @@ class Context():
         wanted = [
             "residual", "ROOT", "resume", "os", "input_file", "output_file",
             "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
-            "valid_resolution", "frame_rate", "frame_count", "frame_rate", "session",
+            "valid_resolution", "frame_rate", "frame_count", "session",
             "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
             "plain_files", "denoise_level", "tile_size", "last_processing_frame",
-            "get_frame_count_method", "get_frame_rate_method"
+            "get_frame_count_method", "get_frame_rate_method", "zero_padding",
+            "loglevel", "input_filename", "output_filename", "extracted_images_extension",
+            "mindisk", "use_vapoursynth", "vapoursynth_pre", "vapoursynth_pos",
+            "frame_count", "apply_pre_noise", "frame_extractor_method", 
+            "get_video_info_method", "get_resolution_method", "wait_time",
+            "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
+            "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
+            "processing"
         ]
 
         data = {}

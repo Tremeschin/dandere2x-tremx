@@ -23,7 +23,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 from git import Repo
-from color import rgb, debug_color
+from color import rgb, debug_color, color_by_name
 
 import os
 
@@ -92,22 +92,25 @@ class VapourSynthWrapper():
 
         debug_prefix = "[VapourSynthWrapper.apply_filter]"
 
-        # Open
-        with open(self.context.ROOT + os.path.sep + "vpys" + os.path.sep + filter_name + ".vpy", "r") as sc:
-            with open(self.context.temp_vpy_script, "w") as temp:
-                temp.write(sc.read().replace("[INPUT]", input_video))
-        
-        # Couldn't get it working with subprocess...?
-        # command = [self.vspipe_bin, "--y4m", self.context.temp_vpy_script, "-", "|", self.x264_bin, "--demuxer", "y4m", "-", "-o", output_video]
+        if not filter_name in ["null", "none"]:
+            # Open
+            with open(self.context.ROOT + os.path.sep + "vpys" + os.path.sep + filter_name + ".vpy", "r") as sc:
+                with open(self.context.temp_vpy_script, "w") as temp:
+                    temp.write(sc.read().replace("[INPUT]", input_video))
+            
+            # Couldn't get it working with subprocess...?
+            # command = [self.vspipe_bin, "--y4m", self.context.temp_vpy_script, "-", "|", self.x264_bin, "--demuxer", "y4m", "-", "-o", output_video]
 
-        command = "\"%s\" --y4m \"%s\" - | \"%s\" --demuxer y4m - -o \"%s\"" % \
-                    (self.vspipe_bin, self.context.temp_vpy_script, self.x264_bin, output_video)
+            command = "\"%s\" --y4m \"%s\" - | \"%s\" --demuxer y4m - -o \"%s\"" % \
+                        (self.vspipe_bin, self.context.temp_vpy_script, self.x264_bin, output_video)
 
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Command for vapoursynth filter processing is: [%s]" % command)
+            if self.context.loglevel >= 3:
+                self.utils.log(color, debug_prefix, "Command for vapoursynth filter processing is: [%s]" % command)
+
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] MAY TAKE A WHILE DEPENDING ON CPU / VIDEO LENGHT / VIDEO RESOLUTION / VAPOURSYNTH STUFF USED")
 
     
-        os.system(command)
+            os.system(command)
         
         
 

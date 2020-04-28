@@ -119,6 +119,11 @@ class Dandere2x():
         # Deals with images, mostly numpy wrapper and special functions like block substitution
         self.utils.log(color, debug_prefix, "Creating Frame()")
         self.frame = Frame(self.context, self.utils, self.controller)
+
+
+        # Vapoursynth wrapper
+        self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
+        self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
             
 
 
@@ -157,6 +162,7 @@ class Dandere2x():
             self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [ON]")
         else:
             self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [OFF]")
+
 
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
@@ -218,12 +224,12 @@ class Dandere2x():
             # Apply pre vapoursynth filter
             if self.context.use_vapoursynth:
 
-                # Vapoursynth wrapper
-                self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
-                self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
-
                 # Apply pre filter
-                self.vapoursynth_wrapper.apply_filter(self.context.vapoursynth_pre, self.context.input_file, self.context.vapoursynth_processing)
+                self.vapoursynth_wrapper.apply_filter(
+                    self.context.vapoursynth_pre,
+                    self.context.input_file,
+                    self.context.vapoursynth_processing
+                )
 
                 # As we applied pre filter, our input video is now the processed one by vapoursynth
                 self.context.input_file = self.context.vapoursynth_processing
@@ -234,7 +240,7 @@ class Dandere2x():
                         self.utils.log(color, debug_prefix, "[MINDISK] Deleting noisy video [%s]" % self.context.noisy_video)
                         self.utils.delete_file(self.context.noisy_video)
                     else:
-                        self.utils.log(color, debug_prefix, "Mindisk mode OFF, do not delete noisy video [%s]" % self.context.noisy_video)
+                        self.utils.log(color, debug_prefix, "Mindisk mode OFF, DO NOT delete noisy video [%s]" % self.context.noisy_video)
 
         
         
@@ -250,6 +256,8 @@ class Dandere2x():
 
     # Here's the core logic for Dandere2x, good luck other files
     def run(self):
+
+        debug_prefix = "[Dandere2x.run]"
 
         # As now we get into the run part of Dandere2x, we don't really want to log
         # within the "global" log on the root folder so we move the logfile to session/log.log
@@ -269,7 +277,40 @@ class Dandere2x():
             )
 
         
+        # Test resume session
+        # self.context.save_vars()
+        # exit()
+
+
+        # Simulate end of upscale
+        #for i in range(2, 0, -1):
+        #    self.utils.log(color, debug_prefix, i)
+        #    time.sleep(1)
+
+        self.controller.exit()
+
+        for thread in self.controller.threads:
+            self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
+            self.controller.threads[thread].join()
+
+
         self.context.save_vars()
+
+
+
+        self.utils.log(color, debug_prefix, "APPLYING POST FILTER")
+
+
+        # FIXME NOTE HARD DEGUG, STUFF NOT IMPLEMENTED
+        self.context.upscaled_video = self.context.noisy_video
+
+
+        if self.context.use_vapoursynth:
+            self.vapoursynth_wrapper.apply_filter(
+                self.context.vapoursynth_pos,
+                self.context.upscaled_video,
+                self.context.output_file
+            )
 
 
         exit()
@@ -289,7 +330,7 @@ class Dandere2x():
         exit()
         '''
         
-        debug_prefix = "[Dandere2x.run]"
+        
 
         self.utils.log(phasescolor, "# # [Run phase] # #")
 
@@ -322,15 +363,7 @@ class Dandere2x():
 
         
     
-        for i in range(60, 0, -1):
-            self.utils.log(color, debug_prefix, i)
-            time.sleep(1)
-
-        self.controller.exit()
-
-        for thread in self.controller.threads:
-            self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
-            self.controller.threads[thread].join()
+        
         
 
 

@@ -290,8 +290,8 @@ class FFmpegWrapper():
 
 
 
-
-
+# This is a multi-class wrapper like we do with Waifu2x, 
+# we abstract the other class (same) functions into a single "global" class
 class VideoFrameExtractor():
     def __init__(self, context, utils, controller):
 
@@ -510,21 +510,16 @@ class Video():
 
         debug_prefix = "[Video.get_video_info]"
 
-        self.input_file = self.context.input_file
-        self.output_file = self.context.output_file 
-
-        video_path = self.ROOT + os.path.sep + self.input_file
-
-        self.utils.log(color, debug_prefix, "Video file is: [%s]" % video_path)
+        self.utils.log(color, debug_prefix, "Video file is: [%s]" % self.context.input_file)
 
 
         # Get the video info
 
         if self.context.get_video_info_method == "mediainfo":
-            self.get_video_info_with_mediainfo(video_path)
+            self.get_video_info_with_mediainfo(self.context.input_file)
 
         elif self.context.get_video_info_method == "ffmpeg":
-            self.get_video_info_with_ffmpeg(video_path)
+            self.get_video_info_with_ffmpeg(self.context.input_file)
         
         else:
             self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] NO VALID get_video_info_method SET: [%s]" % self.context.get_video_info_method)
@@ -542,6 +537,10 @@ class Video():
         self.context.frame_count = self.frame_count
         self.context.frame_rate = self.frame_rate
 
+        # We change how much zero padding we have based on the digit count of the frame_count, plus 1 to be safe
+        self.context.zero_padding = len(str(self.context.frame_count)) + 1
+        self.utils.log(color, debug_prefix, "Changing zero padding in files to [%s]" % self.context.zero_padding)
+
 
 
 
@@ -552,7 +551,7 @@ class Video():
 
         self.utils.log(color, debug_prefix, "Here's the video info:")
 
-        self.utils.log(color, self.context.indentation, "Filename: [%s]" % self.input_file)
+        self.utils.log(color, self.context.indentation, "Filename: [%s]" % self.context.input_file)
         self.utils.log(color, self.context.indentation, "Resolution: (%sx%s)" % (self.width, self.height))     
         self.utils.log(color, self.context.indentation, "Frame count: [%s]" % self.frame_count)
         self.utils.log(color, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)
