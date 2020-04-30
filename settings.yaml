@@ -25,7 +25,7 @@ mindisk: false
 
 basic:
   input_file: samples/yn_moving.mkv
-  output_file: samples/yn_moving_2x.mkv
+  output_file: samples/yn_moving2x.mkv
 
 waifu2x:
   denoise_level: 3
@@ -43,7 +43,7 @@ ffmpeg:
 
 processing:
   extracted_images_extension: .jpg
-  block_size: auto
+  block_size: 500
   bleed: 2
 
 vapoursynth:

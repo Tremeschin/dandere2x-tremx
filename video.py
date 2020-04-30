@@ -65,7 +65,7 @@ class FFmpegWrapper():
 
 
         # Build the command to get the frame_count with "null copy" mode
-        command = ["%s" % self.ffmpeg_binary, "-i", "%s" % video_file, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
+        command = ["%s" % self.ffmpeg_binary, "-loglevel", "warning", "-stats", "-i", "%s" % video_file, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
 
         self.utils.log(color, debug_prefix, "Command to check frame_count is: [%s]" % ' '.join(command))
 
@@ -90,7 +90,7 @@ class FFmpegWrapper():
                 # Transform every non single whitespace to one single whitespace
                 line = ' '.join(line.split())
 
-                frame_count = self.utils.get_nth_word(line, 2)
+                frame_count = line.split("fps")[0].split("=")[1]
                 frame_count = int(frame_count)
 
                 self.utils.log(color, debug_prefix, "Got frame count: [%s]" % frame_count)

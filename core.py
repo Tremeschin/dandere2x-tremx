@@ -28,7 +28,7 @@ color = rgb(0, 115, 255)
 
 
 class CoreLoop():
-    def __init__(self, context, utils, controller, plugins, waifu2x):
+    def __init__(self, context, utils, controller, plugins, waifu2x, d2xcpp):
 
         debug_prefix = "[CoreLoop.__init__]"
 
@@ -37,6 +37,7 @@ class CoreLoop():
         self.controller = controller
         self.plugins = plugins
         self.waifu2x = waifu2x
+        self.d2xcpp = d2xcpp
 
         self.ROOT = self.context.ROOT
 
@@ -48,14 +49,13 @@ class CoreLoop():
 
         debug_prefix = "[CoreLoop.start]"
 
-        # Get context information if it's a resume session
-        if self.context.resume:
-            self.utils.log(color, debug_prefix, "Parsing whole cpp output as IS resume session")
-            self.parse_whole_cpp_out()
-
 
         self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
-        self.utils.log(color, debug_prefix, "Created thread CoreLoop.pipe_plugins")
+        self.utils.log(color, debug_prefix, "Created thread CoreLoop.pipe_plugin_thread")
+
+
+        self.controller.threads["danderere2x_cpp_thread"] = threading.Thread(target=self.d2xcpp.run)
+        self.utils.log(color, debug_prefix, "Created thread CoreLoop.danderere2x_cpp_thread")
         
         
         # For debugging purposes
@@ -71,6 +71,7 @@ class CoreLoop():
 
         else:
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")
+
 
 
         # Start the threads, warn the user that the output is no more linear
@@ -89,17 +90,29 @@ class CoreLoop():
 
         debug_prefix = "[CoreLoop.parse_cpp_out_newline]"
 
-        if self.context.loglevel >= 4:
-            self.utils.log(color, debug_prefix, "[DEBUG 4] Parsing line [\"%s\"]" % line)
+        #if self.context.loglevel >= 4:
+        #    self.utils.log(color, debug_prefix, "[DEBUG 4] Parsing line [\"%s\"]" % line)
+
+        # A line syntax is the following:
+        # type;frame-data0;data1;data2...
 
 
-        # TODO: The parse function goes here but new dandere2x_cpp isn't out so all we gotta do is wait
-        self.controller.cpp_data[self.utils.md5(line)] = line
+        # ["type;frame", "data0;data1;data2..."]
+        line = line.split("-")
 
+        # ";data0;data1;data2..." --> "data0;data1;data2..."
+        data = line[1][1:].replace("\n", "")
 
-        if self.context.loglevel >= 5:
-            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.cpp_data:")
-            self.utils.log(color, debug_prefix, self.controller.cpp_data)
+        # type;frame-data0;data1;data2...  --> "type;frame" --> ["type", "frame"]
+        line = line[0].split(";")
+
+        line_type = line[0]
+        line_referred_frame = line[1]
+
+        self.controller.cpp_data[line_referred_frame] = {
+            "type": line_type,
+            "data": data
+        }
 
         return line
         
@@ -109,23 +122,21 @@ class CoreLoop():
 
         debug_prefix = "[CoreLoop.is_necessary_line]"
 
-        if self.context.loglevel >= 4:
+        if self.context.loglevel >= 7:
             self.utils.log(color, debug_prefix, "[DEBUG] Checking if line [\"%s\"] is necessary: " % line)
+
+        line = self.parse_cpp_out_newline(line)
 
         # If it isn't resume we gotta have everything
         if not self.context.resume:
-
-            if self.context.loglevel >= 4:
-                self.utils.log(color, debug_prefix, "[DEBUG] YES")
             return True
 
         else:
         
             # TODO: CHECK IF NECESSARY IF NOT RESUME
 
-            if self.context.loglevel >= 4:
-                self.utils.log(color, debug_prefix, "[DEBUG] YES")
             return True
+
 
 
     # For resume sessions, parse the entire cpp_out file
@@ -135,10 +146,19 @@ class CoreLoop():
 
         self.utils.log(color, debug_prefix, "Parsing whole cpp_out file")
 
-        with open(self.context.d2x_cpp_out, "r") as cppout:
+        # Warn the user we'll be getting everything as it is not a resume session
+        if not self.context.resume:
+            self.utils.log(color, debug_prefix, "GETTING EVERYTHING AS IS NOT RESUME SESSION")
+
+        with open(self.context.d2x_cpp_plugins_out, "r") as cppout:
             for line in cppout:
                 if self.is_necessary_line(line):
                     self.parse_cpp_out_newline(line)
+
+
+        if self.context.loglevel >= 5:
+            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.cpp_data:")
+            self.utils.log(color, debug_prefix, self.controller.cpp_data)
     
 
     # # #
@@ -151,14 +171,14 @@ class CoreLoop():
 
         # Debug
         if self.context.loglevel >= 3:
-            self.utils.log(debug_color(), debug_prefix, "[DEBUG] Printing new contents of file [%s]" % self.context.d2x_cpp_out)
+            self.utils.log(debug_color(), debug_prefix, "[DEBUG] Printing new contents of file [%s]" % self.context.d2x_cpp_plugins_out)
 
         # Get the new stuff APPENDED into the file
-        for newstuff in self.utils.updating_file(self.context.d2x_cpp_out):
+        for newstuff in self.utils.updating_file(self.context.d2x_cpp_plugins_out):
             
             # Debug
             if self.context.loglevel >= 3:
-                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff)
+                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
                 
             self.parse_cpp_out_newline(newstuff)
 

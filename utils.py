@@ -258,7 +258,7 @@ class Utils():
     # Get the output of a command with subprocess module with check_output
     def command_output_subprocess(self, command):
         return subprocess.check_output(command, stderr=subprocess.STDOUT).decode("utf-8")
-        
+    
 
     # "Pipe" subprocess stdout to python
     def command_output_subprocess_with_stdout(self, command):
@@ -477,7 +477,7 @@ class Utils():
         return string.split(' ')[N-1]
 
 
-
+    # Search binary in path first then externals for Linux and Windows directly into externals
     def get_binary(self, wanted):
 
         debug_prefix = "[Utils.get_binary]"
@@ -494,18 +494,68 @@ class Utils():
 
             self.log(color, debug_prefix, "Got output:", out)
 
-            if out == wanted + ":":
-                self.log(fg.red, debug_prefix, "Couldn't find %s binary in PATH" % wanted)
-                self.exit()
+            if not out == wanted + ":":
+                
+                # out = "ls: /usr/bin/ls /usr/share/man/man1/ls.1p.gz /usr/share/man/man1/ls.1.gz"
+                # out = "asdasd:"
 
-            # out = "ls: /usr/bin/ls /usr/share/man/man1/ls.1p.gz /usr/share/man/man1/ls.1.gz"
-            # out = "asdasd:"
+                # Get the first binary pointed by whereis TODO: is this right?
+                out = self.get_nth_word(out, 2)
 
-            # Get the first binary pointed by whereis TODO: is this right?
-            out = self.get_nth_word(out, 2)
+                # This is the binary from where we're going to execute waifu2x
+                return out
 
-            # This is the binary from where we're going to execute waifu2x
-            return out
+            # Else search in externals as we do with Windows
+            else:
+
+                self.log(fg.red, debug_prefix, "Couldn't find %s binary in PATH, searching in externals, is this right?" % wanted)
+
+                self.log(color, debug_prefix, "Searching [%s] in ./externals/*" % wanted)
+
+                full_path_wanted = None
+                
+
+                # Iterate into externals file tree
+                # for root, dirs, files (annoying warning messages and "_" is ignore as we don't use dirs)
+                for root, _, files in os.walk(self.context.ROOT + os.path.sep + "externals"):
+                    
+                    # Exit loop as the file was found as we're inside two loops
+                    if not full_path_wanted == None:
+                        break
+                    
+                    # For every file in a folder
+                    for f in files:
+
+                        # Hard debug
+                        if self.context.loglevel >= 5:
+                            self.log(color, debug_prefix, "[DEBUG] Scanning [%s] == [%s]" % (wanted, f))
+
+                        
+                        # If wanted matches some file name we're looping
+                        if wanted in f.lower():
+
+                            # Get the full path by joining the root search and the target wanted
+                            full_path_wanted = os.path.join(root, wanted)
+
+                            self.log(rgb(0, 255, 0), debug_prefix, "Got executable, full path: [%s]" % full_path_wanted)
+                            
+                            # Exit "for every file in a folder" loop
+                            break
+                
+
+                # Nothing was found, exit
+                if full_path_wanted == None:
+                    self.log(color, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, wanted))
+                    self.exit()
+                
+
+                # This will yield false on Linux if forcing windows mode for debugging
+                # because Windows is case insensitive and Linux case sensitive
+                if os.path.exists(full_path_wanted):
+                    self.log(color, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (wanted, full_path_wanted))
+                    return full_path_wanted
+
+
 
 
 
@@ -559,5 +609,67 @@ class Utils():
                 self.log(color, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (executable, full_path_executable))
                 return full_path_executable
 
+            
+
+class SubprocessUtils():
+
+    def __init__(self, name, utils):
+
+        debug_prefix = "[SubprocessUtils.__init__]"
+
+        self.utils = utils
+        self.name = name
+
+        self.utils.log(color, debug_prefix, "Creating SubprocessUtils with name: [%s]" % name)
+
+
+    def from_list(self, list):
+
+        debug_prefix = "[SubprocessUtils.run]"
+
+        self.utils.log(color, debug_prefix, "Getting command from list:")
+        self.utils.log(color, debug_prefix, list)
+
+        self.command = list
+    
+
+    def run(self):
+
+        debug_prefix = "[SubprocessUtils.run]"
+
+        self.utils.log(color, debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
+
+        self.process = subprocess.Popen(self.command)
+
+
+    def wait(self):
+
+        debug_prefix = "[SubprocessUtils.wait]"
+
+        self.utils.log(color, debug_prefix, "Waiting SubprocessUtils with name [%s] to finish" % self.name)
+
+        self.process.wait()
+
+
+    def terminate(self):
+
+        debug_prefix = "[SubprocessUtils.terminate]"
+
+        self.utils.log(color, debug_prefix, "Terminating SubprocessUtils with name [%s]" % self.name)
+
+        self.process.terminate()
+
+
+    def is_alive(self):
+
+        debug_prefix = "[SubprocessUtils.is_alive]"
+
+        status = self.process.poll()
+
+        if status == None:
+            return True
+        else:
+            self.utils.log(color, debug_prefix, " SubprocessUtils with name [%s] is not alive" % self.name)
+            return False
             
 

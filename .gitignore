@@ -4,6 +4,7 @@
 *.log
 *.jpg
 *.png
+*.d2x
 *.code-workspace
 
 .vscode
@@ -12,8 +13,19 @@ sessions/*
 frames/*
 externals/*
 
+dandere2x_cpp_tremx/blocks
+dandere2x_cpp_tremx/frames
+dandere2x_cpp_tremx/CMakeFiles
+
 test.py
 prototype.py
+dandere2x_cpp_tremx/CMakeCache.txt
+dandere2x_cpp_tremx/dandere2x_cpp
+dandere2x_cpp_tremx/Makefile
+dandere2x_cpp_tremx/cmake_install.cmake
+dandere2x_cpp_tremx/oldreference.cpp
+
+vpys/sample*
 
 vsrepo
 samples

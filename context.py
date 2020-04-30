@@ -190,7 +190,8 @@ class Context():
 
         # "Static" files location
         files = {
-            "d2x_cpp_out": "//ROOT//|sessions|//SESSION//|plugins_input.d2x",
+            "d2x_cpp_plugins_out": "//ROOT//|sessions|//SESSION//|plugins_input.d2x",
+            "d2x_cpp_vectors_out": "//ROOT//|sessions|//SESSION//|vectors.d2x",
             "upscaled_video": "//ROOT//|sessions|//SESSION//|upscaled_//INPUTVIDEOFILENAME//",
             "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
             "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
@@ -208,7 +209,8 @@ class Context():
         self.iframes = None
         self.session = None
         
-        self.d2x_cpp_out = None
+        self.d2x_cpp_vectors_out = None
+        self.d2x_cpp_plugins_out = None
         self.upscaled_video = None
         self.context_vars = None
         self.temp_vpy_script = None
@@ -235,7 +237,7 @@ class Context():
             print(i, reference)
 
             0 ('dirs', {'residual': 'wor...
-            1 ('files', {'d2x_cpp_out...
+            1 ('files', {'d2x_cpp_plugins_out...
 
             This way we can have the reference[0] which is the name and reference[1]
             which is the full dictionary
@@ -301,7 +303,7 @@ class Context():
             "residual", "ROOT", "resume", "os", "input_file", "output_file",
             "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
             "valid_resolution", "frame_rate", "frame_count", "session",
-            "upscaled", "iframes", "d2x_cpp_out", "context_vars", "plain_dirs",
+            "upscaled", "iframes", "d2x_cpp_plugins_out", "context_vars", "plain_dirs",
             "plain_files", "denoise_level", "tile_size", "last_processing_frame",
             "get_frame_count_method", "get_frame_rate_method", "zero_padding",
             "loglevel", "input_filename", "output_filename", "extracted_images_extension",
@@ -310,7 +312,7 @@ class Context():
             "get_video_info_method", "get_resolution_method", "wait_time",
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
-            "processing"
+            "processing", "d2x_cpp_vectors_out"
         ]
 
 

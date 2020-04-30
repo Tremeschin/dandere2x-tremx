@@ -27,6 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from color import rgb, color_by_name
 
+from d2xcpp import Dandere2xCPPWraper
 from vp import VapourSynthWrapper
 from processing import Processing
 from controller import Controller
@@ -111,9 +112,14 @@ class Dandere2x():
         self.math = D2XMath(self.context, self.utils)
 
 
+        # Dandere2x C++ wrapper
+        self.utils.log(color, debug_prefix, "Creating Dandere2xCPPWraper()")
+        self.d2xcpp = Dandere2xCPPWraper(self.context, self.utils, self.controller, self.video)
+
+
         # On where everything is controlled and starts
         self.utils.log(color, debug_prefix, "Creating CoreLoop()")
-        self.core = CoreLoop(self.context, self.utils, self.controller, self.plugins, self.waifu2x)
+        self.core = CoreLoop(self.context, self.utils, self.controller, self.plugins, self.waifu2x, self.d2xcpp)
 
 
         # Deals with images, mostly numpy wrapper and special functions like block substitution
@@ -127,6 +133,7 @@ class Dandere2x():
             
 
 
+        
 
     # This function mainly configures things before upscaling and verifies stuff,
     # sees if it's a resume session, etc
@@ -219,6 +226,7 @@ class Dandere2x():
                 # As we applied and saved onto new file, that is our new input
                 self.context.input_file = self.context.noisy_video
 
+                exit()
 
             
             # Apply pre vapoursynth filter
@@ -275,11 +283,15 @@ class Dandere2x():
         self.utils.move_log_file(self.context.logfile)
 
 
+        self.d2xcpp.generate_run_command()
         
+
+
         self.video.frame_extractor.setup_video_input(self.context.input_file)
         
         self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
 
+        '''
         print(self.context.last_processing_frame)
 
         for _ in range(5):
@@ -288,6 +300,7 @@ class Dandere2x():
                 + self.utils.pad_zeros(self.context.last_processing_frame)
                 + self.context.extracted_images_extension
             )
+        '''
 
         
         # Test resume session
@@ -302,14 +315,9 @@ class Dandere2x():
 
         
 
-        for thread in self.controller.threads:
-            self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
-            self.controller.threads[thread].join()
-
-
-        
-
-
+        #for thread in self.controller.threads:
+        #    self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
+        #    self.controller.threads[thread].join()
 
 
         
@@ -348,16 +356,15 @@ class Dandere2x():
         self.utils.log(phasescolor, "# # END FRAME() # #")
 
         
-        
+        # If
+        self.core.parse_whole_cpp_out()
         self.core.start()
-
-
 
      
         # Simulate exiting
         self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
 
-        for i in range(2, 0, -1):
+        for i in range(15, 0, -1):
             self.utils.log(color, debug_prefix, i)
             time.sleep(1)
 

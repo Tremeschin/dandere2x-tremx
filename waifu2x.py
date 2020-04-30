@@ -105,10 +105,11 @@ class Waifu2x():
 class Waifu2xLinuxVulkan():
 
     def init(self, context, utils, controller):
+
         self.context = context
         self.utils = utils
         self.controller = controller
-
+        
         debug_prefix = "[Waifu2xLinuxVulkan.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")

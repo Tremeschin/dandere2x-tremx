@@ -67,7 +67,7 @@ class D2XMath():
         # and "fit" it to the nearest 4 multiple as common resolutions
         # are really 4-multiple based
 
-        if "%" in self.context.block_size:
+        if "%" in str(self.context.block_size):
             percentage = round(float(block_size.replace("%", "")) / 100, 6)
             video_dimentions_min = min(height, width)
             theoric_block_size = round(video_dimentions_min * percentage, 3)
