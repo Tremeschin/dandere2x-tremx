@@ -1,5 +1,5 @@
 # ===============================================================================
-# 
+#
 # Purpose: General settings for a Dandere2x session
 #
 # ===============================================================================
@@ -63,7 +63,4 @@ specific: # just ideas at the moment
   log_full_path: false # Log full path instead of relative path to D2X's ROOT folder
 
 debug:
-  enable_waifu2x: true
-
-
-
+  enable_waifu2x: false

@@ -5,12 +5,14 @@ Purpose: Dandere2x C++ wrapper for python, calls the binary
 
 Syntax:
 
-binary input block_size width height out vectors start_frame
+binary input block_size width height out vectors start_frame bleed residuals_output
 
 Example:
 
-dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3
+dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/"
 
+NOTE: residuals_output must end in a os.path.sep -> "/path/to/dir/" and not
+"/path/to/dir"
 
 There are many option in the main.cpp after including things on the defines
 like saving debug frames to video
@@ -40,11 +42,12 @@ import os
 
 color = rgb(240, 100, 64)
 
+
 class Dandere2xCPPWraper():
     def __init__(self, context, utils, controller, video):
-        
+
         debug_prefix = "[Dandere2xCPPWraper.__init__]"
-        
+
         self.context = context
         self.utils = utils
         self.controller = controller
@@ -58,15 +61,14 @@ class Dandere2xCPPWraper():
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
-
     # Generate a run command based on Context info
     def generate_run_command(self):
-        
+
         debug_prefix = "[Dandere2xCPPWraper.generate_run_command]"
-        
+
         # Generic command is:
         # binary input block_size width height out vectors start_frame
-        # dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3
+        # dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals"
 
         self.command = [
             self.binary,
@@ -76,12 +78,14 @@ class Dandere2xCPPWraper():
             str(self.context.resolution[1]),
             self.context.d2x_cpp_plugins_out,
             self.context.d2x_cpp_vectors_out,
-            str(self.context.last_processing_frame)
+            str(self.context.last_processing_frame),
+            str(self.context.bleed),
+            self.context.residual
         ]
 
         self.utils.log(color, debug_prefix, "Run command is: %s" % self.command)
-    
 
+    # Run with SubprocessUtils the d2xcpp binary
     def run(self):
 
         # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
@@ -95,7 +99,5 @@ class Dandere2xCPPWraper():
 
         while self.subprocess.is_alive():
             time.sleep(0.5)
-            if self.controller.stop == True:
+            if self.controller.stop is True:
                 self.subprocess.terminate()
-
-

@@ -6,7 +6,7 @@
 Purpose: The most abstract script, deals with connecting all the others
 
 Creates all the classes we need, checks, verifies, connects them, setup
-and run Dandere2x. 
+and run Dandere2x.
 
 ===============================================================================
 
@@ -35,7 +35,7 @@ from d2xmath import D2XMath
 from plugins import Plugins
 from context import Context
 from waifu2x import Waifu2x
-from core import CoreLoop
+from core import Core
 from frame import Frame
 from video import Video
 from utils import Utils
@@ -54,7 +54,7 @@ class Dandere2x():
 
     def __init__(self, args):
         self.args = args
-        
+
 
     # This function loads up the "core" variables and objects
     def load(self):
@@ -105,7 +105,7 @@ class Dandere2x():
         # Deals with Plugins
         self.utils.log(color, debug_prefix, "Creating Processing()")
         self.processing = Processing(self.context, self.utils, self.controller)
-        
+
 
         # Math utils, specific cases for Dandere2x
         self.utils.log(color, debug_prefix, "Creating D2XMath()")
@@ -118,8 +118,8 @@ class Dandere2x():
 
 
         # On where everything is controlled and starts
-        self.utils.log(color, debug_prefix, "Creating CoreLoop()")
-        self.core = CoreLoop(self.context, self.utils, self.controller, self.plugins, self.waifu2x, self.d2xcpp)
+        self.utils.log(color, debug_prefix, "Creating Core()")
+        self.core = Core(self.context, self.utils, self.controller, self.plugins, self.waifu2x, self.d2xcpp)
 
 
         # Deals with images, mostly numpy wrapper and special functions like block substitution
@@ -130,10 +130,10 @@ class Dandere2x():
         # Vapoursynth wrapper
         self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
         self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
-            
 
 
-        
+
+
 
     # This function mainly configures things before upscaling and verifies stuff,
     # sees if it's a resume session, etc
@@ -162,7 +162,7 @@ class Dandere2x():
         else:
             self.utils.log(rgb(255,100,0), debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
             self.context.resume = False
-        
+
 
         # Warn the user and log mindisk mode
         if self.context.mindisk:
@@ -175,7 +175,7 @@ class Dandere2x():
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
 
-            
+
 
             # Log and reset session directory
             self.utils.log(color_by_name("li_red"), debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
@@ -216,7 +216,7 @@ class Dandere2x():
             if any([self.context.apply_pre_noise, self.context.use_vapoursynth]):
                 self.utils.log(phasescolor, "# # [Filter phase] # #")
 
-            
+
             # If user chose to do so
             if self.context.apply_pre_noise:
 
@@ -228,7 +228,7 @@ class Dandere2x():
 
                 exit()
 
-            
+
             # Apply pre vapoursynth filter
             if self.context.use_vapoursynth:
 
@@ -241,7 +241,7 @@ class Dandere2x():
 
                 # As we applied pre filter, our input video is now the processed one by vapoursynth
                 self.context.input_file = self.context.vapoursynth_processing
-                
+
                 # # As something like a transpose can modify the video resolution we get the new info
 
                 # Get video info
@@ -260,10 +260,10 @@ class Dandere2x():
                     else:
                         self.utils.log(color, debug_prefix, "Mindisk mode OFF, DO NOT delete noisy video [%s]" % self.context.noisy_video)
 
-        
-        
+
+
         # IS RESUME SESSION, basically load instructions from the context saved vars
-        else: 
+        else:
             self.utils.log(color_by_name("li_red"), debug_prefix, "IS RESUME SESSION")
 
             self.utils.log(color, debug_prefix, "Loading Context vars from context_vars file")
@@ -276,7 +276,7 @@ class Dandere2x():
     def run(self):
 
         debug_prefix = "[Dandere2x.run]"
-        
+
 
         # As now we get into the run part of Dandere2x, we don't really want to log
         # within the "global" log on the root folder so we move the logfile to session/log.log
@@ -284,11 +284,11 @@ class Dandere2x():
 
 
         self.d2xcpp.generate_run_command()
-        
+
 
 
         self.video.frame_extractor.setup_video_input(self.context.input_file)
-        
+
         self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
 
         '''
@@ -302,7 +302,7 @@ class Dandere2x():
             )
         '''
 
-        
+
         # Test resume session
         # self.context.save_vars()
         # exit()
@@ -313,14 +313,14 @@ class Dandere2x():
         #    self.utils.log(color, debug_prefix, i)
         #    time.sleep(1)
 
-        
+
 
         #for thread in self.controller.threads:
         #    self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
         #    self.controller.threads[thread].join()
 
 
-        
+
 
 
         '''
@@ -337,8 +337,8 @@ class Dandere2x():
         self.utils.get_binary("mediainfo")
         exit()
         '''
-        
-        
+
+
 
         self.utils.log(phasescolor, "# # [Run phase] # #")
 
@@ -350,17 +350,22 @@ class Dandere2x():
         #frame2.new(1920, 1080)
         frame2.new(272, 207)
         frame2.duplicate(frame)
-        
+
         frame2.save("small_copy.png")
 
         self.utils.log(phasescolor, "# # END FRAME() # #")
 
-        
+
         # If
+
         self.core.parse_whole_cpp_out()
         self.core.start()
+        self.core.get_d2xcpp_vectors()
 
-     
+
+
+
+
         # Simulate exiting
         self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
 
@@ -368,16 +373,16 @@ class Dandere2x():
             self.utils.log(color, debug_prefix, i)
             time.sleep(1)
 
-        
+
 
         self.controller.exit()
-        
+
         self.context.save_vars()
 
         if self.context.use_vapoursynth:
 
             self.utils.log(color, debug_prefix, "APPLYING POST FILTER")
-            
+
 
             # FIXME NOTE HARD DEGUG, STUFF NOT IMPLEMENTED
             self.context.upscaled_video = self.context.noisy_video
@@ -393,10 +398,10 @@ class Dandere2x():
 
         #self.waifu2x.upscale(self.context.ROOT + "/img.png", self.context.ROOT + "/img2x.png")
 
-        
-    
-        
-        
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -408,7 +413,7 @@ if __name__ == "__main__":
 
     # Force deletion of session, don't resume
     args.add_argument('-f', '--force', required=False, action="store_true", help="Forces deletion of session")
-    
+
     # Parse args and make dictionary
     args = args.parse_args()
 

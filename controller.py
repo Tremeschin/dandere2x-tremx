@@ -34,6 +34,7 @@ class Controller():
 
         self.stop = False
         self.cpp_data = {}
+        self.vectors = {}
         self.threads = {}
 
     def exit(self):

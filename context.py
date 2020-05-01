@@ -2,13 +2,13 @@
 ===============================================================================
 
 Purpose: Class Context() deals with multiple file communications and mostly
-"static" variables, or "global constants", think context as in "session settings"
+"static" variables, or "global constants", as in "session settings"
 
 Yes that is very dangerous and not recommended however this works really really
-good as basically this class is accessible on almost all Dandere2x Python scripts
+good as basically this class is accessible on almost all Dandere2x Python files
 files and it's used as a reference on the current state of the program. Also we
-save this variables here and load them up when resuming sessions, so it's a way of
-making persistent session based variables without much trouble
+save this variables here and load them up when resuming sessions, so it's
+a way of making persistent session based variables without much trouble
 
 ===============================================================================
 
@@ -27,9 +27,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from color import color_by_name, fg, rgb
+from color import color_by_name, fg
 
-import sys
 import os
 
 
@@ -55,17 +54,15 @@ class Context():
 
         self.utils.log(fg.li_red, debug_prefix, "Got operating system: " + self.os)
 
-        # Load up the yaml file        
+        # Load up the yaml file
         self.utils.log(color, debug_prefix, "Loading settings YAML file")
 
         self.yaml = self.utils.load_yaml(self.ROOT + os.path.sep + "settings.yaml")
 
-
         # Loglevel
         self.loglevel = self.yaml["developer"]["loglevel"]
-        
-        self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
+        self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
         # Create context dict
         self.utils.log(color, debug_prefix, "Creating Context dictionary")
@@ -73,13 +70,10 @@ class Context():
         self.context = {}
         self.context["ROOT"] = self.utils.ROOT
 
-        
         # # # Static Variables # # #
         self.utils.log(color, debug_prefix, "Setting up static variables")
 
-
         # Load basic variables
-
 
         # # Video I/O
 
@@ -89,7 +83,7 @@ class Context():
         # If the user did not sent us a absolute path
         if not os.path.isabs(self.input_file):
             self.input_file = self.ROOT + os.path.sep + self.input_file
-        
+
         if not os.path.isabs(self.output_file):
             self.output_file = self.ROOT + os.path.sep + self.output_file
 
@@ -97,36 +91,30 @@ class Context():
         self.output_filename = self.utils.get_basename(self.output_file)
 
         # #
-        
 
         # Load processing variables
         self.extracted_images_extension = self.yaml["processing"]["extracted_images_extension"]
         self.block_size = self.yaml["processing"]["block_size"]
         self.bleed = self.yaml["processing"]["bleed"]
 
-
         # "Global" or non-indented options as they're "major"
         self.session_name = self.yaml["session_name"]
         self.waifu2x_type = self.yaml["waifu2x_type"]
         self.mindisk = self.yaml["mindisk"]
-
 
         # Vapoursynth settings
         self.use_vapoursynth = self.yaml["vapoursynth"]["enabled"]
         self.vapoursynth_pre = self.yaml["vapoursynth"]["pre"]
         self.vapoursynth_pos = self.yaml["vapoursynth"]["pos"]
 
-
         # # The special case where the session name is "auto",
         # so we set it according to the input file "a.mkv" -> "a"
         if self.session_name == "auto":
             self.session_name = self.utils.get_auto_session_name(self.input_file)
 
-
         # Waifu2x settings
         self.denoise_level = self.yaml["waifu2x"]["denoise_level"]
         self.tile_size = self.yaml["waifu2x"]["tile_size"]
-
 
         # Create default variables
         self.resolution = []
@@ -135,26 +123,21 @@ class Context():
         self.frame_count = None
         self.frame_rate = None
 
-
-
         # Video related variables
         self.apply_pre_noise = self.yaml["video"]["apply_pre_noise"]
         self.frame_extractor_method = self.yaml["video"]["frame_extractor_method"]
         self.get_video_info_method = self.yaml["video"]["get_video_info_method"]
-
 
         # FFmpeg / FFprobe related
         self.get_frame_count_method = self.yaml["ffmpeg"]["get_frame_count_method"]
         self.get_frame_rate_method = self.yaml["ffmpeg"]["get_frame_rate_method"]
         self.get_resolution_method = self.yaml["ffmpeg"]["get_resolution_method"]
 
-
         # # Static developer vars across files
 
         # How much time in seconds to wait for waiting operations like until_exist()
         self.wait_time = self.yaml["developer"]["wait_time_exists"]
         self.waifu2x_wait_for_residuals = self.yaml["developer"]["waifu2x_wait_for_residuals"]
-
 
         # # # Literal constants
 
@@ -164,13 +147,11 @@ class Context():
 
         # # # # # # # # # # # # # # # # # # # #
 
-
         # Resume options, TODO
         self.resume = False
         self.last_processing_frame = 0
 
-
-        ## Debug stuff
+        # # Debug stuff
 
         # This might sound dumb but it's good to debug as waifu2x doens't upscale and mindisk remove stuff
         self.enable_waifu2x = self.yaml["debug"]["enable_waifu2x"]
@@ -178,10 +159,10 @@ class Context():
 
 
         self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
-    
+
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
-            "residual": "//ROOT//|sessions|//SESSION//|residual",
+            "residual": "//ROOT//|sessions|//SESSION//|residual|",
             "upscaled": "//ROOT//|sessions|//SESSION//|upscaled",
             "iframes": "//ROOT//|sessions|//SESSION//|iframes",
             "processing": "//ROOT//|sessions|//SESSION//|processing",
@@ -203,12 +184,12 @@ class Context():
 
         # # # We declare these as none just for annoying errors on this
         # dynamic variable setting workaround and for autocompleting
-        
+
         self.residual = None
         self.upscaled = None
         self.iframes = None
         self.session = None
-        
+
         self.d2x_cpp_vectors_out = None
         self.d2x_cpp_plugins_out = None
         self.upscaled_video = None
@@ -222,7 +203,7 @@ class Context():
 
         self.plain_dirs = []
         self.plain_files = []
-        
+
 
         # This is a really neat* way of micromanaging lots of self vars, we basically
         # set the self.$name$ with setattr, not much else is happening here other than
@@ -245,14 +226,14 @@ class Context():
 
             name = reference[0]
             dic = reference[1]
-        
+
             for category in dic:
 
                 # # # Getting the full directory and add it to plain_{dirs,files} list # # #
 
                 # Replace our syntax with system-specific one, you'll know
                 # seeing the dictionary in the next line:
-                
+
                 # We use //NAME// because either on Windows or Linux dirs can't have this name
                 # so instead of using a nullbyte or something else for replacing the "dynamic stuff"
                 # se simply use this workaround, note the "|" = os.path.sep MUST BE THE LAST
@@ -261,14 +242,14 @@ class Context():
                     "//INPUTVIDEOFILENAME//": self.input_filename,
                     "//ROOT//": self.ROOT,
 
-                    "|": os.path.sep, # THIS MUST BE THE LAST
+                    "|": os.path.sep,  # THIS MUST BE THE LAST
                 }
 
-                subname = dic[category] # The "path" itself, with the "|" and "SESSION"
-                
+                # The "path" itself, with the "|" and "SESSION"
+                subname = dic[category]
+
                 for item in replace:
                     subname = subname.replace(item, replace[item])
-
 
                 # # Pretty logging
 
@@ -308,7 +289,7 @@ class Context():
             "get_frame_count_method", "get_frame_rate_method", "zero_padding",
             "loglevel", "input_filename", "output_filename", "extracted_images_extension",
             "mindisk", "use_vapoursynth", "vapoursynth_pre", "vapoursynth_pos",
-            "frame_count", "apply_pre_noise", "frame_extractor_method", 
+            "frame_count", "apply_pre_noise", "frame_extractor_method",
             "get_video_info_method", "get_resolution_method", "wait_time",
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
@@ -337,7 +318,7 @@ class Context():
 
             # Atribute
             data[item] = value
-            
+
 
 
         self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
@@ -346,12 +327,12 @@ class Context():
 
         self.utils.log(color, debug_prefix, "Saved")
 
-    
+
     # For resuming, loads into self.* variables the context_vars file
     def load_vars_from_file(self, context_vars_file):
 
         debug_prefix = "[Context.load_vars_from_file]"
-        
+
         context_data = self.utils.load_yaml(context_vars_file)
 
         self.utils.log(color, debug_prefix, "Loaded context_vars yaml file, here's the self vars and loaded values:")
@@ -370,4 +351,3 @@ class Context():
             # Log and set self var "self.item" as value
             self.utils.log(color, self.indentation, debug_prefix, "self.%s = \"%s\"" % (item, value))
             setattr(self, item, value)
-

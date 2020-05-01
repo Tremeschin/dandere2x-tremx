@@ -23,14 +23,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from color import rgb, debug_color
 
 import threading
+import time
 
 color = rgb(0, 115, 255)
 
 
-class CoreLoop():
+class Core():
     def __init__(self, context, utils, controller, plugins, waifu2x, d2xcpp):
 
-        debug_prefix = "[CoreLoop.__init__]"
+        debug_prefix = "[Core.__init__]"
 
         self.context = context
         self.utils = utils
@@ -44,23 +45,23 @@ class CoreLoop():
         self.utils.log(color, debug_prefix, "Init")
 
 
-    # Calls threads and 
+    # Calls threads and
     def start(self):
 
-        debug_prefix = "[CoreLoop.start]"
+        debug_prefix = "[Core.start]"
 
 
         self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
-        self.utils.log(color, debug_prefix, "Created thread CoreLoop.pipe_plugin_thread")
+        self.utils.log(color, debug_prefix, "Created thread Core.pipe_plugin_thread")
 
 
         self.controller.threads["danderere2x_cpp_thread"] = threading.Thread(target=self.d2xcpp.run)
-        self.utils.log(color, debug_prefix, "Created thread CoreLoop.danderere2x_cpp_thread")
-        
-        
+        self.utils.log(color, debug_prefix, "Created thread Core.danderere2x_cpp_thread")
+
+
         # For debugging purposes
         if self.context.enable_waifu2x:
-            
+
             # Create the waifu2x thread pointing the input into the residuals and out to the upscaled
             self.controller.threads["waifu2x_keep_upscaling"] = threading.Thread(
                 target=self.waifu2x.keep_upscaling,
@@ -80,7 +81,7 @@ class CoreLoop():
         for thread in self.controller.threads:
             self.utils.log(color, debug_prefix, "Starting thread: [\"%s\"]" % thread)
             self.controller.threads[thread].start()
-        
+
 
     # # # These are "parsers" for the Dandere2x C++ part that loads the stuff we need (or not) into self.cpp_data
 
@@ -88,7 +89,7 @@ class CoreLoop():
     # Parse newline of cpp_out, generic
     def parse_cpp_out_newline(self, line):
 
-        debug_prefix = "[CoreLoop.parse_cpp_out_newline]"
+        debug_prefix = "[Core.parse_cpp_out_newline]"
 
         #if self.context.loglevel >= 4:
         #    self.utils.log(color, debug_prefix, "[DEBUG 4] Parsing line [\"%s\"]" % line)
@@ -115,12 +116,12 @@ class CoreLoop():
         }
 
         return line
-        
 
-    # Decides if that line is necessary based on 
+
+    # Decides if that line is necessary based on
     def is_necessary_line(self, line):
 
-        debug_prefix = "[CoreLoop.is_necessary_line]"
+        debug_prefix = "[Core.is_necessary_line]"
 
         if self.context.loglevel >= 7:
             self.utils.log(color, debug_prefix, "[DEBUG] Checking if line [\"%s\"] is necessary: " % line)
@@ -132,7 +133,7 @@ class CoreLoop():
             return True
 
         else:
-        
+
             # TODO: CHECK IF NECESSARY IF NOT RESUME
 
             return True
@@ -142,7 +143,7 @@ class CoreLoop():
     # For resume sessions, parse the entire cpp_out file
     def parse_whole_cpp_out(self):
 
-        debug_prefix = "[CoreLoop.parse_whole_cpp_out]"
+        debug_prefix = "[Core.parse_whole_cpp_out]"
 
         self.utils.log(color, debug_prefix, "Parsing whole cpp_out file")
 
@@ -159,15 +160,74 @@ class CoreLoop():
         if self.context.loglevel >= 5:
             self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.cpp_data:")
             self.utils.log(color, debug_prefix, self.controller.cpp_data)
-    
+
 
     # # #
+
+
+    def get_d2xcpp_vectors(self):
+
+        debug_prefix = "[Core.get_d2xcpp_vectors]"
+
+        while True:
+
+            if self.controller.stop:
+                return -1
+
+            with open(self.context.d2x_cpp_vectors_out, "r") as vectorfile:
+                data = vectorfile.read()
+                if data == "":
+                    if self.context.loglevel >= 5:
+                        self.utils.log(color, debug_prefix, "Waiting for vector file contents")
+                else:
+                    break
+
+            time.sleep(0.5)
+
+        self.utils.log(color, debug_prefix, "Got vectorfile contents")
+
+        self.utils.log(color, debug_prefix, "Parsing Dandere2x C++ vectors file")
+
+        with open(self.context.d2x_cpp_vectors_out, "r") as vectorfile:
+            for line in vectorfile:
+                if not line == "\n":
+
+                    # 5162;(1900,640,1920,660) --> ["5162", "(1900,640,1920,660)"]
+                    line = line.split(";")
+
+                    vector_id = line[0]
+
+                    # ["5162", "(1900,640,1920,660)"] --> "(1900,640,1920,660)" --> 1900,640,1920,660 --> ["1900", "640", "1920", "660"]
+                    vector_tuple = line[1]
+                    vector_tuple = vector_tuple.replace("(", "")
+                    vector_tuple = vector_tuple.replace(")", "")
+                    vector_tuple = vector_tuple.split(",")
+
+                    vector_tuple = [int(n) for n in vector_tuple]
+
+                    # Create entry in dictionary, line[0] = 5162
+                    self.controller.vectors[vector_id] = vector_tuple
+
+
+        if self.context.loglevel >= 5:
+            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.vectors:")
+            self.utils.log(color, debug_prefix, self.controller.vectors)
+
+
+
+
+
+
+
+
+
+
 
 
     # Reads new content of self.context.d2x_cpp_out file
     def pipe_plugins(self):
 
-        debug_prefix = "[CoreLoop.pipe_plugins]"
+        debug_prefix = "[Core.pipe_plugins]"
 
         # Debug
         if self.context.loglevel >= 3:
@@ -175,12 +235,9 @@ class CoreLoop():
 
         # Get the new stuff APPENDED into the file
         for newstuff in self.utils.updating_file(self.context.d2x_cpp_plugins_out):
-            
+
             # Debug
-            if self.context.loglevel >= 3:
+            if self.context.loglevel >= 8:
                 self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
-                
+
             self.parse_cpp_out_newline(newstuff)
-
-
-
