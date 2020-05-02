@@ -5,11 +5,12 @@ Purpose: Dandere2x C++ wrapper for python, calls the binary
 
 Syntax:
 
-binary input block_size width height out vectors start_frame bleed residuals_output
+binary input block_size width height out vectors start_frame bleed \
+residuals_output use_mindisk zero_padding
 
 Example:
 
-dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/"
+dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/" 1 8
 
 NOTE: residuals_output must end in a os.path.sep -> "/path/to/dir/" and not
 "/path/to/dir"
@@ -44,6 +45,7 @@ color = rgb(240, 100, 64)
 
 
 class Dandere2xCPPWraper():
+
     def __init__(self, context, utils, controller, video):
 
         debug_prefix = "[Dandere2xCPPWraper.__init__]"
@@ -61,6 +63,7 @@ class Dandere2xCPPWraper():
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
+
     # Generate a run command based on Context info
     def generate_run_command(self):
 
@@ -68,7 +71,7 @@ class Dandere2xCPPWraper():
 
         # Generic command is:
         # binary input block_size width height out vectors start_frame
-        # dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals"
+        # dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/" 1
 
         self.command = [
             self.binary,
@@ -80,16 +83,17 @@ class Dandere2xCPPWraper():
             self.context.d2x_cpp_vectors_out,
             str(self.context.last_processing_frame),
             str(self.context.bleed),
-            self.context.residual
+            self.context.residual,
+            str(int(self.context.mindisk)),
+            str(self.context.zero_padding)
         ]
 
         self.utils.log(color, debug_prefix, "Run command is: %s" % self.command)
 
+
+
     # Run with SubprocessUtils the d2xcpp binary
     def run(self):
-
-        # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
-        os.system("sh dandere2x_cpp_tremx/linux_compile_full.sh")
 
         self.subprocess = SubprocessUtils("d2xcpp", self.utils)
 

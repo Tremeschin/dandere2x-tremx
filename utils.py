@@ -69,23 +69,23 @@ class Utils():
         self.context.stop = True
 
         self.log(exitcolor, debug_prefix, "Joining every thread")
-        
+
         for threadname in self.controller.threads:
             self.log(exitcolor, debug_prefix, "Joining thread: [%s]" % threadname)
             self.context.threads[threadname].join()
             self.log(exitcolor, debug_prefix, "Joined thread: [%s]" % threadname)
-        
+
         self.log(exitcolor, debug_prefix, "Goodbye Dandere2x!!")
-        
+
         exit()
 
 
-    
+
     # On where the session name is set to "auto"
     def get_auto_session_name(self, input_file):
 
         debug_prefix = "[Utils.get_auto_session_name]"
-        
+
         session_name = ''.join(input_file.split(".")[:-1]).split("/")[-1]
 
         self.log(color, debug_prefix, "Session name is AUTO, setting it to: [%s]" % session_name)
@@ -112,7 +112,7 @@ class Utils():
     # Get line number which this function is called, debugging
     def get_linenumber(self):
         return currentframe().f_back.f_lineno
-    
+
 
     # Transform eg. zero_padded(23, 5) -> 00023
     def zero_padded(self, number, digits):
@@ -138,14 +138,14 @@ class Utils():
 
     # Reset file (write empty) or create it
     def reset_file(self, filename):
-        
+
         debug_prefix = "[Utils.reset_file]"
 
         if os.path.isfile(filename):
             self.log(color, debug_prefix, "File exists, reseting it: [%s]" % filename)
         else:
             self.log(color, debug_prefix, "File does NOT exist, creating empty: [%s]" % filename)
-        
+
         with open(filename, "w") as f:
             f.write("")
 
@@ -188,10 +188,10 @@ class Utils():
             self.reset_file(item)
 
 
-    
-    # Deletes an directory, fail safe? Quits if 
+
+    # Deletes an directory, fail safe? Quits if
     def reset_dir(self, directory):
-        
+
         debug_prefix = "[Utils.reset_dir]"
 
         if os.path.isdir(directory):
@@ -202,15 +202,15 @@ class Utils():
 
             if os.path.isdir(directory):
                 self.log(color, debug_prefix, "Error removing directory with ignore_errors=True, trying again")
-                
+
                 shutil.rmtree(directory, ignore_errors=False)
 
                 if os.path.isdir(directory):
                     self.log(fg.li_red, debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
                     self.exit()
-            
+
             self.log(color, debug_prefix, "Removed successfully")
-        
+
         else:
             self.log(color, debug_prefix, "Directory exists, skipping... [%s]" % directory)
 
@@ -258,7 +258,7 @@ class Utils():
     # Get the output of a command with subprocess module with check_output
     def command_output_subprocess(self, command):
         return subprocess.check_output(command, stderr=subprocess.STDOUT).decode("utf-8")
-    
+
 
     # "Pipe" subprocess stdout to python
     def command_output_subprocess_with_stdout(self, command):
@@ -284,7 +284,7 @@ class Utils():
             f.write("")
 
         self.log(color, debug_prefix, "Reseted log file")
-    
+
 
     # Move file with shutil
     def move(self, source, destination):
@@ -308,7 +308,7 @@ class Utils():
         self.logfile = new_logfile
 
         self.log(color, debug_prefix, "Setted logfile to [%s]" % new_logfile)
-        
+
 
 
     def log(self, color, *message):
@@ -316,7 +316,7 @@ class Utils():
         now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
 
         processed_message = "[%s] " % now
-        
+
         # Basically we define *message as an argument so we have to
         # "merge" it, ' '.join(everything)
         for index, item in enumerate(message):
@@ -371,7 +371,7 @@ class Utils():
                 time.sleep(0.1)
                 continue
             yield line
-            
+
 
 
     # Check if context_vars file exist and returns the "resume" key value
@@ -379,21 +379,21 @@ class Utils():
 
         debug_prefix = "[Utils.check_resume]"
 
-        self.log(color, debug_prefix, "Checking") 
+        self.log(color, debug_prefix, "Checking")
 
         vars_file = self.context.context_vars
 
         if os.path.isfile(vars_file):
-            
+
             data = self.load_yaml(vars_file)
 
             if "resume" in data:
-                
+
                 text = "True" if data["resume"] else "False"
-                self.log(color, debug_prefix, "Resume key in session vars: [%s]" % text) 
-                
+                self.log(color, debug_prefix, "Resume key in session vars: [%s]" % text)
+
                 return data["resume"]
-            
+
             self.log(color, debug_prefix, "Resume key not in session vars: [False]")
             return False
         else:
@@ -401,7 +401,7 @@ class Utils():
             return False
 
 
-    
+
     # Waits until file exist or controller stop var is True
     def until_exist(self, path):
 
@@ -411,14 +411,14 @@ class Utils():
             self.log(color, debug_prefix, "Waiting for file or diretory: [%s]" % path)
 
         while True:
-            
+
             if os.path.exists(path) or self.controller.stop:
                 if self.context.loglevel >= 3:
                     if self.controller.stop:
                         self.log(color, debug_prefix, "Quitting waiting: [%s]" % path)
                     else:
                         self.log(color, debug_prefix, "Waited done: [%s]" % path)
-                
+
                 break
 
             time.sleep(self.context.wait_time)
@@ -443,7 +443,7 @@ class Utils():
         # Debug info, show the original string to be replaced and the dictionary
         if self.context.loglevel >= 3:
             debug_prefix = "[Utils.replace_by_dictionary]"
-            
+
             self.log(color, debug_prefix, "Replacing string [\"%s\"] with dictionary:" % replaced)
 
             for key in list(dictionary.keys()):
@@ -456,8 +456,8 @@ class Utils():
 
 
         if self.context.loglevel >= 3:
-            self.log(color, debug_prefix, "Replaced string: [\"%s\"]" % replaced) 
-        
+            self.log(color, debug_prefix, "Replaced string: [\"%s\"]" % replaced)
+
         return replaced
 
 
@@ -485,9 +485,9 @@ class Utils():
 
         # Linux way of life
         if self.context.os == "linux":
-            
+
             command = "whereis " + wanted
-        
+
             self.log(color, debug_prefix, "Sending command to verify:", command)
 
             out = self.command_output(command).replace("\n", "")
@@ -495,7 +495,7 @@ class Utils():
             self.log(color, debug_prefix, "Got output:", out)
 
             if not out == wanted + ":":
-                
+
                 # out = "ls: /usr/bin/ls /usr/share/man/man1/ls.1p.gz /usr/share/man/man1/ls.1.gz"
                 # out = "asdasd:"
 
@@ -513,16 +513,16 @@ class Utils():
                 self.log(color, debug_prefix, "Searching [%s] in ./externals/*" % wanted)
 
                 full_path_wanted = None
-                
+
 
                 # Iterate into externals file tree
                 # for root, dirs, files (annoying warning messages and "_" is ignore as we don't use dirs)
                 for root, _, files in os.walk(self.context.ROOT + os.path.sep + "externals"):
-                    
+
                     # Exit loop as the file was found as we're inside two loops
                     if not full_path_wanted == None:
                         break
-                    
+
                     # For every file in a folder
                     for f in files:
 
@@ -530,7 +530,7 @@ class Utils():
                         if self.context.loglevel >= 5:
                             self.log(color, debug_prefix, "[DEBUG] Scanning [%s] == [%s]" % (wanted, f))
 
-                        
+
                         # If wanted matches some file name we're looping
                         if wanted in f.lower():
 
@@ -538,16 +538,16 @@ class Utils():
                             full_path_wanted = os.path.join(root, wanted)
 
                             self.log(rgb(0, 255, 0), debug_prefix, "Got executable, full path: [%s]" % full_path_wanted)
-                            
+
                             # Exit "for every file in a folder" loop
                             break
-                
+
 
                 # Nothing was found, exit
                 if full_path_wanted == None:
                     self.log(color, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, wanted))
                     self.exit()
-                
+
 
                 # This will yield false on Linux if forcing windows mode for debugging
                 # because Windows is case insensitive and Linux case sensitive
@@ -568,23 +568,23 @@ class Utils():
             self.log(color, debug_prefix, "Searching [%s] in ./externals/*" % executable)
 
             full_path_executable = None
-            
+
 
             # Iterate into externals file tree
             # for root, dirs, files (annoying warning messages and "_" is ignore as we don't use dirs)
             for root, _, files in os.walk(self.context.ROOT + os.path.sep + "externals"):
-                
+
                 # Exit loop as the file was found as we're inside two loops
                 if not full_path_executable == None:
                     break
-                
+
                 # For every file in a folder
                 for f in files:
 
                     # Hard debug
                     if self.context.loglevel >= 5:
                         self.log(color, debug_prefix, "[DEBUG] Scanning [%s] == [%s]" % (executable, f))
-                    
+
                     # If executable matches some file name we're looping
                     if executable in f.lower():
 
@@ -592,16 +592,15 @@ class Utils():
                         full_path_executable = os.path.join(root, executable)
 
                         self.log(rgb(0, 255, 0), debug_prefix, "Got executable, full path: [%s]" % full_path_executable)
-                        
+
                         # Exit "for every file in a folder" loop
                         break
-            
+
 
             # Nothing was found, exit
             if full_path_executable == None:
                 self.log(color, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, executable))
                 self.exit()
-            
 
             # This will yield false on Linux if forcing windows mode for debugging
             # because Windows is case insensitive and Linux case sensitive
@@ -609,7 +608,7 @@ class Utils():
                 self.log(color, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (executable, full_path_executable))
                 return full_path_executable
 
-            
+
 
 class SubprocessUtils():
 
@@ -631,7 +630,7 @@ class SubprocessUtils():
         self.utils.log(color, debug_prefix, list)
 
         self.command = list
-    
+
 
     def run(self):
 
@@ -671,5 +670,3 @@ class SubprocessUtils():
         else:
             self.utils.log(color, debug_prefix, " SubprocessUtils with name [%s] is not alive" % self.name)
             return False
-            
-

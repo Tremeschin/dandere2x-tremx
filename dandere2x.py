@@ -29,16 +29,15 @@ from color import rgb, color_by_name
 
 from d2xcpp import Dandere2xCPPWraper
 from vp import VapourSynthWrapper
-from processing import Processing
 from controller import Controller
+from processing import Processing
 from d2xmath import D2XMath
-from plugins import Plugins
 from context import Context
 from waifu2x import Waifu2x
-from core import Core
 from frame import Frame
 from video import Video
 from utils import Utils
+from core import Core
 
 import argparse
 import time
@@ -54,6 +53,9 @@ class Dandere2x():
 
     def __init__(self, args):
         self.args = args
+
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
+        os.system("sh dandere2x_cpp_tremx/linux_compile_full.sh")
 
 
     # This function loads up the "core" variables and objects
@@ -92,19 +94,9 @@ class Dandere2x():
         self.video = Video(self.context, self.utils, self.controller)
 
 
-        # "Layers" of processing before the actual upscale from Waifu2x
-        self.utils.log(color, debug_prefix, "Creating Plugins()")
-        self.plugins = Plugins(self.context, self.utils, self.controller)
-
-
         # Our upscale wrapper, on which the default is Waifu2x
         self.utils.log(color, debug_prefix, "Creating Waifu2x()")
         self.waifu2x = Waifu2x(self.context, self.utils, self.controller)
-
-
-        # Deals with Plugins
-        self.utils.log(color, debug_prefix, "Creating Processing()")
-        self.processing = Processing(self.context, self.utils, self.controller)
 
 
         # Math utils, specific cases for Dandere2x
@@ -117,20 +109,27 @@ class Dandere2x():
         self.d2xcpp = Dandere2xCPPWraper(self.context, self.utils, self.controller, self.video)
 
 
-        # On where everything is controlled and starts
-        self.utils.log(color, debug_prefix, "Creating Core()")
-        self.core = Core(self.context, self.utils, self.controller, self.plugins, self.waifu2x, self.d2xcpp)
-
-
         # Deals with images, mostly numpy wrapper and special functions like block substitution
         self.utils.log(color, debug_prefix, "Creating Frame()")
         self.frame = Frame(self.context, self.utils, self.controller)
+
+
+        # "Layers" of processing before the actual upscale from Waifu2x
+        self.utils.log(color, debug_prefix, "Creating Processing()")
+        self.processing = Processing(self.context, self.utils, self.controller, self.frame, self.video)
+
+
+        # On where everything is controlled and starts
+        self.utils.log(color, debug_prefix, "Creating Core()")
+        self.core = Core(self.context, self.utils, self.controller, self.waifu2x, self.d2xcpp, self.processing)
 
 
         # Vapoursynth wrapper
         self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
         self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
 
+
+        test = self.frame
 
 
 
@@ -342,6 +341,7 @@ class Dandere2x():
 
         self.utils.log(phasescolor, "# # [Run phase] # #")
 
+        '''
         self.utils.log(phasescolor, "# # TESTING FRAME() # #")
         frame = Frame(self.context, self.utils, self.controller)
         frame.load_from_path(self.context.ROOT + os.path.sep + "small.png")
@@ -354,6 +354,7 @@ class Dandere2x():
         frame2.save("small_copy.png")
 
         self.utils.log(phasescolor, "# # END FRAME() # #")
+        '''
 
 
         # If
@@ -369,7 +370,9 @@ class Dandere2x():
         # Simulate exiting
         self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
 
-        for i in range(15, 0, -1):
+        for i in range(120, 0, -1):
+            if self.controller.stop:
+                break
             self.utils.log(color, debug_prefix, i)
             time.sleep(1)
 

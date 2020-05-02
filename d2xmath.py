@@ -69,8 +69,8 @@ class D2XMath():
 
         if "%" in str(self.context.block_size):
             percentage = round(float(block_size.replace("%", "")) / 100, 6)
-            video_dimentions_min = min(height, width)
-            theoric_block_size = round(video_dimentions_min * percentage, 3)
+            video_dimensions_min = min(height, width)
+            theoric_block_size = round(video_dimensions_min * percentage, 3)
             rounded_theoric = round(theoric_block_size)
 
             # Round $n$ to the nearest $base$ multiple ==> round = base * round(x/base)
@@ -79,7 +79,7 @@ class D2XMath():
 
             self.utils.log(color, debug_prefix, "Block size set to percentage:", percentage)
             self.utils.log(color, debug_prefix, "Video height:", height, " - Video width:", width)
-            self.utils.log(color, debug_prefix, "Minimum value of video dimentions is:", video_dimentions_min)
+            self.utils.log(color, debug_prefix, "Minimum value of video dimensions is:", video_dimensions_min)
             self.utils.log(color, debug_prefix, "Theoric block_size:", theoric_block_size)
             self.utils.log(color, debug_prefix, "Rounded theoric block_size:", rounded_theoric)
             self.utils.log(color, debug_prefix, "Fitted to nearest 4 multiple:", block_size)

@@ -29,16 +29,16 @@ color = rgb(0, 115, 255)
 
 
 class Core():
-    def __init__(self, context, utils, controller, plugins, waifu2x, d2xcpp):
+    def __init__(self, context, utils, controller, waifu2x, d2xcpp, processing):
 
         debug_prefix = "[Core.__init__]"
 
         self.context = context
         self.utils = utils
         self.controller = controller
-        self.plugins = plugins
         self.waifu2x = waifu2x
         self.d2xcpp = d2xcpp
+        self.processing = processing
 
         self.ROOT = self.context.ROOT
 
@@ -51,12 +51,16 @@ class Core():
         debug_prefix = "[Core.start]"
 
 
-        self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.pipe_plugins)
+        self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.get_new_d2xcpp_content_loop)
         self.utils.log(color, debug_prefix, "Created thread Core.pipe_plugin_thread")
 
 
         self.controller.threads["danderere2x_cpp_thread"] = threading.Thread(target=self.d2xcpp.run)
         self.utils.log(color, debug_prefix, "Created thread Core.danderere2x_cpp_thread")
+
+
+        self.controller.threads["processing"] = threading.Thread(target=self.processing.run)
+        self.utils.log(color, debug_prefix, "Created thread Core.processing")
 
 
         # For debugging purposes
@@ -83,7 +87,7 @@ class Core():
             self.controller.threads[thread].start()
 
 
-    # # # These are "parsers" for the Dandere2x C++ part that loads the stuff we need (or not) into self.cpp_data
+    # # # These are "parsers" for the Dandere2x C++ part that loads the stuff we need (or not) into self.block_match_data
 
 
     # Parse newline of cpp_out, generic
@@ -110,10 +114,11 @@ class Core():
         line_type = line[0]
         line_referred_frame = line[1]
 
-        self.controller.cpp_data[line_referred_frame] = {
+        self.controller.block_match_data[line_referred_frame] = {
             "type": line_type,
             "data": data
         }
+
 
         return line
 
@@ -157,9 +162,9 @@ class Core():
                     self.parse_cpp_out_newline(line)
 
 
-        if self.context.loglevel >= 5:
-            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.cpp_data:")
-            self.utils.log(color, debug_prefix, self.controller.cpp_data)
+        if self.context.loglevel >= 10:
+            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.block_match_data:")
+            self.utils.log(color, debug_prefix, self.controller.block_match_data)
 
 
     # # #
@@ -191,14 +196,16 @@ class Core():
         with open(self.context.d2x_cpp_vectors_out, "r") as vectorfile:
             for line in vectorfile:
                 if not line == "\n":
-
+                    # 0;(0,0,20,20)
                     # 5162;(1900,640,1920,660) --> ["5162", "(1900,640,1920,660)"]
+
                     line = line.split(";")
 
                     vector_id = line[0]
 
                     # ["5162", "(1900,640,1920,660)"] --> "(1900,640,1920,660)" --> 1900,640,1920,660 --> ["1900", "640", "1920", "660"]
                     vector_tuple = line[1]
+
                     vector_tuple = vector_tuple.replace("(", "")
                     vector_tuple = vector_tuple.replace(")", "")
                     vector_tuple = vector_tuple.split(",")
@@ -209,7 +216,7 @@ class Core():
                     self.controller.vectors[vector_id] = vector_tuple
 
 
-        if self.context.loglevel >= 5:
+        if self.context.loglevel >= 10:
             self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.vectors:")
             self.utils.log(color, debug_prefix, self.controller.vectors)
 
@@ -225,9 +232,9 @@ class Core():
 
 
     # Reads new content of self.context.d2x_cpp_out file
-    def pipe_plugins(self):
+    def get_new_d2xcpp_content_loop(self):
 
-        debug_prefix = "[Core.pipe_plugins]"
+        debug_prefix = "[Core.get_new_d2xcpp_content_loop]"
 
         # Debug
         if self.context.loglevel >= 3:
@@ -236,8 +243,9 @@ class Core():
         # Get the new stuff APPENDED into the file
         for newstuff in self.utils.updating_file(self.context.d2x_cpp_plugins_out):
 
-            # Debug
-            if self.context.loglevel >= 8:
-                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
-
             self.parse_cpp_out_newline(newstuff)
+
+            # Debug
+            if self.context.loglevel >= 10:
+                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
+                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", self.controller.block_match_data)

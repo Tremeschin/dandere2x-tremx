@@ -23,6 +23,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+from utils import SubprocessUtils
 from color import rgb, fg
 
 import time
@@ -33,7 +34,7 @@ color = rgb(255, 200, 10)
 
 
 class Waifu2x():
-    
+
     def __init__(self, context, utils, controller):
         self.context = context
         self.utils = utils
@@ -46,7 +47,7 @@ class Waifu2x():
     def set_corresponding(self):
 
         debug_prefix = "[Waifu2x.set_corresponding]"
-        
+
         c = fg.li_magenta # Print this color only in this class
 
         self.utils.log(c, debug_prefix, "According to the following, ...")
@@ -71,7 +72,6 @@ class Waifu2x():
             self.utils.log(c, debug_prefix, "Chosen waifu2x and or OS not found: [%s]" % option)
 
         self.waifu2x.init(self.context, self.utils, self.controller)
-        
 
     def verify(self):
         self.waifu2x.verify()
@@ -109,7 +109,7 @@ class Waifu2xLinuxVulkan():
         self.context = context
         self.utils = utils
         self.controller = controller
-        
+
         debug_prefix = "[Waifu2xLinuxVulkan.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
@@ -134,16 +134,9 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
-        # The raw command
-        self.command = self.binary + " -n [DENOISE_LEVEL] -t [TILE_SIZE] -i [INPUT] -o [OUTPUT]"
+        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size)]
 
-        # Substitute accordingly
-        self.command = self.utils.replace_by_dictionary({
-            "[DENOISE_LEVEL]": str(self.context.denoise_level),
-            "[TILE_SIZE]": str(self.context.tile_size)
-        }, self.command)
-    
-        self.utils.log(color, debug_prefix, "Run command is: [\"%s\"]" % self.command)
+        self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
 
     # Call the command and upscale a file or directory
@@ -151,19 +144,28 @@ class Waifu2xLinuxVulkan():
 
         debug_prefix = "[Waifu2xLinuxVulkan.upscale]"
 
-        # Substitute the command
-        command = self.utils.replace_by_dictionary({
-            "[INPUT]": input_path,
-            "[OUTPUT]": output_path
-        }, self.command)
+        # Get a clone of basic usage and extend it based on the I/O
+        command = self.command + ["-i", input_path, "-o", output_path]
 
         if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"] - Command: [\"%s\"]" % (input_path, output_path, command))
+            self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+            self.utils.log(color, debug_prefix, "Command is %s" % command)
 
-        os.system(command)
+        subprocess = SubprocessUtils("waifu2x-ncnn-vulkan", self.utils)
+
+        subprocess.from_list(command)
+
+        subprocess.run()
+
+        while subprocess.is_alive():
+            time.sleep(0.5)
+            if self.controller.stop is True:
+                subprocess.terminate()
 
 
-    # Persistent upscaling 
+
+
+    # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):
 
         debug_prefix = "[Waifu2xLinuxVulkan.keep_upscaling]"
@@ -182,16 +184,16 @@ class Waifu2xLinuxVulkan():
             else:
                 if self.context.loglevel >= 3:
                     self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
-            
-            # Do not call it 
+
+            # Do not call it
             time.sleep(self.context.waifu2x_wait_for_residuals)
-        
+
         self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
 
 
 # Waifu2x Linux CPP (converter-cpp) wrapper
 class Waifu2xLinuxCPP():
-    
+
     def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
@@ -255,4 +257,3 @@ class Waifu2xWindowsCaffe():
         debug_prefix = "[Waifu2xWindowsCaffe.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
-

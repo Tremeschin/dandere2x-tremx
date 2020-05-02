@@ -21,14 +21,14 @@
 
 session_name: auto
 waifu2x_type: vulkan
-mindisk: false
+mindisk: true
 
 basic:
-  input_file: samples/yn_moving.mkv
+  input_file: samples/yn_moving_480.mkv
   output_file: samples/yn_moving2x.mkv
 
 waifu2x:
-  denoise_level: 3
+  denoise_level: 0
   tile_size: 200
 
 video:
@@ -43,7 +43,7 @@ ffmpeg:
 
 processing:
   extracted_images_extension: .jpg
-  block_size: 500
+  block_size: 20
   bleed: 2
 
 vapoursynth:
@@ -54,7 +54,7 @@ vapoursynth:
   pos: transpose # name of filter within ./vpys/$NAME$, applied after everything
 
 developer:
-  loglevel: 5
+  loglevel: 8
   wait_time_exists: 0.05
   waifu2x_wait_for_residuals: 1 # time waifu2x sleeps after upscaling everything or nothing from residuals
 
@@ -63,4 +63,4 @@ specific: # just ideas at the moment
   log_full_path: false # Log full path instead of relative path to D2X's ROOT folder
 
 debug:
-  enable_waifu2x: false
+  enable_waifu2x: true

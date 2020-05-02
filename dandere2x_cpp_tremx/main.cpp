@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <math.h>
+#include <chrono>
+#include <thread>
 
 #include "constants.h"
 
@@ -51,51 +53,13 @@
 
 
 
-cv::Mat createOne(std::vector<cv::Mat> & images, int cols, int min_gap_size)
-{
-    // let's first find out the maximum dimensions
-    int max_width = 0;
-    int max_height = 0;
-    for ( int i = 0; i < images.size(); i++) {
-        // check if type is correct
-        // you could actually remove that check and convert the image
-        // in question to a specific type
-        if ( i > 0 && images[i].type() != images[i-1].type() ) {
-            std::cerr << "WARNING:createOne failed, different types of images";
-            return cv::Mat();
-        }
-        max_height = std::max(max_height, images[i].rows);
-        max_width = std::max(max_width, images[i].cols);
-    }
-    // number of images in y direction
-    int rows = std::ceil(images.size() / cols);
 
-    // create our result-matrix
-    cv::Mat result = cv::Mat::zeros(rows*max_height + (rows-1)*min_gap_size,
-                                    cols*max_width + (cols-1)*min_gap_size, images[0].type());
-    size_t i = 0;
-    int current_height = 0;
-    int current_width = 0;
-    for ( int y = 0; y < rows; y++ ) {
-        for ( int x = 0; x < cols; x++ ) {
-            if ( i >= images.size() ) // shouldn't happen, but let's be safe
-                return result;
-            // get the ROI in our result-image
-            cv::Mat to(result,
-                       cv::Range(current_height, current_height + images[i].rows),
-                       cv::Range(current_width, current_width + images[i].cols));
-            // copy the current image to the ROI
-            images[i++].copyTo(to);
-            current_width += max_width + min_gap_size;
-        }
-        // next line - reset width and update height
-        current_width = 0;
-        current_height += max_height + min_gap_size;
+namespace utils {
+    bool file_exists (const std::string& fname) {
+        std::ifstream f(fname.c_str());
+        return f.good();
     }
-    return result;
 }
-
-
 
 
 
@@ -170,16 +134,16 @@ namespace residual_functions {
             // Get the block number
             int n_blocks = matlist.size();
 
-            // Get the best fit dimentions, see residual_functions::best_fit for the functions
-            std::vector<int> dimentions = residual_functions::best_fit::best_grid_fit(n_blocks);
+            // Get the best fit dimensions, see residual_functions::best_fit for the functions
+            std::vector<int> dimensions = residual_functions::best_fit::best_grid_fit(n_blocks);
 
-            // Calculate the cv::Mat dimentions with bleed added for Width and Height
+            // Calculate the cv::Mat dimensions with bleed added for Width and Height
             // Bleed is applied between blocks and on the image borders
 
-            //std::cout << "best fit dimentions: " << dimentions[0] << ", " << dimentions[1] << " with size: " << n_blocks << std::endl;
+            //std::cout << "best fit dimensions: " << dimensions[0] << ", " << dimensions[1] << " with size: " << n_blocks << std::endl;
 
-            int residual_width  = bleed + ( (bleed + block_size)*dimentions[0] );
-            int residual_height = bleed + ( (bleed + block_size)*dimentions[1] );
+            int residual_width  = bleed + ( (bleed + block_size)*dimensions[0] );
+            int residual_height = bleed + ( (bleed + block_size)*dimensions[1] );
 
             //std::cout << "residual size pixels: " << residual_width << ", " << residual_height << std::endl;
 
@@ -192,8 +156,8 @@ namespace residual_functions {
             cv::Mat current_block;
             int count = 0;
 
-            for(int y=0; y < dimentions[1]; y++) {
-                for(int x=0; x < dimentions[0]; x++) {
+            for(int y=0; y < dimensions[1]; y++) {
+                for(int x=0; x < dimensions[0]; x++) {
 
                     //std::cout << y << " - " << x << std::endl;
 
@@ -222,6 +186,7 @@ namespace residual_functions {
 
 exit_iteration:
 
+
             return residual;
         }
     }
@@ -237,8 +202,7 @@ exit_iteration:
 
 
 //http://jepsonsblog.blogspot.com/2012/10/overlay-transparent-image-in-opencv.html
-void overlayImage(const cv::Mat &background, const cv::Mat &foreground,
-  cv::Mat &output, cv::Point2i location)
+void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location)
 {
     background.copyTo(output);
 
@@ -312,14 +276,6 @@ double calculate_psnr(const cv::Mat& I1, const cv::Mat& I2)
 }
 
 
-
-
-
-
-
-
-
-
 // NOT USED DEFAULT, HERE FOR REFERENCE
 
 cv::Scalar calculate_mssim( const cv::Mat& i1, const cv::Mat& i2)
@@ -376,11 +332,6 @@ cv::Scalar calculate_mssim( const cv::Mat& i1, const cv::Mat& i2)
 }
 
 
-
-
-
-
-
 // NOT USED, HERE FOR REFERENCE
 
 // SSIM returns [0.815287, 0.785487, 0.776612, 0] for example so we gotta "average" the channels
@@ -396,10 +347,6 @@ double fit_ssim(const double red, const double green, const double blue, double 
 #endif
 
 }
-
-
-
-
 
 
 
@@ -488,37 +435,35 @@ double calculate_mse(cv::Mat I1, cv::Mat I2)
 
 
 
-int process_video(const std::string video_path, const int block_size,
-                  const int width, const int height, const std::string output_d2x_file,
-                  const std::string output_vectors_path, const int start_frame,
-                  const int bleed, const std::string residuals_output) {
-
+int process_video(const std::string video_path,
+                  const int block_size,
+                  const int width,
+                  const int height,
+                  const std::string output_d2x_file,
+                  const std::string output_vectors_path,
+                  const int start_frame,
+                  const int bleed,
+                  const std::string residuals_output,
+                  const bool mindisk,
+                  const int zero_padding)
+{
 
     std::string debug_prefix = "[main.cpp/process_video] ";
 
 
-
     // // Set up output file.d2x
-
     std::ofstream output_file;
 
-
     // Open file in append mode
-    //output_file.open(output_d2x_file, std::ios_base::app);
+    output_file.open(output_d2x_file, std::ios_base::app);
 
-    // TODO:
-    output_file.open(output_d2x_file);
-
-
-    //output_file << "Writing this to a file.\n";
-
+    // Open file in overwrite mode
+    // output_file.open(output_d2x_file);
 
 
     // // Get iteration info on how much to break the video into blocks
-
     int width_iterations = std::ceil(static_cast<double>(width) / block_size);
     int height_iterations = std::ceil(static_cast<double>(height) / block_size);
-
 
     // Create variables for the crop positions of blocks
     int start_x;
@@ -553,22 +498,22 @@ int process_video(const std::string video_path, const int block_size,
         // Begin slice image into blocks
         for (int x=0; x < width_iterations; x++) {
 
-            start_x = (x * block_size);
-            end_x = start_x + block_size;
+            start_x = (x * block_size)*2;
+            end_x = start_x + (block_size*2);
 
             // If x it surpasses the width
-            end_x = std::min(width, end_x);
+            end_x = std::min((width*2), end_x);
 
 
             for (int y=0; y < height_iterations; y++) {
 
-                start_y = (y * block_size);
-                end_y = start_y + block_size;
+                start_y = (y * block_size)*2;
+                end_y = start_y + (block_size*2);
 
                 // If y it surpasses the height
-                end_y = std::min(height, end_y);
+                end_y = std::min((height*2), end_y);
 
-                output_vectors_file << vector_id << ";(" << start_x << "," << start_y << "," << end_x << "," << end_y << ")\n";
+                output_vectors_file << vector_id << ";(" << start_x << "," << start_y << "," << end_x-1 << "," << end_y-1 << ")\n";
                 vector_id++;
             }
         }
@@ -964,9 +909,22 @@ int process_video(const std::string video_path, const int block_size,
 
             cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
 
-            //cv::Mat residual = createOne(matched_blocks, grid_colums, 2);
+            int max_frames_ahead = 10;
+            int max_frames_ahead_wait = count_frame - max_frames_ahead;
 
-            std::string residual_name = residuals_output + "residual_" + std::string(8 - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
+            std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
+
+            std::string residual_name_mindisk = residuals_output + "residual_" + std::string(zero_padding - std::to_string(max_frames_ahead_wait).length(), '0') + std::to_string(max_frames_ahead_wait) + ".jpg";
+
+            // Mindisk utility, wait for the file - max_frames_ahead to be deleted
+            while (mindisk && utils::file_exists(residual_name_mindisk)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                #if VERBOSE_DEBUG
+                    std::cout << "Waiting for residual [" << residual_name_mindisk << "] to be deleted" << std::endl;
+                #endif
+
+            }
 
             cv::imwrite(residual_name, residual);
 
@@ -1009,6 +967,10 @@ int process_video(const std::string video_path, const int block_size,
 
 
 
+
+
+
+
 int main(int argc, char** argv) {
 
 
@@ -1038,7 +1000,7 @@ int main(int argc, char** argv) {
 
     // Failsafe number of arguments
 
-    const int expected_args = 10;
+    const int expected_args = 12;
 
 
 #if SHOW_MAIN_OPTIONS
@@ -1055,8 +1017,6 @@ int main(int argc, char** argv) {
     }
 
 
-
-
     /* The argument orders must be:
      *
      * - video path
@@ -1068,6 +1028,8 @@ int main(int argc, char** argv) {
      * - start_frame
      * - bleed
      * - residuals_output
+     * - mindisk mode on / off [1/0]
+     * - zero padding (residuals files)
      */
 
 
@@ -1085,6 +1047,14 @@ int main(int argc, char** argv) {
 
     std::string residuals_output = argv[9];
 
+    int mindisk_argv = atoi(argv[10]);
+
+    int zero_padding = atoi(argv[11]);
+
+    bool mindisk;
+
+
+
 #if SHOW_MAIN_OPTIONS
     // Show the info
     {
@@ -1097,10 +1067,10 @@ int main(int argc, char** argv) {
         std::cout << debug_prefix << "start_frame: " << start_frame << '\n';
         std::cout << debug_prefix << "bleed: " << bleed << '\n';
         std::cout << debug_prefix << "residuals_output: " << residuals_output << '\n';
+        std::cout << debug_prefix << "mindisk_argv: " << mindisk_argv << '\n';
+        std::cout << debug_prefix << "zero_padding: " << zero_padding << '\n';
         std::cout << '\n' << debug_prefix << "Any zero value on int is invalid, cheking.. ";
     };
-
-
 
     // Check for invalid passed values
     if (block_size == 0) {
@@ -1119,9 +1089,20 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Pass\n";
+
 #endif
 
-    process_video(video_path, block_size, width, height, output_d2x_file, output_vectors_path, start_frame, bleed, residuals_output);
+
+    if (mindisk_argv == 1) {
+        mindisk = true;
+    } else if (mindisk_argv == 0) {
+        mindisk = false;
+    } else {
+        std::cout << debug_prefix << "Mindisk mode not 0 or 1 recieved from argv" << std::endl;
+        std::exit(-1);
+    }
+
+    process_video(video_path, block_size, width, height, output_d2x_file, output_vectors_path, start_frame, bleed, residuals_output, mindisk, zero_padding);
 
     return 0;
 }

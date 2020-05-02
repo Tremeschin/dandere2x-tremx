@@ -164,7 +164,7 @@ class Context():
         dirs = {
             "residual": "//ROOT//|sessions|//SESSION//|residual|",
             "upscaled": "//ROOT//|sessions|//SESSION//|upscaled",
-            "iframes": "//ROOT//|sessions|//SESSION//|iframes",
+            "merged": "//ROOT//|sessions|//SESSION//|merged|",
             "processing": "//ROOT//|sessions|//SESSION//|processing",
             "session": "//ROOT//|sessions|//SESSION//"
         }
@@ -187,7 +187,7 @@ class Context():
 
         self.residual = None
         self.upscaled = None
-        self.iframes = None
+        self.merged = None
         self.session = None
 
         self.d2x_cpp_vectors_out = None
@@ -263,7 +263,7 @@ class Context():
 
                 # #
 
-                # Set the value based on the "category" -> self.residual, self.upscaled, self.iframes
+                # Set the value based on the "category" -> self.residual, self.upscaled, self.merged
                 setattr(self, category, subname)
 
                 self.utils.log(color, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, subname))
@@ -284,7 +284,7 @@ class Context():
             "residual", "ROOT", "resume", "os", "input_file", "output_file",
             "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
             "valid_resolution", "frame_rate", "frame_count", "session",
-            "upscaled", "iframes", "d2x_cpp_plugins_out", "context_vars", "plain_dirs",
+            "upscaled", "merged", "d2x_cpp_plugins_out", "context_vars", "plain_dirs",
             "plain_files", "denoise_level", "tile_size", "last_processing_frame",
             "get_frame_count_method", "get_frame_rate_method", "zero_padding",
             "loglevel", "input_filename", "output_filename", "extracted_images_extension",

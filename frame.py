@@ -48,9 +48,9 @@ class Frame():
 
     frame2 = Frame()
     frame2.new(1920, 1080)
-    
+
     frame2.duplicate(frame)
-    
+
     frame2.save("yn_copy.jpg")
 
     """
@@ -65,7 +65,7 @@ class Frame():
         self.width = None
         self.height = None
         self.name = None
-        
+
 
 
     # fuck this function, lmao. Credits to
@@ -86,11 +86,11 @@ class Frame():
             A_slices = tuple(map(slice, A_start, A_start + shape + 1))
             B[B_slices] = A[A_slices]
 
-            if self.context.loglevel >= 3:
+            if self.context.loglevel >= 9:
                 self.utils.log(color, debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
 
-        except ValueError:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block")
+        except ValueError as e:
+            self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block: ", e)
             self.controller.exit()
 
 
@@ -118,7 +118,7 @@ class Frame():
             if self.context.loglevel >= 3:
                 self.utils.log(color, debug_prefix, "Copied from fade, args = {%s, %s, %s, %s}" % (A_start,B_start,B_end,scalar))
 
-        except ValueError:
+        except ValueError as e:
             self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block from fade")
             self.controller.exit()
 
@@ -164,7 +164,7 @@ class Frame():
         if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Waiting for: [%s]" % filename)
 
-        self.utils.until_exists()
+        self.utils.until_exist(filename)
         self.load_from_path(filename)
 
 
@@ -183,7 +183,7 @@ class Frame():
             jpegsave.save(directory + "temp" + extension, format='JPEG', subsampling=0, quality=100)
             self.utils.until_exist(directory + "temp" + extension)
             self.utils.rename(directory + "temp" + extension, directory)
-        
+
         elif "png" in extension:
             save_image = self.image_array()
             save_image.save(directory + "temp" + extension, format='PNG')
@@ -332,49 +332,6 @@ class Frame():
             self.controller.exit()
 
 
-    def create_bleeded_image(self, bleed):
-        """
-        For residuals processing, pixels may or may not exist when trying to create an residual image based
-        off the residual blocks, because of padding. This function will make a larger image, and place the same image
-        within the larger image, effectively creating a black bleed around the image itself.
-
-        For example, pretend the series of 1's is a static image
-
-        111
-        111
-        111
-
-        And we need to get the top left most block, with image padding of one pixel. However, no pixels exist. So we
-        create a bleeded image,
-
-        00000
-        01110
-        01110
-        01110
-        00000
-
-        Then we can create a residual image of the top left pixel with a padding of one pixel, which would yield
-
-        000
-        011
-        011
-
-        """
-
-        shape = self.frame.shape
-        x = shape[0] + bleed + bleed
-        y = shape[1] + bleed + bleed
-        out_image = np.zeros([x, y, 3], dtype=np.uint8)
-        self.copy_from(self.frame, out_image, (0, 0), (bleed, bleed), (shape[0] + bleed - 1, shape[1] + bleed - 1))
-
-        im_out = Frame(self.context, self.utils, self.controller)
-        im_out.frame = out_image
-        im_out.width = out_image.shape[1]
-        im_out.height = out_image.shape[0]
-
-        return im_out
 
     def mean(self, other):
         return numpy.mean((self.frame - other.frame) ** 2)
-
-        

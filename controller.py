@@ -4,7 +4,7 @@
 Purpose: Non constant and runtime dependent variables for communicating
 between Python scripts
 
-Holds for example the cpp_data we parse with core.py and a signal to stop d2x
+Holds for example the block_match_data we parse with core.py and a signal to stop d2x
 
 ===============================================================================
 
@@ -33,7 +33,7 @@ class Controller():
         self.context = context
 
         self.stop = False
-        self.cpp_data = {}
+        self.block_match_data = {}
         self.vectors = {}
         self.threads = {}
 

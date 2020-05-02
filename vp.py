@@ -37,6 +37,9 @@ class VapourSynthWrapper():
         self.utils = utils
         self.controller = controller
 
+        if not self.context.use_vapoursynth:
+            return None
+
         debug_prefix = "[VapourSynthWrapper.__init__]"
 
         # Windows users install packages with vsrepo
@@ -60,7 +63,7 @@ class VapourSynthWrapper():
                 self.utils.log(color, debug_prefix, "Cloned vsrepo repo exists")
         else:
             self.utils.log(debug_color(), debug_prefix, "YOU'RE USING LINUX, SADLY WE CURRENTLY RELY YOU HAVE INSTALLED ALL THE VAPOURSYNTH PLUGINS YOU'RE GONNA USE")
-        
+
 
         self.get_vspipe_bin()
         self.get_x264_bin()
@@ -71,7 +74,7 @@ class VapourSynthWrapper():
         debug_prefix = "[VapourSynthWrapper.get_vspipe_bin]"
 
         if self.context.os == "linux":
-            self.utils.log(color, debug_prefix, "YOU'RE USING LINUX, MAKE SURE VSPIPE IS ACESSIBLE FROM A RAW SHELL (IN PATH)") 
+            self.utils.log(color, debug_prefix, "YOU'RE USING LINUX, MAKE SURE VSPIPE IS ACESSIBLE FROM A RAW SHELL (IN PATH)")
             self.vspipe_bin = "vspipe"
         else:
             self.utils.log(debug_color(), debug_prefix, "[ERROR] VAPOURSYNTH WINDOWS DOES NOT WORK YET")
@@ -82,7 +85,7 @@ class VapourSynthWrapper():
         debug_prefix = "[VapourSynthWrapper.get_vspipe_bin]"
 
         if self.context.os == "linux":
-            self.utils.log(color, debug_prefix, "YOU'RE USING LINUX, MAKE SURE x264 IS ACESSIBLE FROM A RAW SHELL (IN PATH)") 
+            self.utils.log(color, debug_prefix, "YOU'RE USING LINUX, MAKE SURE x264 IS ACESSIBLE FROM A RAW SHELL (IN PATH)")
             self.x264_bin = "x264"
         else:
             self.utils.log(debug_color(), debug_prefix, "[ERROR] VAPOURSYNTH WINDOWS DOES NOT WORK YET")
@@ -97,7 +100,7 @@ class VapourSynthWrapper():
             with open(self.context.ROOT + os.path.sep + "vpys" + os.path.sep + filter_name + ".vpy", "r") as sc:
                 with open(self.context.temp_vpy_script, "w") as temp:
                     temp.write(sc.read().replace("[INPUT]", input_video))
-            
+
             # Couldn't get it working with subprocess...?
             # command = [self.vspipe_bin, "--y4m", self.context.temp_vpy_script, "-", "|", self.x264_bin, "--demuxer", "y4m", "-", "-o", output_video]
 
@@ -109,14 +112,5 @@ class VapourSynthWrapper():
 
             self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] MAY TAKE A WHILE DEPENDING ON CPU / VIDEO LENGHT / VIDEO RESOLUTION / VAPOURSYNTH STUFF USED")
 
-    
+
             os.system(command)
-        
-        
-
-
-
-
-
-
-
