@@ -27,6 +27,7 @@ from utils import SubprocessUtils
 from color import rgb, fg
 
 import time
+import cv2
 import os
 
 
@@ -61,11 +62,17 @@ class Waifu2x():
         # Hacky switch case statement, tho we do instantiate them that's why
         # we define a init instead of a __init__ function
         self.waifu2x = {
+
             "linux-vulkan":   Waifu2xLinuxVulkan(),
             "linux-cpp":      Waifu2xLinuxCPP(),
+
             "windows-vulkan": Waifu2xWindowsVulkan(),
             "windows-cpp":    Waifu2xWindowsVulkan(),
-            "windows-caffe":  Waifu2xWindowsCaffe()
+            "windows-caffe":  Waifu2xWindowsCaffe(),
+
+            "linux-fake":     NotFakeWaifu2x(),
+            "windows-fake":   NotFakeWaifu2x()
+
         }.get(option, "not_found")
 
         if self.waifu2x == "not_found":
@@ -86,6 +93,58 @@ class Waifu2x():
         self.waifu2x.keep_upscaling(input_path, output_path)
 
 
+
+
+class NotFakeWaifu2x():
+    def init(self, context, utils, controller):
+
+        self.context = context
+        self.utils = utils
+        self.controller = controller
+
+        debug_prefix = "[NotFakeWaifu2x.__init__]"
+
+        self.utils.log(color, debug_prefix, "Will use this \"Waifu2x\" wrapper")
+
+    def verify(self):
+        pass
+
+    def generate_run_command(self):
+        pass
+
+    def keep_upscaling(self, input_path, output_path):
+
+        while not self.controller.stop:
+            if len(os.listdir(input_path)) > 0:
+                for file in os.listdir(input_path):
+
+                    try:
+                        input = input_path + file
+                        output = output_path + file #.replace(".jpg", ".jpg.png")
+
+                        img = cv2.imread(input)
+
+                        scale_percent = 200 # percent of original size
+
+                        width = int(img.shape[1] * scale_percent / 100)
+                        height = int(img.shape[0] * scale_percent / 100)
+
+                        dim = (width, height)
+
+                        resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
+                        cv2.imwrite(output, resized)
+
+                        self.utils.rename(output, output.replace(".jpg", ".jpg.png"))
+
+                        self.utils.delete_file(output)
+                        self.utils.delete_file(input)
+
+                    except Exception:
+                        pass
+
+
+            time.sleep(self.context.waifu2x_wait_for_residuals)
 
 
 
@@ -134,7 +193,7 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
-        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size)]
+        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "16:32:16"]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 

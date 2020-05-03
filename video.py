@@ -300,7 +300,7 @@ class FFmpegWrapper():
                 '-i', '-',
                 '-an',
                 '-crf', '17',
-                '-vcodec', 'libx264',
+                '-vcodec', 'libxvid',
                 '-vf', 'pp=hb/vb/dr/fq|32, deband=range=22:blur=false',
                 '-b:v', '5000k',
                 output
@@ -317,6 +317,8 @@ class FFmpegWrapper():
     def pipe_resume(self, previous, output):
 
         debug_prefix = "[FFmpegWrapper.pipe_resume]"
+
+        self.pipe_one_time(output)
 
 
     # Write images into pipe

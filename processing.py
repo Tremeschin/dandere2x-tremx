@@ -24,6 +24,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from color import rgb, debug_color
 
 import threading
+import math
 import time
 import copy
 import os
@@ -64,6 +65,12 @@ class Processing():
         bleed *= 2
         block_size *= 2
 
+        # If the block_size is bigger than the resolution itself,
+        # the rounding we do for getting the colums and rows aproaches zero
+        # so we force them to be 1x1 if that's the case (the block is the full residual)
+        if columns == 0: columns = 1
+        if rows == 0: rows = 1
+
         for y in range(rows):
 
             start_y = bleed + (y * (bleed + block_size))
@@ -99,6 +106,11 @@ class Processing():
         # For each frame since the one we started with
         for frame_number in range(self.context.last_processing_frame, self.context.frame_count + 1):
 
+            if not self.context.resume:
+                if frame_number == 300:
+                    self.utils.log(color, debug_prefix, "[DEBUG] Quitting on this frame for testing resume mode")
+                    self.controller.exit()
+
             # Wait for file to exist or quit if controller says so
             while True:
                 if self.controller.stop is True:
@@ -121,32 +133,31 @@ class Processing():
             # print("working_data", working_data)
             # print("vector ids", working_vector_ids)
 
-            if self.context.loglevel >= 8:
+            if self.context.loglevel >= 12:
                 self.utils.log(color, debug_prefix, "Working vector ids:")
                 self.utils.log(color, debug_prefix, working_vector_ids)
 
 
             if (working_data["type"]) == "pframe" and not ( working_vector_ids == ['']):
 
-                residual_upscaled_file_path = self.context.upscaled + os.path.sep + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
+                residual_upscaled_file_path = self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
                 residual_file_path = self.context.residual + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
                 residual_upscaled.load_from_path_wait(residual_upscaled_file_path)
 
-                dimensions = (residual_upscaled.width, residual_upscaled.height)
+                residual_dimensions = (residual_upscaled.width, residual_upscaled.height)
 
                 grid_dimensions = [
-                    int(((dimensions[0] - (self.context.bleed*2)) / (self.context.bleed + self.context.block_size))/2),
-                    int(((dimensions[1] - (self.context.bleed*2)) / (self.context.bleed + self.context.block_size))/2)
+                    math.ceil(((residual_dimensions[0] - (self.context.bleed*2)) / (self.context.bleed + self.context.block_size))/2),
+                    math.ceil(((residual_dimensions[1] - (self.context.bleed*2)) / (self.context.bleed + self.context.block_size))/2)
                 ]
-
 
                 # columns, rows, width, height, bleed, block_size
                 this_residual_vector_generator = \
                     self.residual_vector_iterator_generator(
                         grid_dimensions[0],
                         grid_dimensions[1],
-                        dimensions[0],
-                        dimensions[1],
+                        residual_dimensions[0],
+                        residual_dimensions[1],
                         self.context.bleed,
                         self.context.block_size
                     )
@@ -198,6 +209,7 @@ class Processing():
                 self.context.last_processing_frame = frame_number
 
                 self.utils.delete_file(residual_file_path)
+                self.utils.delete_file(residual_upscaled_file_path)
 
             else:
                 # No vectors to substitute

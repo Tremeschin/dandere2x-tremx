@@ -78,7 +78,6 @@ class Core():
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")
 
 
-
         # Start the threads, warn the user that the output is no more linear
         self.utils.log(debug_color(), debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
 
@@ -101,7 +100,6 @@ class Core():
         # A line syntax is the following:
         # type;frame-data0;data1;data2...
 
-
         # ["type;frame", "data0;data1;data2..."]
         line = line.split("-")
 
@@ -118,7 +116,6 @@ class Core():
             "type": line_type,
             "data": data
         }
-
 
         return line
 
@@ -150,6 +147,7 @@ class Core():
 
         debug_prefix = "[Core.parse_whole_cpp_out]"
 
+
         self.utils.log(color, debug_prefix, "Parsing whole cpp_out file")
 
         # Warn the user we'll be getting everything as it is not a resume session
@@ -158,8 +156,9 @@ class Core():
 
         with open(self.context.d2x_cpp_plugins_out, "r") as cppout:
             for line in cppout:
-                if self.is_necessary_line(line):
-                    self.parse_cpp_out_newline(line)
+                if not line == "END":
+                    if self.is_necessary_line(line):
+                        self.parse_cpp_out_newline(line)
 
 
         if self.context.loglevel >= 10:
@@ -174,20 +173,24 @@ class Core():
 
         debug_prefix = "[Core.get_d2xcpp_vectors]"
 
+        # Wait for d2x_cpp_vectors_out to write END on the last line of file file
         while True:
+
+            lastline = ""
+
+            with open(self.context.d2x_cpp_vectors_out, "r") as vectors:
+                for line in vectors:
+                    lastline = line
+
+            if lastline == "END":
+                break
 
             if self.controller.stop:
                 return -1
 
-            with open(self.context.d2x_cpp_vectors_out, "r") as vectorfile:
-                data = vectorfile.read()
-                if data == "":
-                    if self.context.loglevel >= 5:
-                        self.utils.log(color, debug_prefix, "Waiting for vector file contents")
-                else:
-                    break
+            self.utils.log(color, debug_prefix, "Waiting for last line in d2x_cpp_vectors_out to be \"END\"")
+            time.sleep(0.2)
 
-            time.sleep(0.5)
 
         self.utils.log(color, debug_prefix, "Got vectorfile contents")
 
@@ -195,7 +198,7 @@ class Core():
 
         with open(self.context.d2x_cpp_vectors_out, "r") as vectorfile:
             for line in vectorfile:
-                if not line == "\n":
+                if not line == "END":
                     # 0;(0,0,20,20)
                     # 5162;(1900,640,1920,660) --> ["5162", "(1900,640,1920,660)"]
 
@@ -216,7 +219,7 @@ class Core():
                     self.controller.vectors[vector_id] = vector_tuple
 
 
-        if self.context.loglevel >= 10:
+        if self.context.loglevel >= 12:
             self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.vectors:")
             self.utils.log(color, debug_prefix, self.controller.vectors)
 
@@ -237,15 +240,18 @@ class Core():
         debug_prefix = "[Core.get_new_d2xcpp_content_loop]"
 
         # Debug
-        if self.context.loglevel >= 3:
+        if self.context.loglevel >= 12:
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] Printing new contents of file [%s]" % self.context.d2x_cpp_plugins_out)
 
         # Get the new stuff APPENDED into the file
         for newstuff in self.utils.updating_file(self.context.d2x_cpp_plugins_out):
 
+            # TODO GET A SAFE WAY OF WAITING D2XCPP TO WRITE TO PLUGINS OUT FILE, TEMPORARY SLEEP
+            time.sleep(0.016)
+
             self.parse_cpp_out_newline(newstuff)
 
             # Debug
-            if self.context.loglevel >= 10:
+            if self.context.loglevel >= 12:
                 self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
                 self.utils.log(debug_color(), debug_prefix, "[DEBUG]", self.controller.block_match_data)

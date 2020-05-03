@@ -133,6 +133,18 @@ namespace residual_functions {
             // Get the block number
             int n_blocks = matlist.size();
 
+            // For cutting the black parts of the residual
+            int max_x = 0;
+            int max_y = 0;
+
+            int this_x_location = 0;
+            int this_y_location = 0;
+
+            int block_rows;
+            int block_cols;
+
+            cv::Rect crop;
+
             // Get the best fit dimensions, see residual_functions::best_fit for the functions
             std::vector<int> dimensions = residual_functions::best_fit::best_grid_fit(n_blocks);
 
@@ -167,13 +179,23 @@ namespace residual_functions {
 
                     current_block = matlist[count];
 
+                    this_x_location = bleed + (bleed + block_size)*x;
+                    this_y_location = bleed + (bleed + block_size)*y;
+
+                    block_cols = current_block.cols;
+                    block_rows = current_block.rows;
+
+                    max_x = std::max(max_x, this_x_location + block_cols);
+                    max_y = std::max(max_y, this_y_location + block_rows);
+
+
                     current_block.copyTo(
                         residual(
                             cv::Rect(
-                                bleed + (bleed + block_size)*x,
-                                bleed + (bleed + block_size)*y,
-                                current_block.cols,
-                                current_block.rows
+                                this_x_location,
+                                this_y_location,
+                                block_cols,
+                                block_rows
                             )
                         )
                     );
@@ -183,9 +205,15 @@ namespace residual_functions {
                 }
             }
 
+            max_x += bleed;
+            max_y += bleed;
+
+            // Region of Interest to crop only the parts we want
+            crop = cv::Rect(0, 0, max_x, max_y);
+
+            residual = cv::Mat(residual, crop);
+
 exit_iteration:
-
-
             return residual;
         }
     }
@@ -475,6 +503,7 @@ int process_video(const std::string video_path,
         std::cout << debug_prefix << "Generated vector files" << std::endl;
     #endif
         total_blocks = vector_id;
+        output_vectors_file << "END"; // signal python we ended
         output_vectors_file.flush();
         output_vectors_file.close();
     };
@@ -539,6 +568,8 @@ int process_video(const std::string video_path,
     double raw_block_mse;
     double compressed_mse;
 
+    std::string next_output_newline;
+
 
     // // Compression
 
@@ -583,6 +614,8 @@ int process_video(const std::string video_path,
 
     // Main routine
     while (true) {
+
+        next_output_newline = "";
 
         // Invert next iteration
         this_or_that = !this_or_that;
@@ -646,7 +679,7 @@ int process_video(const std::string video_path,
 
 
 
-        output_file << "pframe;" << count_frame << "-";
+        next_output_newline += "pframe;" + std::to_string(count_frame) + "-";
 
         remaining_frames = total_frame_count - count_frame;
 
@@ -703,7 +736,7 @@ int process_video(const std::string video_path,
                 raw_block_mse = fit_ssim(block_msee_scalar[0], block_msee_scalar[1], block_msee_scalar[2], block_msee_scalar[3]);
 
                 if (true) {
-                    output_file << ";" << block_id;
+                    next_output_newline += ";" + std::to_string(block_id);
                 }
 
             #endif
@@ -764,7 +797,7 @@ int process_video(const std::string video_path,
                     std::cout << "accepted]" << std::endl;
                 #endif
 
-                    output_file << ";" << block_id; // << "," << raw_block_mse;
+                    next_output_newline += ";" + std::to_string(block_id); // << "," << raw_block_mse;
 
                     if (this_or_that) {
                         matched_blocks.push_back(block_a);
@@ -843,7 +876,9 @@ int process_video(const std::string video_path,
             debug_video.write(debug_frame);
         }
 
-        output_file << '\n';
+        next_output_newline += '\n';
+
+        output_file << next_output_newline;
 
         output_file.flush();
 
@@ -861,7 +896,7 @@ int process_video(const std::string video_path,
 
             cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
 
-            int max_frames_ahead = 10;
+            int max_frames_ahead = 200;
             int max_frames_ahead_wait = count_frame - max_frames_ahead;
 
             std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
@@ -870,7 +905,7 @@ int process_video(const std::string video_path,
 
             // Mindisk utility, wait for the file - max_frames_ahead to be deleted
             while (mindisk && utils::file_exists(residual_name_mindisk)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
                 #if VERBOSE_DEBUG
                     std::cout << "Waiting for residual [" << residual_name_mindisk << "] to be deleted" << std::endl;

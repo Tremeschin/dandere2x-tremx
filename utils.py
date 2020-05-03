@@ -313,7 +313,7 @@ class Utils():
 
     def log(self, color, *message):
 
-        now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
+        now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S,%f")
 
         processed_message = "[%s] " % now
 
@@ -362,14 +362,21 @@ class Utils():
 
     # This "follows" updating files, yields the new stuff written
     def updating_file(self, filename):
+
         ufile = open(filename, "r")
-        ufile.seek(0,2)
+        ufile.seek(0, 2)
+
         while True:
-            if self.controller.stop: break
+
+            if self.controller.stop:
+                break
+
             line = ufile.readline()
+
             if not line:
                 time.sleep(0.1)
                 continue
+
             yield line
 
 
