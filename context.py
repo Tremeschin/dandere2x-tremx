@@ -164,7 +164,7 @@ class Context():
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
             "residual": "//ROOT//|sessions|//SESSION//|residual|",
-            "upscaled": "//ROOT//|sessions|//SESSION//|upscaled",
+            "upscaled": "//ROOT//|sessions|//SESSION//|upscaled|",
             "merged": "//ROOT//|sessions|//SESSION//|merged|",
             "processing": "//ROOT//|sessions|//SESSION//|processing",
             "session": "//ROOT//|sessions|//SESSION//"
@@ -178,7 +178,7 @@ class Context():
             "debug_video": "//ROOT//|sessions|//SESSION//|debug_video.mkv",
             "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
             "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
-            "original_audio_file": "//ROOT//|sessions|//SESSION//|processing|original_audio.aac",
+            "original_audio_file": "//ROOT//|sessions|//SESSION//|processing|original_audio.aac", # Deprecated?
             "noisy_video": "//ROOT//|sessions|//SESSION//|processing|noisy_//INPUTVIDEOFILENAME//",
             "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
             "joined_audio": "//ROOT//|sessions|//SESSION//|processing|joined_audio_//INPUTVIDEOFILENAME//",

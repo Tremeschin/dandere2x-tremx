@@ -157,10 +157,12 @@ class Utils():
         debug_prefix = "[Utils.delete_file]"
 
         if os.path.isfile(filename):
-            self.log(color, debug_prefix, "File exists, deleting it: [%s]" % filename)
+            if self.context.loglevel >= 12:
+                self.log(color, debug_prefix, "File exists, deleting it: [%s]" % filename)
             os.remove(filename)
         else:
-            self.log(color, debug_prefix, "File does NOT exist")
+            if self.context.loglevel >= 12:
+                self.log(color, debug_prefix, "File does NOT exist")
 
 
     # /some/dir/file.ext -> "file.ext"

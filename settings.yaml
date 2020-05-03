@@ -20,16 +20,16 @@
 
 
 session_name: auto
-waifu2x_type: vulkan
-mindisk: false
+waifu2x_type: fake
+mindisk: true
 
 basic:
-  input_file: samples/yn_moving_480.mkv
+  input_file: samples/yn_moving.mkv
   output_file: samples/yn_moving2x.mkv
 
 waifu2x:
-  denoise_level: 0
-  tile_size: 200
+  denoise_level: 3
+  tile_size: 100
 
 video:
   apply_pre_noise: false

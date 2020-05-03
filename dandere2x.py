@@ -181,12 +181,14 @@ class Dandere2x():
             self.utils.log(color, debug_prefix, "Showing video info")
             self.video.show_info()
 
+            # DEPRECATED
             # Set block size and a valid input resolution
-            self.utils.log(color, debug_prefix, "Setting block_size")
-            self.math.set_block_size()
+            #self.utils.log(color, debug_prefix, "Setting block_size")
+            #self.math.set_block_size()
 
-            self.utils.log(color, debug_prefix, "Getting valid input resolution")
-            self.math.get_a_valid_input_resolution()
+            # DEPRECATED
+            #self.utils.log(color, debug_prefix, "Getting valid input resolution")
+            #self.math.get_a_valid_input_resolution()
 
             # Save vars of context so d2x_cpp can use them and we can resume it later
             self.utils.log(color, debug_prefix, "Saving Context vars to file")
@@ -253,6 +255,8 @@ class Dandere2x():
             self.utils.log(color, debug_prefix, "Loading Context vars from context_vars file")
 
             self.context.load_vars_from_file(self.context.context_vars)
+
+            self.video.ffmpeg.pipe_resume(None, self.context.upscaled_video)
 
 
 
