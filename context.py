@@ -155,6 +155,7 @@ class Context():
 
         # This might sound dumb but it's good to debug as waifu2x doens't upscale and mindisk remove stuff
         self.enable_waifu2x = self.yaml["debug"]["enable_waifu2x"]
+        self.write_only_debug_video = self.yaml["debug"]["write_only_debug_video"]
 
 
 
@@ -174,11 +175,13 @@ class Context():
             "d2x_cpp_plugins_out": "//ROOT//|sessions|//SESSION//|plugins_input.d2x",
             "d2x_cpp_vectors_out": "//ROOT//|sessions|//SESSION//|vectors.d2x",
             "upscaled_video": "//ROOT//|sessions|//SESSION//|upscaled_//INPUTVIDEOFILENAME//",
+            "debug_video": "//ROOT//|sessions|//SESSION//|debug_video.mkv",
             "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
             "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
             "original_audio_file": "//ROOT//|sessions|//SESSION//|processing|original_audio.aac",
             "noisy_video": "//ROOT//|sessions|//SESSION//|processing|noisy_//INPUTVIDEOFILENAME//",
             "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
+            "joined_audio": "//ROOT//|sessions|//SESSION//|processing|joined_audio_//INPUTVIDEOFILENAME//",
             "logfile": "//ROOT//|sessions|//SESSION//|log.log"
         }
 
@@ -193,10 +196,12 @@ class Context():
         self.d2x_cpp_vectors_out = None
         self.d2x_cpp_plugins_out = None
         self.upscaled_video = None
+        self.debug_video = None
         self.context_vars = None
         self.temp_vpy_script = None
         self.noisy_video = None
         self.vapoursynth_processing = None
+        self.joined_audio = None
         self.logfile = None
 
         # # #

@@ -56,7 +56,7 @@ class FFmpegWrapper():
 
 
     def get_frame_count_with_null_copy(self, video_file):
-        
+
         # ffmpeg -i input.mkv -map 0:v:0 -c copy -f null -
 
         debug_prefix = "[FFmpegWrapper.get_frame_count_with_null_copy]"
@@ -94,14 +94,14 @@ class FFmpegWrapper():
                 frame_count = int(frame_count)
 
                 self.utils.log(color, debug_prefix, "Got frame count: [%s]" % frame_count)
-        
+
         # Fail safe
         if frame_count == None:
             self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] COULDN'T GET FRAME COUNT")
             self.controller.exit()
 
         return frame_count
-    
+
 
 
 
@@ -110,7 +110,7 @@ class FFmpegWrapper():
         # ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=nw=1 input.mp4
 
         debug_prefix = "[FFmpegWrapper.get_resolution_with_ffprobe]"
-        
+
         wanted = {
             "width": None,
             "height": None
@@ -141,7 +141,7 @@ class FFmpegWrapper():
                     self.utils.log(color, debug_prefix, "Line with width: [%s]" % line)
 
                 wanted["width"] = int(line.split("=")[1])
-                
+
 
             if "height" in line:
                 if self.context.loglevel >= 3:
@@ -154,7 +154,7 @@ class FFmpegWrapper():
         return wanted
 
 
-    
+
 
     def get_frame_rate_with_ffprobe(self, video_file):
 
@@ -172,7 +172,7 @@ class FFmpegWrapper():
         frame_rate = self.utils.command_output_subprocess(command).replace("\n", "")
 
         self.utils.log(color, debug_prefix, "Got frame rate output: [%s]" % frame_rate)
-        
+
 
         # NOTE: this returns the "division" as in 2997/100 fps, or 30/1
 
@@ -201,7 +201,7 @@ class FFmpegWrapper():
             self.utils.log(color, debug_prefix, "[INFO] Getting video [frame_count] info with [NULL COPY] method")
             video_info["frame_count"] = self.get_frame_count_with_null_copy(video_file)
 
-        
+
 
         # Get the resolution
         if self.context.get_resolution_method == "ffprobe":
@@ -210,7 +210,7 @@ class FFmpegWrapper():
             video_info["width"] = resolution["width"]
             video_info["height"] = resolution["height"]
 
-            
+
 
         # Get the frame rate
         if self.context.get_frame_rate_method == "ffprobe":
@@ -234,7 +234,7 @@ class FFmpegWrapper():
         # ffmpeg -i input.mkv -vn -acodec copy audio.aac
 
         debug_prefix = "[FFmpegWrapper.extract_video_audio]"
-        
+
         command = [self.ffmpeg_binary, "-i", video_file, "-vn", "-acodec", "copy", target_output]
 
         #command = "\"%s\" -i \"%s\" -vn -acodec copy \"%s\"" % (self.ffmpeg_binary, video_file, target_output)
@@ -245,15 +245,15 @@ class FFmpegWrapper():
         self.utils.run_subprocess(command)
 
 
-    
+
     # This maps video A video and video B audio to a target video+audio
     def copy_videoA_audioB_to_other_videoC(self, get_video, get_audio, target_output):
-        
+
         # ffmpeg -loglevel panic -i input_0.mp4 -i input_1.mp4 -c copy -map 0:0 -map 1:1 -shortest out.mp4
 
         debug_prefix = "[FFmpegWrapper.copy_video_audio_to_other_video]"
-        
-        command = [self.ffmpeg_binary, "-loglevel", "panic", "-i", get_video,
+
+        command = [self.ffmpeg_binary, "-y", "-loglevel", "panic", "-i", get_video,
                   "-i", get_audio, "-c", "copy", "-map", "0:0", "-map", "1:1",
                   "-shortest", target_output]
 
@@ -267,13 +267,13 @@ class FFmpegWrapper():
 
 
     def apply_noise(self, input_video, output_noisey, noise):
-        
+
         # ffmpeg -i input noise=c1s=8:c0f=u
 
         debug_prefix = "[FFmpegWrapper.apply_noise]"
 
         command = [self.ffmpeg_binary, "-loglevel", "warning", "-stats", "-y", "-i", input_video] + noise.split(" ") + [output_noisey]
-        
+
         #command = "\"%s\" -y -i \"%s\" %s \"%s\"" % (self.ffmpeg_binary, input_video, noise, output_noisey)
 
         self.utils.log(color, debug_prefix, "Apply noise [%s] to [%s] and save [%s]" % (noise, input_video, output_noisey))
@@ -284,13 +284,69 @@ class FFmpegWrapper():
         self.utils.run_subprocess(command)
 
 
+    # One time pipe
+    def pipe_one_time(self, output):
+
+        debug_prefix = "[FFmpegWrapper.pipe_one_time]"
+
+        command = [
+                self.ffmpeg_binary,
+                '-y',
+                '-f', 'rawvideo',
+                '-vcodec', 'rawvideo',
+                '-s', '%sx%s' % (self.context.resolution[0]*2, self.context.resolution[1]*2),
+                '-pix_fmt', 'rgb24',
+                '-r', self.context.frame_rate,
+                '-i', '-',
+                '-an',
+                '-crf', '17',
+                '-vcodec', 'libx264',
+                '-vf', 'pp=hb/vb/dr/fq|32, deband=range=22:blur=false',
+                '-b:v', '5000k',
+                output
+        ]
+
+        self.utils.log(color, debug_prefix, "Creating FFmpeg one time pipe, output [%s]" % output)
+
+        self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.utils.log(color, debug_prefix, "Created FFmpeg one time pipe")
+
+
+    # TODO: FIGURE OUT HOW TO CONCATENATE PREVIOUS VIDEO AND PIPE NEW IMAGES ONTO A NEW ONE
+    def pipe_resume(self, previous, output):
+
+        debug_prefix = "[FFmpegWrapper.pipe_resume]"
+
+
+    # Write images into pipe
+    def write_to_pipe(self, image):
+
+        debug_prefix = "[FFmpegWrapper.write_to_pipe]"
+
+        self.pipe_subprocess.stdin.write(image)
+
+
+    # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
+    def close_pipe(self):
+
+        debug_prefix = "[FFmpegWrapper.close_pipe]"
+
+        self.utils.log(color, debug_prefix, "Closing pipe")
+
+        self.pipe_subprocess.stdin.close()
+        self.pipe_subprocess.stderr.close()
+
+        self.utils.log(color, debug_prefix, "Waiting process to finish")
+
+        self.pipe_subprocess.wait()
+
+        self.utils.log(color, debug_prefix, "Closed!!")
 
 
 
 
-
-
-# This is a multi-class wrapper like we do with Waifu2x, 
+# This is a multi-class wrapper like we do with Waifu2x,
 # we abstract the other class (same) functions into a single "global" class
 class VideoFrameExtractor():
     def __init__(self, context, utils, controller):
@@ -339,7 +395,7 @@ class VideoFrameExtractorCV2():
 
         self.cap = None
 
-        
+
     # Do the setup required to extract the video frames, mostly useful for this class
     def setup_video_input(self, video_file):
 
@@ -352,7 +408,7 @@ class VideoFrameExtractorCV2():
             self.utils.exit()
 
         if self.context.extracted_images_extension == ".png":
-            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] PNG SET TO EXTRACTED IMAGES WITH OPENCV, IT'S ABOUT 4X SLOWER THAN JPG") 
+            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] PNG SET TO EXTRACTED IMAGES WITH OPENCV, IT'S ABOUT 4X SLOWER THAN JPG")
 
 
 
@@ -391,13 +447,13 @@ class VideoFrameExtractorCV2():
         else:
             if self.context.extracted_images_extension == ".png":
                 cv2.imwrite(save_location, frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
-            
+
             if self.context.extracted_images_extension == ".jpg":
                 cv2.imwrite(save_location, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
 
             self.context.last_processing_frame += 1
 
-    
+
 
 
 
@@ -446,7 +502,7 @@ class Video():
         self.frame_extractor = VideoFrameExtractor(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Init")
-    
+
 
     # TODO: Should be moved into its own class?
     def get_video_info_with_mediainfo(self, video_path):
@@ -454,7 +510,7 @@ class Video():
         debug_prefix = "[Video.get_video_info_with_mediainfo]"
 
         self.utils.log(color, debug_prefix, "Using mediainfo to get video info")
-        
+
         # What output we want from mediainfo, and run it
         output_format = r'--Output="Video;%FrameCount%,%FrameRate%,%Width%,%Height%"'
         command = "%s --fullscan %s \"%s\"" % (self.utils.get_binary("mediainfo"), output_format, video_path)
@@ -464,7 +520,7 @@ class Video():
         out = self.utils.command_output(command).replace("\n", "")
 
         self.utils.log(color, debug_prefix, "Got output: [%s]" % out)
-        
+
         # Remove the new line and split by commas
         out = out.split(",")
 
@@ -472,7 +528,7 @@ class Video():
         # # Set variables
         self.utils.log(color, debug_prefix, "Got info, setting vars")
 
-        # Frame 
+        # Frame
         self.frame_count = int(out[0])
         self.frame_rate = float(out[1])
 
@@ -493,7 +549,7 @@ class Video():
 
         video_info = self.ffmpeg.get_video_info(video_path)
 
-        # Frame 
+        # Frame
         self.frame_count = video_info["frame_count"]
         self.frame_rate = video_info["frame_rate"]
 
@@ -520,7 +576,7 @@ class Video():
 
         elif self.context.get_video_info_method == "ffmpeg":
             self.get_video_info_with_ffmpeg(self.context.input_file)
-        
+
         else:
             self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] NO VALID get_video_info_method SET: [%s]" % self.context.get_video_info_method)
             self.utils.exit()
@@ -531,9 +587,9 @@ class Video():
         self.resolution = [self.width, self.height]
 
         self.context.resolution = self.resolution
-        self.context.height = self.height 
+        self.context.height = self.height
         self.context.width = self.width
-        
+
         self.context.frame_count = self.frame_count
         self.context.frame_rate = self.frame_rate
 
@@ -546,13 +602,13 @@ class Video():
 
     # Self explanatory
     def show_info(self):
-        
+
         debug_prefix = "[Video.show_info]"
 
         self.utils.log(color, debug_prefix, "Here's the video info:")
 
         self.utils.log(color, self.context.indentation, "ABS Path: [%s]" % self.context.input_file)
-        self.utils.log(color, self.context.indentation, "Resolution: (%sx%s)" % (self.width, self.height))     
+        self.utils.log(color, self.context.indentation, "Resolution: (%sx%s)" % (self.width, self.height))
         self.utils.log(color, self.context.indentation, "Frame count: [%s]" % self.frame_count)
         self.utils.log(color, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)
 

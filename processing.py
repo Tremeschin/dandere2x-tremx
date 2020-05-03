@@ -97,7 +97,7 @@ class Processing():
         merged = start_frame
 
         # For each frame since the one we started with
-        for frame_number in range(self.context.last_processing_frame, self.context.frame_count - 1):
+        for frame_number in range(self.context.last_processing_frame, self.context.frame_count + 1):
 
             # Wait for file to exist or quit if controller says so
             while True:
@@ -105,22 +105,31 @@ class Processing():
                     return 0
                 if str(frame_number) in self.controller.block_match_data:
                     break
+                if frame_number == self.context.frame_count:
+                    break
                 self.utils.log(color, debug_prefix, "Waiting for frame_number [%s] in controller.block_match_data" % frame_number)
                 time.sleep(0.5)
 
 
             # print(self.controller.block_match_data)
-
-            working_data = self.controller.block_match_data[str(frame_number)]
-            working_vector_ids = working_data["data"].split(";")
+            if not frame_number == self.context.frame_count:
+                working_data = self.controller.block_match_data[str(frame_number)]
+                working_vector_ids = working_data["data"].split(";")
+            else:
+                working_vector_ids = ['']
 
             # print("working_data", working_data)
             # print("vector ids", working_vector_ids)
 
-            if working_data["type"] == "pframe":
+            if self.context.loglevel >= 8:
+                self.utils.log(color, debug_prefix, "Working vector ids:")
+                self.utils.log(color, debug_prefix, working_vector_ids)
+
+
+            if (working_data["type"]) == "pframe" and not ( working_vector_ids == ['']):
 
                 residual_upscaled_file_path = self.context.upscaled + os.path.sep + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
-                residual_file_path = self.context.residual + os.path.sep + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
+                residual_file_path = self.context.residual + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
                 residual_upscaled.load_from_path_wait(residual_upscaled_file_path)
 
                 dimensions = (residual_upscaled.width, residual_upscaled.height)
@@ -176,9 +185,29 @@ class Processing():
 
                     #merged.save("merged_vector%s.png" % vector_id)
 
-                merged.save(self.context.merged + "merged_%s.jpg" % self.utils.pad_zeros(frame_number))
+
+                self.utils.log(color, debug_prefix, "Writing merged image into pipe n=[%s]" % frame_number)
+
+                self.video.ffmpeg.write_to_pipe(merged.frame)
+
+                self.utils.log(color, debug_prefix, "Wrote sucessfully")
+
+                #merged.save(self.context.merged + "merged_%s.jpg" % self.utils.pad_zeros(frame_number))
 
                 # Update the last processed frame for resume session
                 self.context.last_processing_frame = frame_number
 
                 self.utils.delete_file(residual_file_path)
+
+            else:
+                # No vectors to substitute
+                self.video.ffmpeg.write_to_pipe(merged.frame)
+
+
+        self.utils.log(color, debug_prefix, "All merged images done, closing pipe")
+
+        # Finished piping all the images we merged
+        self.video.ffmpeg.close_pipe()
+
+        self.controller.upscale_finished = True
+        self.controller.exit()

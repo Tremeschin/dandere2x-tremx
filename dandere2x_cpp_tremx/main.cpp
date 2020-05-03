@@ -36,7 +36,6 @@
 
 #define DEBUG_SAVE_BLOCKS 0
 #define DEBUG_SAVE_FRAMES 0
-#define WRITE_DEBUG_FRAMES_VIDEO 1
 
 #define SHOW_MAIN_OPTIONS 0
 
@@ -358,68 +357,20 @@ double calculate_mse(cv::Mat I1, cv::Mat I2)
 {
     cv::Mat s1;
 
-    //cv::Mat t1(5, 5, CV_8UC3, cv::Scalar(255, 200, 0));
-    //cv::Mat t2(5, 5, CV_8UC3, cv::Scalar(4, 4, 4));
-
-    //t1.convertTo(t1, CV_32S);
-    //t2.convertTo(t2, CV_32S);
-
     I1.convertTo(I1, CV_32S);
     I2.convertTo(I2, CV_32S);
 
-    //cv::Mat addition;
+    cv::absdiff(I1, I2, s1); // |I1 - I2|
 
-    //cv::add(t1, t2, addition);
+    s1.convertTo(s1, CV_32S); // cannot make a square on 8 bits
 
-    //std::cout << "\n " << addition << std::endl;
+    s1 = s1.mul(s1); // |I1 - I2|^2
 
-    //std::exit(0);
-
-    //cv::cvtColor(I1, I1, cv::COLOR_RGBA2RGB);
-    //cv::cvtColor(I2, I2, cv::COLOR_RGBA2RGB);
-
-
-    // cv::Mat t(5, 5, CV_8UC3, cv::Scalar(0, 0, 0));
-
-    cv::absdiff(I1, I2, s1);       // |I1 - I2|
-
-#if VERBOSE_DEBUG
-
-    std::cout << "\nI1\n" << I1 << std::endl;
-    std::cout << "\nI2\n" << I2 << std::endl;
-
-    std::cout << "\ns1 absdif\n" << s1 << std::endl;
-
-#endif
-
-
-
-
-    s1.convertTo(s1, CV_32S);  // cannot make a square on 8 bits
-
-    //std::cout << "\ns1 conv\n" << s1 << std::endl;
-
-    s1 = s1.mul(s1);           // |I1 - I2|^2
-
-
-#if VERBOSE_DEBUG
-    std::cout << "\ns1 mult\n" << s1 << std::endl;
-#endif
-
-
-    cv::Scalar s = sum(s1);        // sum elements per channel
+    cv::Scalar s = sum(s1); // sum elements per channel
 
     double sse = s.val[0] + s.val[1] + s.val[2]; // sum channels
 
     double mse  = sse / (double)(I1.channels() * I1.total());
-
-
-#if VERBOSE_DEBUG
-    std::cout << "\nsse: " << sse << " , " << (double)(I1.channels() * I1.total()) << ", sum: " << s << ", mse: " << mse << std::endl;
-
-
-#endif
-    //std::exit(0);
 
     return mse;
  }
@@ -445,7 +396,9 @@ int process_video(const std::string video_path,
                   const int bleed,
                   const std::string residuals_output,
                   const bool mindisk,
-                  const int zero_padding)
+                  const int zero_padding,
+                  const bool write_only_debug_video,
+                  const std::string debug_video_output)
 {
 
     std::string debug_prefix = "[main.cpp/process_video] ";
@@ -566,13 +519,15 @@ int process_video(const std::string video_path,
 
 
 
+    cv::VideoWriter debug_video;
 
-#if WRITE_DEBUG_FRAMES_VIDEO
+    if (write_only_debug_video) {
 
-    std::string debug_video_filename = "debug_video_start_" + std::to_string(start_frame) + "_block_size_" + std::to_string(block_size) + ".mkv";
-    cv::VideoWriter debug_video(debug_video_filename, CV_FOURCC('M','J','P','G'), 24, cv::Size(width, height));
+        std::string debug_video_filename = debug_video_output;
+        debug_video = cv::VideoWriter(debug_video_filename, CV_FOURCC('M','J','P','G'), 24, cv::Size(width, height));
 
-#endif
+    }
+
 
 
     // // Frame relevant vars
@@ -637,24 +592,20 @@ int process_video(const std::string video_path,
             video >> frame_a;
             compressed = frame_a.clone();
 
-        #if WRITE_DEBUG_FRAMES_VIDEO
-            debug_frame = frame_a.clone();
-        #endif
+            if (write_only_debug_video) {
+                debug_frame = frame_a.clone();
+            }
 
-            //compressed = frame_a;
-            //debug_frame = frame_a;
-            //std::cout << "frame a" << std::endl;
+
         } else {
+
             video >> frame_b;
             compressed = frame_b.clone();
 
-        #if WRITE_DEBUG_FRAMES_VIDEO
-            debug_frame = frame_b.clone();
-        #endif
+            if (write_only_debug_video) {
+                debug_frame = frame_b.clone();
+            }
 
-            //compressed = frame_b;
-            //debug_frame = frame_b;
-            //std::cout << "frame b" << std::endl;
         }
 
 
@@ -825,12 +776,13 @@ int process_video(const std::string video_path,
 
 
 
-                #if WRITE_DEBUG_FRAMES_VIDEO
-                    //black_block.copyTo(debug_frame(cv::Rect(start_x, start_y, black_block.cols, black_block.rows)));
+                    if (write_only_debug_video) {
 
-                    black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(0, 0, 0, 140));
-                    overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
-                #endif
+                        //black_block.copyTo(debug_frame(cv::Rect(start_x, start_y, black_block.cols, black_block.rows)));
+
+                        black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(0, 0, 0, 140));
+                        overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
+                    }
 
 
                 } else {
@@ -887,9 +839,9 @@ int process_video(const std::string video_path,
             break;
         //cv::imshow( "Frame", debug_frame );
 
-    #if WRITE_DEBUG_FRAMES_VIDEO
-        debug_video.write(debug_frame);
-    #endif
+        if (write_only_debug_video) {
+            debug_video.write(debug_frame);
+        }
 
         output_file << '\n';
 
@@ -992,15 +944,12 @@ int main(int argc, char** argv) {
     */
 
 
-
-
-
     std::string debug_prefix = "[main.cpp/main] ";
 
 
     // Failsafe number of arguments
 
-    const int expected_args = 12;
+    const int expected_args = 14;
 
 
 #if SHOW_MAIN_OPTIONS
@@ -1030,6 +979,8 @@ int main(int argc, char** argv) {
      * - residuals_output
      * - mindisk mode on / off [1/0]
      * - zero padding (residuals files)
+     * - write_only_debug_video
+     * - debug_video_output
      */
 
 
@@ -1050,7 +1001,11 @@ int main(int argc, char** argv) {
     int mindisk_argv = atoi(argv[10]);
 
     int zero_padding = atoi(argv[11]);
+    int write_only_debug_video_argv = atoi(argv[12]);
 
+    std::string debug_video_output = argv[13];
+
+    bool write_only_debug_video;
     bool mindisk;
 
 
@@ -1069,6 +1024,8 @@ int main(int argc, char** argv) {
         std::cout << debug_prefix << "residuals_output: " << residuals_output << '\n';
         std::cout << debug_prefix << "mindisk_argv: " << mindisk_argv << '\n';
         std::cout << debug_prefix << "zero_padding: " << zero_padding << '\n';
+        std::cout << debug_prefix << "write_only_debug_video: " << write_only_debug_video << '\n';
+        std::cout << debug_prefix << "debug_video_output: " << debug_video_output << '\n';
         std::cout << '\n' << debug_prefix << "Any zero value on int is invalid, cheking.. ";
     };
 
@@ -1102,7 +1059,30 @@ int main(int argc, char** argv) {
         std::exit(-1);
     }
 
-    process_video(video_path, block_size, width, height, output_d2x_file, output_vectors_path, start_frame, bleed, residuals_output, mindisk, zero_padding);
+    if (write_only_debug_video_argv == 1) {
+        write_only_debug_video = true;
+    } else if (write_only_debug_video_argv == 0) {
+        write_only_debug_video = false;
+    } else {
+        std::cout << debug_prefix << "Only debug video not 0 or 1 recieved from argv" << std::endl;
+        std::exit(-1);
+    }
+
+    process_video(
+        video_path,
+        block_size,
+        width,
+        height,
+        output_d2x_file,
+        output_vectors_path,
+        start_frame,
+        bleed,
+        residuals_output,
+        mindisk,
+        zero_padding,
+        write_only_debug_video,
+        debug_video_output
+    );
 
     return 0;
 }

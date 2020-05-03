@@ -6,11 +6,12 @@ Purpose: Dandere2x C++ wrapper for python, calls the binary
 Syntax:
 
 binary input block_size width height out vectors start_frame bleed \
-residuals_output use_mindisk zero_padding
+residuals_output use_mindisk zero_padding 0 debug_video
 
 Example:
 
-dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/" 1 8
+dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/" \
+1 8 1 "debug.mkv"
 
 NOTE: residuals_output must end in a os.path.sep -> "/path/to/dir/" and not
 "/path/to/dir"
@@ -38,7 +39,6 @@ from utils import SubprocessUtils
 from color import rgb
 
 import time
-import os
 
 
 color = rgb(240, 100, 64)
@@ -63,15 +63,11 @@ class Dandere2xCPPWraper():
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
-
     # Generate a run command based on Context info
     def generate_run_command(self):
 
         debug_prefix = "[Dandere2xCPPWraper.generate_run_command]"
 
-        # Generic command is:
-        # binary input block_size width height out vectors start_frame
-        # dandere2x_cpp "in.mkv" 40 1920 1080 "out.d2x" "vectors.d2x" 3 1 "residuals/" 1
 
         self.command = [
             self.binary,
@@ -85,7 +81,9 @@ class Dandere2xCPPWraper():
             str(self.context.bleed),
             self.context.residual,
             str(int(self.context.mindisk)),
-            str(self.context.zero_padding)
+            str(self.context.zero_padding),
+            str(int(self.context.write_only_debug_video)),
+            self.context.debug_video
         ]
 
         self.utils.log(color, debug_prefix, "Run command is: %s" % self.command)

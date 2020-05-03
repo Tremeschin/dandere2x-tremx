@@ -33,6 +33,7 @@ class Controller():
         self.context = context
 
         self.stop = False
+        self.upscale_finished = False
         self.block_match_data = {}
         self.vectors = {}
         self.threads = {}
@@ -43,8 +44,11 @@ class Controller():
 
         self.utils.log(color, debug_prefix, "Controller exit called")
 
-        if not self.context.resume:
-            self.utils.log(color, debug_prefix, "Setting resume=True as we're closing")
-            self.context.resume = True
+        if not self.upscale_finished:
+            if not self.context.resume:
+                self.utils.log(color, debug_prefix, "Setting resume=True as we're closing")
+                self.context.resume = True
+        else:
+            self.utils.log(color, debug_prefix, "Exiting as upscale finished, Goodbye Dandere!!")
 
         self.stop = True

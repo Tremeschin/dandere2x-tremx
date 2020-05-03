@@ -21,7 +21,7 @@
 
 session_name: auto
 waifu2x_type: vulkan
-mindisk: true
+mindisk: false
 
 basic:
   input_file: samples/yn_moving_480.mkv
@@ -44,7 +44,7 @@ ffmpeg:
 processing:
   extracted_images_extension: .jpg
   block_size: 20
-  bleed: 2
+  bleed: 1
 
 vapoursynth:
   enabled: false
@@ -63,4 +63,5 @@ specific: # just ideas at the moment
   log_full_path: false # Log full path instead of relative path to D2X's ROOT folder
 
 debug:
+  write_only_debug_video: false
   enable_waifu2x: true

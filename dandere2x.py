@@ -57,7 +57,6 @@ class Dandere2x():
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
         os.system("sh dandere2x_cpp_tremx/linux_compile_full.sh")
 
-
     # This function loads up the "core" variables and objects
     def load(self):
 
@@ -68,68 +67,53 @@ class Dandere2x():
         self.utils.log(phasescolor, "# # [Load phase] # #")
         self.utils.log(color, debug_prefix, "Created Utils()")
 
-
         # Communication between files, static
         self.utils.log(color, debug_prefix, "Creating Context()")
         self.context = Context(self.utils)
-
 
         # Communication between files, depends on runtime
         self.utils.log(color, debug_prefix, "Creating Controller()")
         self.controller = Controller(self.utils, self.context)
 
-
         # Let Utils access Controller
         self.utils.log(color, debug_prefix, "Giving Utils, Controller")
         self.utils.set_controller(self.controller)
-
 
         # Let Utils access Context
         self.utils.log(color, debug_prefix, "Giving Utils, Context")
         self.utils.set_context(self.context)
 
-
         # Deals with Video related stuff
         self.utils.log(color, debug_prefix, "Creating Video()")
         self.video = Video(self.context, self.utils, self.controller)
-
 
         # Our upscale wrapper, on which the default is Waifu2x
         self.utils.log(color, debug_prefix, "Creating Waifu2x()")
         self.waifu2x = Waifu2x(self.context, self.utils, self.controller)
 
-
         # Math utils, specific cases for Dandere2x
         self.utils.log(color, debug_prefix, "Creating D2XMath()")
         self.math = D2XMath(self.context, self.utils)
-
 
         # Dandere2x C++ wrapper
         self.utils.log(color, debug_prefix, "Creating Dandere2xCPPWraper()")
         self.d2xcpp = Dandere2xCPPWraper(self.context, self.utils, self.controller, self.video)
 
-
         # Deals with images, mostly numpy wrapper and special functions like block substitution
         self.utils.log(color, debug_prefix, "Creating Frame()")
         self.frame = Frame(self.context, self.utils, self.controller)
-
 
         # "Layers" of processing before the actual upscale from Waifu2x
         self.utils.log(color, debug_prefix, "Creating Processing()")
         self.processing = Processing(self.context, self.utils, self.controller, self.frame, self.video)
 
-
         # On where everything is controlled and starts
         self.utils.log(color, debug_prefix, "Creating Core()")
         self.core = Core(self.context, self.utils, self.controller, self.waifu2x, self.d2xcpp, self.processing)
 
-
         # Vapoursynth wrapper
         self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
         self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
-
-
-        test = self.frame
 
 
 
@@ -173,8 +157,6 @@ class Dandere2x():
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
-
-
 
             # Log and reset session directory
             self.utils.log(color_by_name("li_red"), debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
@@ -260,6 +242,9 @@ class Dandere2x():
                         self.utils.log(color, debug_prefix, "Mindisk mode OFF, DO NOT delete noisy video [%s]" % self.context.noisy_video)
 
 
+            # Welp we don't need to add previous upscaled video if we're just starting
+            self.video.ffmpeg.pipe_one_time(self.context.upscaled_video)
+
 
         # IS RESUME SESSION, basically load instructions from the context saved vars
         else:
@@ -276,31 +261,26 @@ class Dandere2x():
 
         debug_prefix = "[Dandere2x.run]"
 
+        self.d2xcpp.generate_run_command()
+
+
+        if self.context.write_only_debug_video:
+            self.utils.log(color, debug_prefix, "WRITE ONLY DEBUG VIDEO SET TO TRUE, CALLING CPP AND QUITTING")
+            self.context.last_processing_frame = 0
+            self.d2xcpp.run()
+            self.controller.exit()
+            return 0;
+
 
         # As now we get into the run part of Dandere2x, we don't really want to log
         # within the "global" log on the root folder so we move the logfile to session/log.log
         self.utils.move_log_file(self.context.logfile)
 
 
-        self.d2xcpp.generate_run_command()
-
-
 
         self.video.frame_extractor.setup_video_input(self.context.input_file)
 
         self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
-
-        '''
-        print(self.context.last_processing_frame)
-
-        for _ in range(5):
-            self.video.frame_extractor.next_frame(
-                  self.context.iframes + os.path.sep
-                + self.utils.pad_zeros(self.context.last_processing_frame)
-                + self.context.extracted_images_extension
-            )
-        '''
-
 
         # Test resume session
         # self.context.save_vars()
@@ -331,33 +311,8 @@ class Dandere2x():
         '''
 
 
-        '''
-        self.context.os = "windows"
-        self.utils.get_binary("mediainfo")
-        exit()
-        '''
-
-
-
         self.utils.log(phasescolor, "# # [Run phase] # #")
 
-        '''
-        self.utils.log(phasescolor, "# # TESTING FRAME() # #")
-        frame = Frame(self.context, self.utils, self.controller)
-        frame.load_from_path(self.context.ROOT + os.path.sep + "small.png")
-
-        frame2 = Frame(self.context, self.utils, self.controller)
-        #frame2.new(1920, 1080)
-        frame2.new(272, 207)
-        frame2.duplicate(frame)
-
-        frame2.save("small_copy.png")
-
-        self.utils.log(phasescolor, "# # END FRAME() # #")
-        '''
-
-
-        # If
 
         self.core.parse_whole_cpp_out()
         self.core.start()
@@ -370,39 +325,55 @@ class Dandere2x():
         # Simulate exiting
         self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
 
-        for i in range(120, 0, -1):
+        #for i in range(120, 0, -1):
+
+        since_started = 0
+
+        while True:
             if self.controller.stop:
                 break
-            self.utils.log(color, debug_prefix, i)
+            if self.controller.upscale_finished:
+                break
+            self.utils.log(color, debug_prefix, "Time since started: %s" % since_started)
+            since_started += 1
             time.sleep(1)
 
-
-
-        self.controller.exit()
-
-        self.context.save_vars()
-
-        if self.context.use_vapoursynth:
-
-            self.utils.log(color, debug_prefix, "APPLYING POST FILTER")
-
-
-            # FIXME NOTE HARD DEGUG, STUFF NOT IMPLEMENTED
-            self.context.upscaled_video = self.context.noisy_video
+        if self.controller.upscale_finished:
 
 
             if self.context.use_vapoursynth:
-                self.vapoursynth_wrapper.apply_filter(
-                    self.context.vapoursynth_pos,
-                    self.context.upscaled_video,
-                    self.context.output_file
-                )
+
+                self.utils.log(color, debug_prefix, "APPLYING POST VAPOURSYNTH FILTER")
+
+                if self.context.use_vapoursynth:
+                    self.vapoursynth_wrapper.apply_filter(
+                        self.context.vapoursynth_pos,
+                        self.context.upscaled_video,
+                        self.context.vapoursynth_processing
+                    )
+
+                    # Make the processed one the new upscaled
+                    self.utils.delete_file(self.context.upscaled_video)
+                    self.utils.rename(self.context.vapoursynth_processing, self.context.upscaled_video)
 
 
-        #self.waifu2x.upscale(self.context.ROOT + "/img.png", self.context.ROOT + "/img2x.png")
+            # Migrate audio
+            self.video.ffmpeg.copy_videoA_audioB_to_other_videoC(
+                self.context.upscaled_video,
+                self.context.input_file,
+                self.context.joined_audio
+            )
 
+            # Delete old only upscaled video as migrated tracks
+            self.utils.delete_file(self.context.upscaled_video)
+            self.utils.rename(self.context.joined_audio, self.context.output_file)
 
+            self.controller.exit()
 
+            # Happy upscaled video :)
+
+        else:
+            self.context.save_vars()
 
 
 
