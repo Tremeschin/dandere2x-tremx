@@ -1,0 +1,6 @@
+packages (pacman):
+    opencv (4)
+    vtk
+    hdf5
+    cmake
+    make

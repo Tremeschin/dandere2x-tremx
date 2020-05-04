@@ -20,11 +20,11 @@
 
 
 session_name: auto
-waifu2x_type: fake
+waifu2x_type: cpp
 mindisk: true
 
 basic:
-  input_file: samples/yn_moving.mkv
+  input_file: samples/yn_moving_480.mkv
   output_file: samples/yn_moving2x.mkv
 
 waifu2x:

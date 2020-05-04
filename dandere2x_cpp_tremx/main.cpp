@@ -27,7 +27,6 @@
 #include <chrono>
 #include <thread>
 
-#include "constants.h"
 
 
 
@@ -447,13 +446,12 @@ int process_video(const std::string video_path,
     int height_iterations = std::ceil(static_cast<double>(height) / block_size);
 
     // Create variables for the crop positions of blocks
-    int start_x;
-    int start_y;
+    int start_x = 0;
+    int start_y = 0;
 
-    int end_x;
-    int end_y;
+    int end_x = 0;
+    int end_y = 0;
 
-    int total_blocks;
 
 
 #if METHOD_USE_MSSIM
@@ -502,7 +500,6 @@ int process_video(const std::string video_path,
     #if VERBOSE_DEBUG
         std::cout << debug_prefix << "Generated vector files" << std::endl;
     #endif
-        total_blocks = vector_id;
         output_vectors_file << "END"; // signal python we ended
         output_vectors_file.flush();
         output_vectors_file.close();
@@ -520,7 +517,7 @@ int process_video(const std::string video_path,
     }
 
     // Subtract 2 as it starts on zero and can't compare frame LAST with LAST+1
-    int total_frame_count = video.get(CV_CAP_PROP_FRAME_COUNT) - 2;
+    int total_frame_count = video.get(cv::CAP_PROP_FRAME_COUNT) - 2;
 
 #if VERBOSE_DEBUG
     std::cout << "Total frame count is: " << total_frame_count << std::endl;
@@ -531,8 +528,14 @@ int process_video(const std::string video_path,
     cv::Mat frame_a(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
     cv::Mat frame_b;
 
+    cv::Mat noised_frame_a;
+    cv::Mat noised_frame_b;
+
     cv::Mat block_a;
     cv::Mat block_b;
+
+    cv::Mat noised_block_a;
+    cv::Mat noised_block_b;
 
     cv::Mat compressed_block;
     cv::Mat black_block;
@@ -553,20 +556,25 @@ int process_video(const std::string video_path,
     if (write_only_debug_video) {
 
         std::string debug_video_filename = debug_video_output;
-        debug_video = cv::VideoWriter(debug_video_filename, CV_FOURCC('M','J','P','G'), 24, cv::Size(width, height));
+        debug_video = cv::VideoWriter(debug_video_filename, cv::VideoWriter::fourcc('M','J','P','G'), 24, cv::Size(width, height));
 
     }
 
 
 
     // // Frame relevant vars
-    double frame_psnr;
+    double frame_psnr = 0;
     int count_frame = 0;
-    int block_id;
-    int remaining_frames;
+    int block_id = 0;
+    int remaining_frames = 0;
 
-    double raw_block_mse;
-    double compressed_mse;
+    // Division by zero if 0 on counting the blocks
+    int total_blocks = 1;
+    int dont_need_upscaling = 0;
+    int need_upscaling = 0;
+
+    double raw_block_mse = 0;
+    double compressed_mse = 0;
 
     std::string next_output_newline;
 
@@ -586,7 +594,7 @@ int process_video(const std::string video_path,
     if (start_frame > 0) {
         std::cout << "Seeking to " << start_frame - 1 << std::endl;
 
-        video.set(CV_CAP_PROP_POS_FRAMES, start_frame - 1);
+        video.set(cv::CAP_PROP_POS_FRAMES, start_frame - 1);
         video >> frame_a;
 
         count_frame = start_frame;
@@ -596,7 +604,7 @@ int process_video(const std::string video_path,
 
         cv::imencode(".jpg", frame_a, buff, param);
 
-        compressed = cv::imdecode(buff, CV_LOAD_IMAGE_COLOR);
+        compressed = cv::imdecode(buff, cv::IMREAD_COLOR);
 
         cv::imwrite("frame_compressed.jpg", compressed);
     #endif
@@ -605,6 +613,18 @@ int process_video(const std::string video_path,
 
 
 
+
+    cv::Mat uniform_noise = cv::Mat::zeros(height, width, CV_8UC3);
+
+    cv::randu(uniform_noise, 0, 255);
+
+    uniform_noise *= 0.00;
+
+    noised_frame_a = frame_a.clone();
+    noised_frame_a += uniform_noise;
+
+    //std::cout << uniform_noise << std::endl;
+    //return 0;
 
 
 
@@ -622,8 +642,20 @@ int process_video(const std::string video_path,
 
         // Get next frame with a T flip flop mechanism
         if (this_or_that) {
+
             video >> frame_a;
+
+            if (frame_a.empty()) {
+                std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
+                output_file.close();
+                return 0;
+            }
+
             compressed = frame_a.clone();
+            compressed += uniform_noise;
+
+            noised_frame_a = frame_a.clone();
+            noised_frame_a += uniform_noise;
 
             if (write_only_debug_video) {
                 debug_frame = frame_a.clone();
@@ -633,38 +665,23 @@ int process_video(const std::string video_path,
         } else {
 
             video >> frame_b;
+
+            if (frame_b.empty()) {
+                std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
+                output_file.close();
+                return 0;
+            }
+
             compressed = frame_b.clone();
+            compressed += uniform_noise;
+
+            noised_frame_b = frame_b.clone();
+            noised_frame_b += uniform_noise;
 
             if (write_only_debug_video) {
                 debug_frame = frame_b.clone();
             }
 
-        }
-
-
-    #if DEBUG_SAVE_FRAMES
-        std::string previous_fresh_filename = "freshframes/frame_" + std::to_string(count_frame) + "-1-previous_full.jpg";
-        std::string next_fresh_filename =     "freshframes/frame_" + std::to_string(count_frame) + "-2-next_full.jpg";
-
-        cv::imwrite(previous_fresh_filename, frame_a);
-        cv::imwrite(next_fresh_filename, frame_b);
-    #endif
-
-
-
-
-
-    #if ONLY_FIRST_FRAME
-        cv::imwrite("frame_a.jpg", frame_a);
-        cv::imwrite("frame_b.jpg", frame_b);
-    #endif
-
-
-        // Exit as frame_a or frame_b is empty and can't compare
-        if ( frame_b.empty() || frame_a.empty()) {
-            std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
-            output_file.close();
-            return 0;
         }
 
 
@@ -675,7 +692,7 @@ int process_video(const std::string video_path,
         cv::imencode(".jpg", compressed, buff, param);
 
         // Decode the compressed block
-        compressed = cv::imdecode(buff, CV_LOAD_IMAGE_COLOR);
+        compressed = cv::imdecode(buff, cv::IMREAD_COLOR);
 
 
 
@@ -722,13 +739,13 @@ int process_video(const std::string video_path,
                 block_a = cv::Mat(frame_a, crop);
                 block_b = cv::Mat(frame_b, crop);
 
+                noised_block_a = cv::Mat(noised_frame_a, crop);
+                noised_block_b = cv::Mat(noised_frame_b, crop);
+
                 compressed_block = cv::Mat(compressed, crop);
 
 
-
-
-
-
+            /*
             #if METHOD_USE_MSSIM
 
                 block_msee_scalar = calculate_mssim(block_a, block_b);
@@ -740,13 +757,13 @@ int process_video(const std::string video_path,
                 }
 
             #endif
-
+            */
 
 
             #if METHOD_USE_MSE
 
                 // Raw MSE between two blocks
-                raw_block_mse = calculate_mse(block_a, block_b);
+                raw_block_mse = calculate_mse(noised_block_a, noised_block_b);
 
 
                 // Calculate the MSE of compressed
@@ -772,13 +789,6 @@ int process_video(const std::string video_path,
                 std::cout << "Compressed block mse: " << compressed_mse << " - Raw mse: " << raw_block_mse << std::endl;
             #endif
 
-
-                //cv::imwrite("block_a_mse.jpg", block_a);
-                //cv::imwrite("block_b_mse.jpg", block_b);
-                //cv::imwrite("block_compressed.jpg", compressed_block);
-
-
-
             #if WRITE_COMPRESSED
 
                 cv::imwrite("frame_compressed.jpg", compressed);
@@ -790,12 +800,16 @@ int process_video(const std::string video_path,
             #endif
 
 
+                total_blocks++;
+
                 // Validate
                 if (raw_block_mse > compressed_mse) {
 
                 #if VERBOSE_DEBUG
                     std::cout << "accepted]" << std::endl;
                 #endif
+
+                    need_upscaling++;
 
                     next_output_newline += ";" + std::to_string(block_id); // << "," << raw_block_mse;
 
@@ -819,6 +833,8 @@ int process_video(const std::string video_path,
 
 
                 } else {
+
+                    dont_need_upscaling++;
 
                 #if VERBOSE_DEBUG
                     std::cout << "denied]" << std::endl;
@@ -874,6 +890,9 @@ int process_video(const std::string video_path,
 
         if (write_only_debug_video) {
             debug_video.write(debug_frame);
+            std::cout << "Writing debug frame: [" << count_frame << "/" << total_frame_count << "]"
+                      << ", (Need / Don't need) upscaling: [" << need_upscaling << "/" << dont_need_upscaling << "]"
+                      << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << static_cast<double>(100)*dont_need_upscaling / total_blocks << std::endl;
         }
 
         next_output_newline += '\n';
@@ -896,7 +915,7 @@ int process_video(const std::string video_path,
 
             cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
 
-            int max_frames_ahead = 200;
+            int max_frames_ahead = 20;
             int max_frames_ahead_wait = count_frame - max_frames_ahead;
 
             std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
@@ -959,6 +978,44 @@ int process_video(const std::string video_path,
 
 
 int main(int argc, char** argv) {
+
+    /*
+    cv::Mat image = cv::imread("frame_a.jpg");
+
+    cv::Mat uniform_noise = cv::Mat::zeros (image.rows, image.cols, CV_8UC1);
+
+    cv::randu(uniform_noise, 0, 255);
+    //cv::imshow("Uniform random noise", uniform_noise );
+    //cv::waitKey();
+
+    cv::imwrite("uniform1.jpg", uniform_noise);
+    cv::imwrite("uniform0.5.jpg", uniform_noise*0.5);
+    cv::imwrite("uniform0.2.jpg", uniform_noise*0.2);
+    cv::imwrite("uniform0.1.jpg", uniform_noise*0.1);
+    */
+
+    // Another way to generate the random values form the same distribution is to use
+    // functions randu and randn
+
+    //cv::Mat image = cv::imread("frame_a.jpg");
+
+    // Let's first create a zero image with the same dimensions of the loaded image
+
+    //cv::Mat gaussian_noise = cv::Mat::zeros (image.rows, image.cols, CV_8UC1);
+
+    //cv::imshow("All zero values", gaussian_noise);
+    //cv::waitKey();
+
+    // now, we can set the pixel values as a Gaussian noise
+    // we have set a mean value to 128 and a standard deviation to 20
+    //cv::randn(gaussian_noise, 50, 20);
+
+    // Let's plot this image and see how it looks like
+    //cv::imshow("Gaussian noise", gaussian_noise);
+    //cv::waitKey();
+
+    //cv::imwrite("Gaussian random noise.jpg", gaussian_noise);
+
 
 
     /*

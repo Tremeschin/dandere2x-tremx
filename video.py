@@ -19,17 +19,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
-# pipe
-# ffprobe vid info
-# frame_compressor.py
-
 from color import rgb, color_by_name
 
 import subprocess
-import threading
 import cv2
-import os
 
 
 color = rgb(30, 200, 60)
@@ -50,11 +43,9 @@ class FFmpegWrapper():
         self.utils.log(color, debug_prefix, "Init")
 
 
-
-
     # # # # # # # # # # # # # SESSION DEDICATED TO GETTING VIDEO INFO # # # # # # # # # # # # #
 
-
+    # One way of getting the video frame count, output -f null
     def get_frame_count_with_null_copy(self, video_file):
 
         # ffmpeg -i input.mkv -map 0:v:0 -c copy -f null -
@@ -63,22 +54,18 @@ class FFmpegWrapper():
 
         self.utils.log(color, debug_prefix, "[WARNING] CHECKING VIDEO FRAME COUNT SAFE WAY, MAY TAKE A WHILE DEPENDING ON CPU AND VIDEO LENGTH")
 
-
         # Build the command to get the frame_count with "null copy" mode
         command = ["%s" % self.ffmpeg_binary, "-loglevel", "warning", "-stats", "-i", "%s" % video_file, "-map", "0:v:0", "-c", "copy", "-f", "null", "-"]
 
         self.utils.log(color, debug_prefix, "Command to check frame_count is: [%s]" % ' '.join(command))
 
-
         # We have to use subprocess here as os.popen doesn't catch the output correctly
         info = self.utils.command_output_subprocess(command)
         frame_count = None
 
-
         if self.context.loglevel >= 6:
             self.utils.log(color, debug_prefix, "[DEBUG] COMMAND OUTPUT:")
             self.utils.log(rgb(255,255,255), debug_prefix, info)
-
 
         # Iterate through the output lines
         for line in info.split("\n"):
@@ -102,9 +89,7 @@ class FFmpegWrapper():
 
         return frame_count
 
-
-
-
+    # Use FFprobe and its process output for getting the resolution
     def get_resolution_with_ffprobe(self, video_file):
 
         # ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=nw=1 input.mp4
@@ -120,14 +105,12 @@ class FFmpegWrapper():
 
         self.utils.log(color, debug_prefix, "Command to check resolution is: [%s]" % ' '.join(command))
 
-
         # We have to use subprocess here as os.popen doesn't catch the output correctly
         info = self.utils.command_output_subprocess(command)
 
         if self.context.loglevel >= 6:
             self.utils.log(color, debug_prefix, "[DEBUG] COMMAND OUTPUT:")
             self.utils.log(rgb(255,255,255), debug_prefix, info)
-
 
         # Iterate in the output lines
         for line in info.split("\n"):
@@ -142,7 +125,6 @@ class FFmpegWrapper():
 
                 wanted["width"] = int(line.split("=")[1])
 
-
             if "height" in line:
                 if self.context.loglevel >= 3:
                     self.utils.log(color, debug_prefix, "Line with height: [%s]" % line)
@@ -153,34 +135,26 @@ class FFmpegWrapper():
 
         return wanted
 
-
-
-
+    # Use FFprobe and its process output for getting the frame rate
     def get_frame_rate_with_ffprobe(self, video_file):
 
         # ffprobe -v 0 -of csv=p=0 -select_streams v:0 -show_entries stream=r_frame_rate infile
+        # NOTE: this returns the "division" as in 2997/100 fps, or 30/1
 
         debug_prefix = "[FFmpegWrapper.get_resolution_with_ffprobe]"
 
         command = [self.ffprobe_binary, "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", video_file]
 
-
         self.utils.log(color, debug_prefix, "Command to check frame_rate is: [%s]" % ' '.join(command))
-
 
         # We have to use subprocess here as os.popen doesn't catch the output correctly
         frame_rate = self.utils.command_output_subprocess(command).replace("\n", "")
 
         self.utils.log(color, debug_prefix, "Got frame rate output: [%s]" % frame_rate)
 
-
-        # NOTE: this returns the "division" as in 2997/100 fps, or 30/1
-
         return frame_rate
 
-
-
-
+    # Get the video info based on user choice in settings.yaml
     def get_video_info(self, video_file):
 
         debug_prefix = "[FFmpegWrapper.get_video_info]"
@@ -192,16 +166,12 @@ class FFmpegWrapper():
             "height": None,
         }
 
-
         # # Get the frame count
-
 
         # Get the frame count
         if self.context.get_frame_count_method == "null_copy":
             self.utils.log(color, debug_prefix, "[INFO] Getting video [frame_count] info with [NULL COPY] method")
             video_info["frame_count"] = self.get_frame_count_with_null_copy(video_file)
-
-
 
         # Get the resolution
         if self.context.get_resolution_method == "ffprobe":
@@ -210,25 +180,19 @@ class FFmpegWrapper():
             video_info["width"] = resolution["width"]
             video_info["height"] = resolution["height"]
 
-
-
         # Get the frame rate
         if self.context.get_frame_rate_method == "ffprobe":
             self.utils.log(color, debug_prefix, "[INFO] Getting video [frame_rate] info with [ffprobe] method")
             video_info["frame_rate"] = self.get_frame_rate_with_ffprobe(video_file)
 
-
         return video_info
-
 
     # # # # # # # # # # # # END SESSION DEDICATED TO GETTING VIDEO INFO # # # # # # # # # # # #
 
 
     # # # # # # # # # # # # # # # SESSION DEDICATED TO VIDEO UTILS # # # # # # # # # # # # # # #
 
-
-
-    # Extracts raw video audio into a file, copy the original stream is what it is
+    # Extracts raw video audio into a file, copy the original stream
     def extract_raw_video_audio(self, video_file, target_output):
 
         # ffmpeg -i input.mkv -vn -acodec copy audio.aac
@@ -237,14 +201,10 @@ class FFmpegWrapper():
 
         command = [self.ffmpeg_binary, "-i", video_file, "-vn", "-acodec", "copy", target_output]
 
-        #command = "\"%s\" -i \"%s\" -vn -acodec copy \"%s\"" % (self.ffmpeg_binary, video_file, target_output)
-
         self.utils.log(color, debug_prefix, "Extracting video audio [%s] to [%s]" % (video_file, target_output))
         self.utils.log(color, debug_prefix, "Command do do that: [%s]" % command)
 
         self.utils.run_subprocess(command)
-
-
 
     # This maps video A video and video B audio to a target video+audio
     def copy_videoA_audioB_to_other_videoC(self, get_video, get_audio, target_output):
@@ -257,15 +217,12 @@ class FFmpegWrapper():
                   "-i", get_audio, "-c", "copy", "-map", "0:0", "-map", "1:1",
                   "-shortest", target_output]
 
-        #command = "\"%s\" -loglevel panic -i \"%s\" -i \"%s\" -c copy -map 0:0 -map 1:1 -shortest \"%s\"" % (self.ffmpeg_binary, get_video, get_audio, target_output)
-
         self.utils.log(color, debug_prefix, "Map video [A video] and video [B audio] to a [Target C = V+A]: Video From: [%s] / Audio From: [%s] / Target to: [%s]" % (get_video, get_audio, target_output))
         self.utils.log(color, debug_prefix, "Command do do that: %s" % command)
 
         self.utils.run_subprocess(command)
 
-
-
+    # Apply some noise into the video with FFmpeg filters
     def apply_noise(self, input_video, output_noisey, noise):
 
         # ffmpeg -i input noise=c1s=8:c0f=u
@@ -274,8 +231,6 @@ class FFmpegWrapper():
 
         command = [self.ffmpeg_binary, "-loglevel", "warning", "-stats", "-y", "-i", input_video] + noise.split(" ") + [output_noisey]
 
-        #command = "\"%s\" -y -i \"%s\" %s \"%s\"" % (self.ffmpeg_binary, input_video, noise, output_noisey)
-
         self.utils.log(color, debug_prefix, "Apply noise [%s] to [%s] and save [%s]" % (noise, input_video, output_noisey))
         self.utils.log(color, debug_prefix, "Command do do that: %s" % command)
 
@@ -283,8 +238,8 @@ class FFmpegWrapper():
 
         self.utils.run_subprocess(command)
 
-
-    # One time pipe
+    # Calls a FFmpeg process reading images from stdin
+    # "one time" means it should not be reused ie. wouldn't work into a resume session
     def pipe_one_time(self, output):
 
         debug_prefix = "[FFmpegWrapper.pipe_one_time]"
@@ -312,22 +267,13 @@ class FFmpegWrapper():
 
         self.utils.log(color, debug_prefix, "Created FFmpeg one time pipe")
 
-
     # TODO: FIGURE OUT HOW TO CONCATENATE PREVIOUS VIDEO AND PIPE NEW IMAGES ONTO A NEW ONE
     def pipe_resume(self, previous, output):
-
-        debug_prefix = "[FFmpegWrapper.pipe_resume]"
-
         self.pipe_one_time(output)
-
 
     # Write images into pipe
     def write_to_pipe(self, image):
-
-        debug_prefix = "[FFmpegWrapper.write_to_pipe]"
-
         self.pipe_subprocess.stdin.write(image)
-
 
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):
@@ -344,8 +290,6 @@ class FFmpegWrapper():
         self.pipe_subprocess.wait()
 
         self.utils.log(color, debug_prefix, "Closed!!")
-
-
 
 
 # This is a multi-class wrapper like we do with Waifu2x,
@@ -367,7 +311,6 @@ class VideoFrameExtractor():
             self.utils.log(color, debug_prefix, "Method is FFmpeg")
             self.extract = VideoFrameExtractorFFMPEG(self.context, self.utils, self.controller)
 
-
     # Do the setup required to extract the video frames, mostly useful for CV2 method
     def setup_video_input(self, video_file):
         self.extract.setup_video_input(video_file)
@@ -380,12 +323,8 @@ class VideoFrameExtractor():
     def next_frame(self, save_location):
         self.extract.next_frame(save_location)
 
-
-
-
-
-
-
+# DEPRECATED, FFMPEG DEALS WITH RESIDUALS, HERE FOR LEGACY
+# MIGHT BE REMOVED LATER IF C++ HANDLES PERFECTLY THE RESIDUALS
 class VideoFrameExtractorCV2():
     def __init__(self, context, utils, controller):
 
@@ -396,7 +335,6 @@ class VideoFrameExtractorCV2():
         self.controller = controller
 
         self.cap = None
-
 
     # Do the setup required to extract the video frames, mostly useful for this class
     def setup_video_input(self, video_file):
@@ -412,8 +350,6 @@ class VideoFrameExtractorCV2():
         if self.context.extracted_images_extension == ".png":
             self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] PNG SET TO EXTRACTED IMAGES WITH OPENCV, IT'S ABOUT 4X SLOWER THAN JPG")
 
-
-
     # Seek to that frame_number
     def set_current_frame(self, frame_number):
 
@@ -422,8 +358,6 @@ class VideoFrameExtractorCV2():
         self.utils.log(color, debug_prefix, "Setting current frame to [%s]" % frame_number)
 
         self.cap.set(1, frame_number)
-
-
 
     # Extract the next frame
     def next_frame(self, save_location):
@@ -442,7 +376,6 @@ class VideoFrameExtractorCV2():
         # Actually get the frame
         sucess, frame = self.cap.read()
 
-
         if sucess == False:
             self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] Cannot read more frames or out of frames??")
 
@@ -455,13 +388,8 @@ class VideoFrameExtractorCV2():
 
             self.context.last_processing_frame += 1
 
-
-
-
-
-
-
-
+# DEPRECATED, FFMPEG DEALS WITH RESIDUALS, HERE FOR LEGACY
+# MIGHT BE REMOVED LATER IF C++ HANDLES PERFECTLY THE RESIDUALS
 class VideoFrameExtractorFFMPEG():
     def __init__(self, context, utils, controller):
 
@@ -475,20 +403,7 @@ class VideoFrameExtractorFFMPEG():
         pass
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# The class which abstracts many useful video functions
 class Video():
     def __init__(self, context, utils, controller):
 
@@ -504,7 +419,6 @@ class Video():
         self.frame_extractor = VideoFrameExtractor(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Init")
-
 
     # TODO: Should be moved into its own class?
     def get_video_info_with_mediainfo(self, video_path):
@@ -526,7 +440,6 @@ class Video():
         # Remove the new line and split by commas
         out = out.split(",")
 
-
         # # Set variables
         self.utils.log(color, debug_prefix, "Got info, setting vars")
 
@@ -539,10 +452,6 @@ class Video():
         self.height = int(out[3])
 
         self.resolution = [self.width, self.height]
-
-
-
-
 
     # Get video information with FFprobe
     def get_video_info_with_ffmpeg(self, video_path):
@@ -559,17 +468,12 @@ class Video():
         self.width = video_info["width"]
         self.height = video_info["height"]
 
-
-
-
-
-    # Get video info with MediaInfo, don't process it yet
+    # Get video info with the method the user have chosen
     def get_video_info(self):
 
         debug_prefix = "[Video.get_video_info]"
 
         self.utils.log(color, debug_prefix, "Video file is: [%s]" % self.context.input_file)
-
 
         # Get the video info
 
@@ -582,7 +486,6 @@ class Video():
         else:
             self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] NO VALID get_video_info_method SET: [%s]" % self.context.get_video_info_method)
             self.utils.exit()
-
 
         # # Save info to context
 
@@ -599,10 +502,7 @@ class Video():
         self.context.zero_padding = len(str(self.context.frame_count)) + 1
         self.utils.log(color, debug_prefix, "Changing zero padding in files to [%s]" % self.context.zero_padding)
 
-
-
-
-    # Self explanatory
+    # Self explanatory, show video info
     def show_info(self):
 
         debug_prefix = "[Video.show_info]"
@@ -614,7 +514,6 @@ class Video():
         self.utils.log(color, self.context.indentation, "Frame count: [%s]" % self.frame_count)
         self.utils.log(color, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)
 
-
-
+    # Applies noise to a video
     def apply_noise(self, input_video, output_noisey, noise):
         self.ffmpeg.apply_noise(input_video, output_noisey, noise)

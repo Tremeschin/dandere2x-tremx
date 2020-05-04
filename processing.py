@@ -32,7 +32,7 @@ import os
 color = rgb(0, 115, 255)
 
 class Processing():
-    def __init__(self, context, utils, controller, frame, video):
+    def __init__(self, context, utils, controller, frame, video, waifu2x):
 
         debug_prefix = "[Processing.__init__]"
 
@@ -41,35 +41,13 @@ class Processing():
         self.controller = controller
         self.frame = frame
         self.video = video
+        self.waifu2x = waifu2x
 
-    '''
-    start_x = (x * block_size);
-    end_x = start_x + block_size;
-
-    // If x it surpasses the width
-    end_x = std::min(width, end_x);
-
-
-    for (int y=0; y < height_iterations; y++) {
-
-        start_y = (y * block_size);
-        end_y = start_y + block_size;
-
-        // If y it surpasses the height
-        end_y = std::min(height, end_y);
-    '''
-
-
+    # A generator which gives us the vectors for iterating over
     def residual_vector_iterator_generator(self, columns, rows, width, height, bleed, block_size):
 
         bleed *= 2
         block_size *= 2
-
-        # If the block_size is bigger than the resolution itself,
-        # the rounding we do for getting the colums and rows aproaches zero
-        # so we force them to be 1x1 if that's the case (the block is the full residual)
-        if columns == 0: columns = 1
-        if rows == 0: rows = 1
 
         for y in range(rows):
 
@@ -82,8 +60,6 @@ class Processing():
                 end_x = min(width, start_x + block_size)
 
                 yield (start_y, start_x, end_y, end_x)
-
-
 
     def run(self):
 
@@ -140,7 +116,9 @@ class Processing():
 
             if (working_data["type"]) == "pframe" and not ( working_vector_ids == ['']):
 
-                residual_upscaled_file_path = self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
+                # Each Waifu2x outputs the images in a different naming sadly
+                residual_upscaled_file_path = self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
+
                 residual_file_path = self.context.residual + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
                 residual_upscaled.load_from_path_wait(residual_upscaled_file_path)
 
@@ -171,31 +149,16 @@ class Processing():
                     residual_get_vector = next(this_residual_vector_generator)
                     position_where_vector = self.controller.vectors[vector_id]
 
-                    # print("vectors: ", self.controller.vectors)
-                    # print("vector id: ", vector_id)
-
-                    # print("Position where vector: ", position_where_vector)
-                    # print("Residual vector: ", residual_get_vector)
-
-
-                    """
-                    copy_from(self, A, B, A_start, B_start, B_end)
-                    A_start is the index with respect to A of the upper left corner of the overlap
-                    B_start is the index with respect to B of the upper left corner of the overlap
-                    B_end is the index of with respect to B of the lower right corner of the overlap
-                    """
-
-
                     merged.copy_from(
                         residual_upscaled.frame,
                         merged.frame,
-                        [ residual_get_vector[0],   residual_get_vector[1]   ],
-                        [ position_where_vector[1], position_where_vector[0] ],
-                        [ position_where_vector[3], position_where_vector[2] ]
+                        [residual_get_vector[0], residual_get_vector[1]],
+                        [position_where_vector[1], position_where_vector[0]],
+                        [position_where_vector[3], position_where_vector[2]]
                     )
 
-                    #merged.save("merged_vector%s.png" % vector_id)
-
+                    # See the blocks being completed, useful for debug
+                    # merged.save("merged_vector%s.png" % vector_id)
 
                 self.utils.log(color, debug_prefix, "Writing merged image into pipe n=[%s]" % frame_number)
 
@@ -203,7 +166,7 @@ class Processing():
 
                 self.utils.log(color, debug_prefix, "Wrote sucessfully")
 
-                #merged.save(self.context.merged + "merged_%s.jpg" % self.utils.pad_zeros(frame_number))
+                # merged.save(self.context.merged + "merged_%s.jpg" % self.utils.pad_zeros(frame_number))
 
                 # Update the last processed frame for resume session
                 self.context.last_processing_frame = frame_number

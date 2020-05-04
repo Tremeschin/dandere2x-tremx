@@ -92,6 +92,8 @@ class Waifu2x():
     def keep_upscaling(self, input_path, output_path):
         self.waifu2x.keep_upscaling(input_path, output_path)
 
+    def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
+        return self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
 
 
 
@@ -193,7 +195,7 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
-        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "16:32:16"]
+        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "8:16:8"]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
@@ -249,6 +251,11 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
 
+    # Each Waifu2x outputs the images in a different naming sadly
+    def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
+        return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
+
+
 
 # Waifu2x Linux CPP (converter-cpp) wrapper
 class Waifu2xLinuxCPP():
@@ -272,6 +279,75 @@ class Waifu2xLinuxCPP():
         self.binary = self.utils.get_binary("waifu2x-converter-cpp")
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
+
+
+    # Creates the raw command for upscaling a file / directory
+    def generate_run_command(self):
+
+        debug_prefix = "[Waifu2xLinuxCPP.generate_run_command]"
+
+        self.utils.log(color, debug_prefix, "Generating run command")
+
+        self.command = [self.binary, "--noise-level", str(self.context.denoise_level), "--block-size", str(self.context.tile_size), "-a", "0", "-j", "16", "-f", "jpg", "-q", "101", "-v", "1"]
+
+        self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
+
+
+    # Call the command and upscale a file or directory
+    def upscale(self, input_path, output_path):
+
+        debug_prefix = "[Waifu2xLinuxCPP.upscale]"
+
+        # Get a clone of basic usage and extend it based on the I/O
+        command = self.command + ["-i", input_path[:-1], "-o", output_path[:-1]]
+
+        if self.context.loglevel >= 3:
+            self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+            self.utils.log(color, debug_prefix, "Command is %s" % command)
+
+        subprocess = SubprocessUtils("waifu2x-converter-cpp", self.utils)
+
+        subprocess.from_list(command)
+
+        subprocess.run()
+
+        while subprocess.is_alive():
+            time.sleep(0.5)
+            if self.controller.stop is True:
+                subprocess.terminate()
+
+
+    # Persistent upscaling
+    def keep_upscaling(self, input_path, output_path):
+
+        debug_prefix = "[Waifu2xLinuxCPP.keep_upscaling]"
+
+        self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+
+        # If we get a message to stop (ie. finished or panic)
+        while not self.controller.stop:
+
+            # See if there is any file to upscale
+            if len(os.listdir(input_path)) > 0:
+                self.upscale(input_path, output_path)
+
+                if self.context.loglevel >= 3:
+                    self.utils.log(color, debug_prefix, "Upscaled everything, looping again..")
+            else:
+                if self.context.loglevel >= 3:
+                    self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
+
+            # Do not call it
+            time.sleep(self.context.waifu2x_wait_for_residuals)
+
+        self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
+
+
+    # Each Waifu2x outputs the images in a different naming sadly
+    def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
+        return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
+
+
 
 
 

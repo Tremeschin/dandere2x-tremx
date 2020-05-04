@@ -87,6 +87,7 @@ class Dandere2xCPPWraper():
         ]
 
         self.utils.log(color, debug_prefix, "Run command is: %s" % self.command)
+        self.utils.log(color, debug_prefix, "[DEBUG] Plain command is: %s" % ' '.join(self.command))
 
 
 

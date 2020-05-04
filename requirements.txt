@@ -5,3 +5,4 @@ imageio
 playsound
 gitpython
 opencv-python
+pyyaml

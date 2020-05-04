@@ -24,7 +24,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
 from color import rgb, color_by_name
 
 from d2xcpp import Dandere2xCPPWraper
@@ -56,6 +55,7 @@ class Dandere2x():
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
         os.system("sh dandere2x_cpp_tremx/linux_compile_full.sh")
+        #exit()
 
     # This function loads up the "core" variables and objects
     def load(self):
@@ -105,7 +105,7 @@ class Dandere2x():
 
         # "Layers" of processing before the actual upscale from Waifu2x
         self.utils.log(color, debug_prefix, "Creating Processing()")
-        self.processing = Processing(self.context, self.utils, self.controller, self.frame, self.video)
+        self.processing = Processing(self.context, self.utils, self.controller, self.frame, self.video, self.waifu2x)
 
         # On where everything is controlled and starts
         self.utils.log(color, debug_prefix, "Creating Core()")
@@ -114,9 +114,6 @@ class Dandere2x():
         # Vapoursynth wrapper
         self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
         self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
-
-
-
 
     # This function mainly configures things before upscaling and verifies stuff,
     # sees if it's a resume session, etc
@@ -136,7 +133,6 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Generating run command from Waifu2x")
         self.waifu2x.generate_run_command()
 
-
         # Check if context_vars file exist and is set to be resume
         # If force argument is set, force not resume session
         if not self.args["force"]:
@@ -146,14 +142,11 @@ class Dandere2x():
             self.utils.log(rgb(255,100,0), debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
             self.context.resume = False
 
-
         # Warn the user and log mindisk mode
         if self.context.mindisk:
             self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [ON]")
         else:
             self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [OFF]")
-
-
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
@@ -183,23 +176,23 @@ class Dandere2x():
 
             # DEPRECATED
             # Set block size and a valid input resolution
-            #self.utils.log(color, debug_prefix, "Setting block_size")
-            #self.math.set_block_size()
+            # self.utils.log(color, debug_prefix, "Setting block_size")
+            # self.math.set_block_size()
 
             # DEPRECATED
-            #self.utils.log(color, debug_prefix, "Getting valid input resolution")
-            #self.math.get_a_valid_input_resolution()
+            # self.utils.log(color, debug_prefix, "Getting valid input resolution")
+            # self.math.get_a_valid_input_resolution()
 
             # Save vars of context so d2x_cpp can use them and we can resume it later
             self.utils.log(color, debug_prefix, "Saving Context vars to file")
             self.context.save_vars()
 
-
             # Organization, if any filter applied just print a separator
             if any([self.context.apply_pre_noise, self.context.use_vapoursynth]):
                 self.utils.log(phasescolor, "# # [Filter phase] # #")
 
-
+            '''
+            DEPRECATED, C++ ADDS NOISE TO IMAGE
             # If user chose to do so
             if self.context.apply_pre_noise:
 
@@ -208,9 +201,7 @@ class Dandere2x():
 
                 # As we applied and saved onto new file, that is our new input
                 self.context.input_file = self.context.noisy_video
-
-                exit()
-
+            '''
 
             # Apply pre vapoursynth filter
             if self.context.use_vapoursynth:
@@ -234,7 +225,6 @@ class Dandere2x():
                 self.utils.log(color, debug_prefix, "Showing new video info")
                 self.video.show_info()
 
-
                 # If we have already applied pre noise with ffmpeg, delete the old noisy file
                 if self.context.apply_pre_noise:
                     if self.context.mindisk:
@@ -243,10 +233,8 @@ class Dandere2x():
                     else:
                         self.utils.log(color, debug_prefix, "Mindisk mode OFF, DO NOT delete noisy video [%s]" % self.context.noisy_video)
 
-
             # Welp we don't need to add previous upscaled video if we're just starting
             self.video.ffmpeg.pipe_one_time(self.context.upscaled_video)
-
 
         # IS RESUME SESSION, basically load instructions from the context saved vars
         else:
@@ -258,93 +246,61 @@ class Dandere2x():
 
             self.video.ffmpeg.pipe_resume(None, self.context.upscaled_video)
 
-
-
-    # Here's the core logic for Dandere2x, good luck other files
+    # Here's the core logic for Dandere2x
     def run(self):
 
         debug_prefix = "[Dandere2x.run]"
 
         self.d2xcpp.generate_run_command()
 
-
+        # Only write the debug video just for fun
         if self.context.write_only_debug_video:
+            self.context.mindisk = False
+            self.d2xcpp.generate_run_command()
             self.utils.log(color, debug_prefix, "WRITE ONLY DEBUG VIDEO SET TO TRUE, CALLING CPP AND QUITTING")
             self.context.last_processing_frame = 0
             self.d2xcpp.run()
             self.controller.exit()
-            return 0;
+            return 0
 
+        self.d2xcpp.generate_run_command()
 
         # As now we get into the run part of Dandere2x, we don't really want to log
         # within the "global" log on the root folder so we move the logfile to session/log.log
         self.utils.move_log_file(self.context.logfile)
 
-
-
-        self.video.frame_extractor.setup_video_input(self.context.input_file)
-
-        self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
-
-        # Test resume session
-        # self.context.save_vars()
-        # exit()
-
-
-        # Simulate end of upscale
-        #for i in range(2, 0, -1):
-        #    self.utils.log(color, debug_prefix, i)
-        #    time.sleep(1)
-
-
-
-        #for thread in self.controller.threads:
-        #    self.utils.log(color, debug_prefix, "Joining thread: [\"%s\"]" % thread)
-        #    self.controller.threads[thread].join()
-
-
-
-
-
-        '''
-        self.video.ffmpeg.copy_videoA_audioB_to_other_videoC(
-            "/home/tremeschin/github/clone/dandere2x-new/samples/demo.mkv",
-            "/home/tremeschin/github/clone/dandere2x-new/samples/away.mkv",
-            "/home/tremeschin/github/clone/dandere2x-new/samples/target.mkv"
-        )
-        '''
-
+        # DEPRECATED Set out current position on video and the input
+        # DEPRECATED self.video.frame_extractor.setup_video_input(self.context.input_file)
+        # DEPRECATED self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
 
         self.utils.log(phasescolor, "# # [Run phase] # #")
 
-
         self.core.parse_whole_cpp_out()
+
         self.core.start()
+
         self.core.get_d2xcpp_vectors()
 
-
-
-
-
-        # Simulate exiting
-        self.utils.log(color, debug_prefix, "Simulating exit in 3 seconds")
-
-        #for i in range(120, 0, -1):
+        # Show the user we're still alive
 
         since_started = 0
 
         while True:
             if self.controller.stop:
                 break
+
             if self.controller.upscale_finished:
                 break
+
             self.utils.log(color, debug_prefix, "Time since started: %s" % since_started)
+
             since_started += 1
             time.sleep(1)
 
+        # When we exit the while loop either we finished or we stopped
         if self.controller.upscale_finished:
 
-
+            # Apply post vapoursynth filter as the upscale finished
             if self.context.use_vapoursynth:
 
                 self.utils.log(color, debug_prefix, "APPLYING POST VAPOURSYNTH FILTER")
@@ -360,8 +316,7 @@ class Dandere2x():
                     self.utils.delete_file(self.context.upscaled_video)
                     self.utils.rename(self.context.vapoursynth_processing, self.context.upscaled_video)
 
-
-            # Migrate audio
+            # Migrate audio tracks from the original video to the new one
             self.video.ffmpeg.copy_videoA_audioB_to_other_videoC(
                 self.context.upscaled_video,
                 self.context.input_file,
@@ -377,9 +332,8 @@ class Dandere2x():
             # Happy upscaled video :)
 
         else:
+            # Save progress for later resuming
             self.context.save_vars()
-
-
 
 
 if __name__ == "__main__":
