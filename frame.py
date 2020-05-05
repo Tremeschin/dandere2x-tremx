@@ -22,19 +22,16 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from color import rgb, color_by_name
-from scipy import misc
 from PIL import Image
 
 import numpy as np
 
 import imageio
 import numpy
-import time
 import os
 
 
 color = rgb(196, 255, 33)
-
 
 
 class Frame():
@@ -66,8 +63,6 @@ class Frame():
         self.height = None
         self.name = None
 
-
-
     # fuck this function, lmao. Credits to
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):
@@ -92,7 +87,6 @@ class Frame():
         except ValueError as e:
             self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block: ", e)
             self.controller.exit()
-
 
     # we need to parse the new input into a non uint8 format so it doesnt overflow,
     # then parse it back to an integer using np.clip to make it fit within [0,255]
@@ -119,9 +113,8 @@ class Frame():
                 self.utils.log(color, debug_prefix, "Copied from fade, args = {%s, %s, %s, %s}" % (A_start,B_start,B_end,scalar))
 
         except ValueError as e:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block from fade")
+            self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block from fade: [%s]" % e)
             self.controller.exit()
-
 
     # Create and set new frame
     def new(self, width, height):
@@ -137,8 +130,7 @@ class Frame():
         if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (width, height))
 
-
-    # Load file based on nme
+    # Load file based on the filename
     def load_from_path(self, filename):
 
         debug_prefix = "[Frame.load_from_path]"
@@ -155,7 +147,6 @@ class Frame():
         if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (self.width, self.height))
 
-
     # Wait on a file if it does not exist yet. Wait can be cancelled via a cancellation token
     def load_from_path_wait(self, filename):
 
@@ -165,8 +156,10 @@ class Frame():
             self.utils.log(color, debug_prefix, "Waiting for: [%s]" % filename)
 
         self.utils.until_exist(filename)
-        self.load_from_path(filename)
 
+        if not self.controller.stop:
+            self.utils.log(color, debug_prefix, "Will not load waited file [%s] as controller stopped" % filename)
+            self.load_from_path(filename)
 
     # Save an image with specific instructions depending on it's extension type.
     def save(self, directory):
@@ -190,11 +183,9 @@ class Frame():
             self.utils.until_exist(directory + "temp" + extension)
             self.utils.rename(directory + "temp" + extension, directory)
 
-
     # Get PIL image array from this object frame
     def image_array(self):
         return Image.fromarray(self.frame.astype(np.uint8))
-
 
     # Explained inside
     def save_image_temp(self, directory, temp_location):
@@ -214,7 +205,6 @@ class Frame():
         self.utils.until_exist(temp_location)
         self.utils.rename(temp_location, directory)
 
-
     # Gets the (other_frame), (self.frame), and set to this (self.frame) the other's (self.frame)
     def duplicate(self, other_frame):
         """
@@ -233,7 +223,6 @@ class Frame():
         height_matches = self.height == other_frame.height
         width_matches = self.width == other_frame.width
 
-
         # Checks if both height and width matches and if not log the info on what went wrong, exit Dandere2x
         if not height_matches or not width_matches:
             self.utils.log(color_by_name("li_red"), debug_prefix, "Copy images are not equal")
@@ -245,10 +234,8 @@ class Frame():
 
             self.controller.exit()
 
-
         self.copy_from(other_frame.frame, self.frame, (0, 0), (0, 0),
                   (other_frame.frame.shape[0], other_frame.frame.shape[1]))
-
 
     # Copy block from (other frame) to (this frame)
     def copy_block(self, other_frame, block_size, other_x, other_y, this_x, this_y):
@@ -266,9 +253,9 @@ class Frame():
         self.check_valid(other_frame, block_size, other_x, other_y, this_x, this_y)
 
         self.copy_from(other_frame.frame, self.frame,
-                  (other_y, other_x), (this_y, this_x),
-                  (this_y + block_size - 1, this_x + block_size - 1))
-
+                       (other_y, other_x), (this_y, this_x),
+                       (this_y + block_size - 1, this_x + block_size - 1)
+                       )
 
     def fade_block(self, this_x, this_y, block_size, scalar):
         """
@@ -282,9 +269,8 @@ class Frame():
             self.utils.log(color, debug_prefix, "Copy from fade: [%s]" % self.name)
 
         self.copy_from_fade(self.frame, self.frame,
-                       (this_y, this_x), (this_y, this_x),
-                       (this_y + block_size - 1, this_x + block_size - 1), scalar)
-
+                            (this_y, this_x), (this_y, this_x),
+                            (this_y + block_size - 1, this_x + block_size - 1), scalar)
 
     def check_valid(self, other_frame, block_size, other_x, other_y, this_x, this_y):
         """
@@ -330,8 +316,6 @@ class Frame():
 
         if other_x < 0 or other_y < 0:
             self.controller.exit()
-
-
 
     def mean(self, other):
         return numpy.mean((self.frame - other.frame) ** 2)

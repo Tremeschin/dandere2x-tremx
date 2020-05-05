@@ -19,11 +19,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
 from color import rgb, debug_color
 
 import threading
 import time
+
 
 color = rgb(0, 115, 255)
 
@@ -44,24 +44,19 @@ class Core():
 
         self.utils.log(color, debug_prefix, "Init")
 
-
     # Calls threads and
     def start(self):
 
         debug_prefix = "[Core.start]"
 
-
         self.controller.threads["pipe_plugin_thread"] = threading.Thread(target=self.get_new_d2xcpp_content_loop)
         self.utils.log(color, debug_prefix, "Created thread Core.pipe_plugin_thread")
-
 
         self.controller.threads["danderere2x_cpp_thread"] = threading.Thread(target=self.d2xcpp.run)
         self.utils.log(color, debug_prefix, "Created thread Core.danderere2x_cpp_thread")
 
-
         self.controller.threads["processing"] = threading.Thread(target=self.processing.run)
         self.utils.log(color, debug_prefix, "Created thread Core.processing")
-
 
         # For debugging purposes
         if self.context.enable_waifu2x:
@@ -77,7 +72,6 @@ class Core():
         else:
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")
 
-
         # Start the threads, warn the user that the output is no more linear
         self.utils.log(debug_color(), debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
 
@@ -85,9 +79,7 @@ class Core():
             self.utils.log(color, debug_prefix, "Starting thread: [\"%s\"]" % thread)
             self.controller.threads[thread].start()
 
-
     # # # These are "parsers" for the Dandere2x C++ part that loads the stuff we need (or not) into self.block_match_data
-
 
     # Parse newline of cpp_out, generic
     def parse_cpp_out_newline(self, line):
@@ -119,13 +111,12 @@ class Core():
 
         return line
 
-
     # Decides if that line is necessary based on
     def is_necessary_line(self, line):
 
         debug_prefix = "[Core.is_necessary_line]"
 
-        if self.context.loglevel >= 7:
+        if self.context.loglevel >= 13:
             self.utils.log(color, debug_prefix, "[DEBUG] Checking if line [\"%s\"] is necessary: " % line)
 
         line = self.parse_cpp_out_newline(line)
@@ -133,14 +124,9 @@ class Core():
         # If it isn't resume we gotta have everything
         if not self.context.resume:
             return True
-
         else:
-
             # TODO: CHECK IF NECESSARY IF NOT RESUME
-
             return True
-
-
 
     # For resume sessions, parse the entire cpp_out file
     def parse_whole_cpp_out(self):
@@ -160,14 +146,9 @@ class Core():
                     if self.is_necessary_line(line):
                         self.parse_cpp_out_newline(line)
 
-
         if self.context.loglevel >= 10:
             self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.block_match_data:")
             self.utils.log(color, debug_prefix, self.controller.block_match_data)
-
-
-    # # #
-
 
     def get_d2xcpp_vectors(self):
 
@@ -190,7 +171,6 @@ class Core():
 
             self.utils.log(color, debug_prefix, "Waiting for last line in d2x_cpp_vectors_out to be \"END\"")
             time.sleep(0.2)
-
 
         self.utils.log(color, debug_prefix, "Got vectorfile contents")
 
@@ -218,21 +198,9 @@ class Core():
                     # Create entry in dictionary, line[0] = 5162
                     self.controller.vectors[vector_id] = vector_tuple
 
-
         if self.context.loglevel >= 12:
             self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.vectors:")
             self.utils.log(color, debug_prefix, self.controller.vectors)
-
-
-
-
-
-
-
-
-
-
-
 
     # Reads new content of self.context.d2x_cpp_out file
     def get_new_d2xcpp_content_loop(self):

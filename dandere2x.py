@@ -49,7 +49,6 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 class Dandere2x():
-
     def __init__(self, args):
         self.args = args
 
@@ -234,7 +233,7 @@ class Dandere2x():
                         self.utils.log(color, debug_prefix, "Mindisk mode OFF, DO NOT delete noisy video [%s]" % self.context.noisy_video)
 
             # Welp we don't need to add previous upscaled video if we're just starting
-            self.video.ffmpeg.pipe_one_time(self.context.upscaled_video)
+            self.video.ffmpeg.pipe_one_time(self.utils.get_partial_video_path())
 
         # IS RESUME SESSION, basically load instructions from the context saved vars
         else:
@@ -244,7 +243,9 @@ class Dandere2x():
 
             self.context.load_vars_from_file(self.context.context_vars)
 
-            self.video.ffmpeg.pipe_resume(None, self.context.upscaled_video)
+            self.video.save_last_frame_of_video_ffmpeg(self.utils.get_last_partial_video_path(), self.context.resume_video_frame)
+
+            self.video.ffmpeg.pipe_one_time(self.utils.get_partial_video_path())
 
     # Here's the core logic for Dandere2x
     def run(self):
@@ -294,11 +295,34 @@ class Dandere2x():
 
             self.utils.log(color, debug_prefix, "Time since started: %s" % since_started)
 
+            if since_started == 50:
+                self.context.resume = True
+                self.context.save_vars()
+                self.controller.exit()
+                return 0
+
             since_started += 1
             time.sleep(1)
 
         # When we exit the while loop either we finished or we stopped
         if self.controller.upscale_finished:
+
+            # If we finished in a single run time
+            partials = len(os.listdir(self.context.partial))
+
+            if partials == 1:
+                self.utils.move(self.context.partial + "0.mkv", self.context.upscaled_video)
+
+            elif partials > 1:
+                # If we have two or more partials video
+                self.video.ffmpeg.concat_video_folder_reencode(self.context.partial, self.context.upscaled_video)
+
+                # Delete the partial dir
+                self.utils.reset_dir(self.context.partial)
+
+            else:
+                self.utils.log(color, debug_prefix, "No partials were found in [%s]" % self.context.partial)
+                return -1
 
             # Apply post vapoursynth filter as the upscale finished
             if self.context.use_vapoursynth:

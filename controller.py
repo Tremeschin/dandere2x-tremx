@@ -24,7 +24,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from color import rgb
 
+
 color = rgb(240, 100, 64)
+
 
 class Controller():
     def __init__(self, utils, context):

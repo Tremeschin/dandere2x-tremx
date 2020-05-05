@@ -22,7 +22,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
 from utils import SubprocessUtils
 from color import rgb, fg
 
@@ -43,13 +42,12 @@ class Waifu2x():
 
         self.waifu2x = None
 
-
     # Set internal self.waifu2x to a specific wrapper based on the os and w2x selected
     def set_corresponding(self):
 
         debug_prefix = "[Waifu2x.set_corresponding]"
 
-        c = fg.li_magenta # Print this color only in this class
+        c = fg.li_magenta  # Print this color only in this class
 
         self.utils.log(c, debug_prefix, "According to the following, ...")
 
@@ -96,7 +94,6 @@ class Waifu2x():
         return self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
 
 
-
 class NotFakeWaifu2x():
     def init(self, context, utils, controller):
 
@@ -122,11 +119,11 @@ class NotFakeWaifu2x():
 
                     try:
                         input = input_path + file
-                        output = output_path + file #.replace(".jpg", ".jpg.png")
+                        output = output_path + file  #.replace(".jpg", ".jpg.png")
 
                         img = cv2.imread(input)
 
-                        scale_percent = 200 # percent of original size
+                        scale_percent = 200  # percent of original size
 
                         width = int(img.shape[1] * scale_percent / 100)
                         height = int(img.shape[0] * scale_percent / 100)
@@ -137,29 +134,26 @@ class NotFakeWaifu2x():
 
                         cv2.imwrite(output, resized)
 
-                        self.utils.rename(output, output.replace(".jpg", ".jpg.png"))
-
-                        self.utils.delete_file(output)
+                        #self.utils.delete_file(output)
                         self.utils.delete_file(input)
 
                     except Exception:
                         pass
 
-
             time.sleep(self.context.waifu2x_wait_for_residuals)
 
-
+    # Each Waifu2x outputs the images in a different naming sadly
+    def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
+        return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Linux
-
 
 # # For verifying waifu2x binary is in path:
 
 # bash: type: waifu2x-ncnn-vulkan is /usr/bin/waifu2x-ncnn-vulkan
 # bash: type: waifu2x-ncnn-vulka: not found
 # [TODO]: This only finds waifu2x's in PATH]
-
 
 
 # Waifu2x Linux Vulkan (ncnn) wrapper
@@ -175,7 +169,6 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
-
     # Get the binary if it exist
     def verify(self):
 
@@ -187,7 +180,6 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
-
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
 
@@ -198,7 +190,6 @@ class Waifu2xLinuxVulkan():
         self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "8:16:8"]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
-
 
     # Call the command and upscale a file or directory
     def upscale(self, input_path, output_path):
@@ -222,9 +213,6 @@ class Waifu2xLinuxVulkan():
             time.sleep(0.5)
             if self.controller.stop is True:
                 subprocess.terminate()
-
-
-
 
     # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):
@@ -256,7 +244,6 @@ class Waifu2xLinuxVulkan():
         return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
 
 
-
 # Waifu2x Linux CPP (converter-cpp) wrapper
 class Waifu2xLinuxCPP():
 
@@ -269,17 +256,13 @@ class Waifu2xLinuxCPP():
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
-
     def verify(self):
 
         debug_prefix = "[Waifu2xLinuxCPP.verify]"
 
         self.utils.log(color, debug_prefix, "Verifying and getting binary")
-
         self.binary = self.utils.get_binary("waifu2x-converter-cpp")
-
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
-
 
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
@@ -291,7 +274,6 @@ class Waifu2xLinuxCPP():
         self.command = [self.binary, "--noise-level", str(self.context.denoise_level), "--block-size", str(self.context.tile_size), "-a", "0", "-j", "16", "-f", "jpg", "-q", "101", "-v", "1"]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
-
 
     # Call the command and upscale a file or directory
     def upscale(self, input_path, output_path):
@@ -315,7 +297,6 @@ class Waifu2xLinuxCPP():
             time.sleep(0.5)
             if self.controller.stop is True:
                 subprocess.terminate()
-
 
     # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):
@@ -342,17 +323,9 @@ class Waifu2xLinuxCPP():
 
         self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
 
-
     # Each Waifu2x outputs the images in a different naming sadly
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
         return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
-
-
-
-
-
-
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Windows
@@ -361,11 +334,12 @@ class Waifu2xLinuxCPP():
 # Waifu2x Windows Vulkan (ncnn) wrapper
 class Waifu2xWindowsVulkan():
     def init(self, context, utils, controller):
+
+        debug_prefix = "[Waifu2xWindowsVulkan.__init__]"
+
         self.context = context
         self.utils = utils
         self.controller = controller
-
-        debug_prefix = "[Waifu2xWindowsVulkan.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 

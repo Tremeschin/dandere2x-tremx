@@ -20,7 +20,7 @@
 
 
 session_name: auto
-waifu2x_type: cpp
+waifu2x_type: fake # fake, cpp, vulkan
 mindisk: true
 
 basic:
@@ -40,6 +40,9 @@ ffmpeg:
   get_frame_count_method: null_copy # only option available right now
   get_frame_rate_method: ffprobe # only option available right now
   get_resolution_method: ffprobe # only option available right now
+
+  deblock_filter: pp=hb/vb/dr/fq|32, deband=range=22:blur=false
+  encode_codec: libx264
 
 processing:
   extracted_images_extension: .jpg

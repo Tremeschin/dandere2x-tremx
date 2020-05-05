@@ -21,10 +21,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
-# get_operating_system, wait_on_delete_dir, wait_on_file
 from dandere2x import Dandere2x
 from playsound import playsound
+from gi.repository import Gtk
 from context import Context
 import webbrowser
 import threading
@@ -37,10 +36,9 @@ import os
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-
 
 
 def progressbar_thread():
@@ -50,11 +48,9 @@ def progressbar_thread():
         # Wait until frame count and current frame exists
         try:
             frame_count = window.dandere2x.context.frame_count
-            break
-        except Exception as e:
+        except Exception:
             time.sleep(1)
-            #print(logprefix + "Waiting for frame count to exist")
-
+            # print(logprefix + "Waiting for frame count to exist")
 
     for x in range(window.dandere2x.context.frame_count - 1):
 
@@ -65,16 +61,17 @@ def progressbar_thread():
         # Update progress bar
         window.update_progress_bar(x+1, frame_count)
 
+
 threading.Thread(target=progressbar_thread).start()
 
 
 def play_sound_threaded(audio):
     playsound(ROOT + os.path.sep + "data" + os.path.sep + audio + ".wav")
 
+
 def sound(audio):
     # Gotta thread of GUI hangs
     threading.Thread(target=play_sound_threaded, args=(audio, )).start()
-
 
 
 class DandereGTK():
@@ -100,14 +97,14 @@ class DandereGTK():
 
             "resources": self.resources,
 
-            "quit": Gtk.main_quit #TODO: does not quit python?
+            "quit": Gtk.main_quit  # TODO: does not quit python?
         }
 
         # Connect the handlers to Python functions
         self.builder.connect_signals(self.handlers)
 
         # Declare all the varables in their default values
-        
+
         # Sliders
         self.scale_factor = 2
         self.denoise_level = 3
@@ -127,8 +124,8 @@ class DandereGTK():
         self.progressbar = self.builder.get_object("progressbar")
         self.average = self.builder.get_object("averages")
         self.tcc = self.builder.get_object("tcc")
-        self.n_frames_average = 120 # MUST BE GREATER OR EQUAL TO 10
-        self.last_frame_time_completed = 0 # for calculating the TCC correctly
+        self.n_frames_average = 120  # MUST BE GREATER OR EQUAL TO 10
+        self.last_frame_time_completed = 0  # for calculating the TCC correctly
         self.gui_round_numbers_decimals = 2
 
         # Waifu2x
@@ -139,9 +136,8 @@ class DandereGTK():
         self.can_toggle = True
         self.time_start = None
         self.time_took_frames = [0 for _ in range(self.n_frames_average)]
-        self.dandere2x = None # For not creating two dandere2x processes
+        self.dandere2x = None  # For not creating two dandere2x processes
         self.can_change_options = False
-
 
         if self.n_frames_average < 10:
             self.n_frames_average = 10
@@ -161,16 +157,14 @@ class DandereGTK():
 
         logprefix = "[gtk_dandere2x_gui.__init__] "
 
-        print(logprefix + "Init done")   
-
-
+        print(logprefix + "Init done")
 
     # Calls the GTK MessageDialog
     def message_box(self, title, content):
-        
+
         # Create the GTK object dialog with the title
         dialog = Gtk.MessageDialog(None, None, Gtk.MessageType.QUESTION,
-            Gtk.ButtonsType.OK, title)
+                                   Gtk.ButtonsType.OK, title)
 
         # Add the content of it
         dialog.format_secondary_text(content)
@@ -178,7 +172,7 @@ class DandereGTK():
         # Run and destroy it after being closed (runned)
         response = dialog.run()
         dialog.destroy()
-        
+
 
 
     # (/s) Smartly chooses which dialog message to call the MessageDialog
@@ -190,7 +184,7 @@ class DandereGTK():
         # Load it
         with open(configfile, "r") as read_file:
             config = yaml.safe_load(read_file)
-         
+
 
         # This section checks which message_type is being requested and
         # calls the message_box modular function to show up the dialog
@@ -202,15 +196,15 @@ class DandereGTK():
 
             sound("pop")
             self.message_box(message[0], message[1])
-            
+
 
         # Save everything we just changed (if we were greeted first time,
         # or clicked the advanced options first time as well)
         with open(configfile, 'w') as outfile:
             yaml.dump(config, outfile, default_flow_style=False)
-            
 
-      
+
+
     # This function toggles the user-interactible widgets but the upscale and stop button
     def toggle_gui_options(self):
 
@@ -226,12 +220,12 @@ class DandereGTK():
         option_widgets_ids.append("suspendbutton")
 
         for widget in option_widgets_ids:
-            
+
             # Set the widget sensitive or insensitive (enabled/disabled)
             self.builder.get_object(widget).set_sensitive(self.can_change_options)
 
 
-    
+
     # Change the status label at bottom left of the GUI, the spinner button
     # is off by default and can be called if True is set as a second argument
     def status(self, new_status, spin = False):
@@ -292,12 +286,12 @@ class DandereGTK():
                 if upscalebutton.get_active() == False:
                     self.can_toggle = False
                     upscalebutton.set_active(True)
-                
+
                 # Not toggled so we change the current mode
                 elif upscalebutton.get_active() == True:
-                    
+
                     if self.test_good_to_go() == True:
-                        
+
                         if not upscalebutton.get_label() == "Return Upscaling":
                             sound("start")
                         else:
@@ -330,10 +324,10 @@ class DandereGTK():
                 if suspendbutton.get_active() == False:
                     self.can_toggle = False
                     suspendbutton.set_active(True)
-                
+
                 # Not toggled so we change the current mode
                 elif suspendbutton.get_active() == True:
-                    
+
                     sound("stop")
 
                     self.can_toggle = False # Avoid infinite loop
@@ -355,7 +349,7 @@ class DandereGTK():
     # TODO: LINUX DOES NOT SUPPORT CAFFE
 
     def test_good_to_go(self):
-        
+
         self.status("Testing good to go options...", True)
 
         # Input file exists
@@ -375,7 +369,7 @@ class DandereGTK():
 
     # Core functionality of this gui, calling Dandere2x.start() method
     def upscale(self):
-        
+
         self.status("Upscale function called")
 
         # If dandere2x class Dandere2x() object does not exist
@@ -398,7 +392,7 @@ class DandereGTK():
             config['dandere2x']['usersettings']['scale_factor'] = self.scale_factor
             config['dandere2x']['usersettings']['denoise_level'] = self.denoise_level
             config['dandere2x']['usersettings']['quality_minimum'] = self.image_quality
-            
+
             config['dandere2x']['usersettings']['input_file'] = self.input_file
             config['dandere2x']['usersettings']['output_file'] = self.output_file
 
@@ -427,7 +421,7 @@ class DandereGTK():
             self.status("Dandere2x start() called")
 
             self.status("Upscaling...", True)
-        
+
         else:
             self.status("Dandere2x already running... But, how you got here? Resume not supported yet")
 
@@ -444,19 +438,19 @@ class DandereGTK():
 
     # This needs to be called outside of this class preferably in a separate thread
     def update_progress_bar(self, currentframe, totalframes):
-        
+
         # Limit progress bar updats in frames per second    vvvv
-        if (time.time() - self.last_frame_time_completed) > 1/60: 
+        if (time.time() - self.last_frame_time_completed) > 1/60:
 
             # For calculating global averages
             time_took_until_now = time.time() - self.time_start
 
             # Proportion completed
             frac = self.proportion(totalframes, 1, currentframe + 1)
-            
+
             # The text to set the progressbar to
             progress_bar_text = "Progress: Frame [%s/%s] - %s %% " % (currentframe+1, totalframes, round(frac*100, 1))
-            
+
             self.progressbar.set_fraction(frac)
             self.progressbar.set_text(progress_bar_text)
 
@@ -484,8 +478,8 @@ class DandereGTK():
 
             # The text to set the widget to
             average_text = "Average last N frames:   [10 :  %s sec/frame]    [%s : %s sec/frame]    [ALL : %s sec/frame]" % ( \
-                            round(average_last_10, self.gui_round_numbers_decimals), 
-                            round(self.n_frames_average, self.gui_round_numbers_decimals), 
+                            round(average_last_10, self.gui_round_numbers_decimals),
+                            round(self.n_frames_average, self.gui_round_numbers_decimals),
                             round(average_last_n, self.gui_round_numbers_decimals),
                             round(average_all, self.gui_round_numbers_decimals))
 
@@ -495,14 +489,14 @@ class DandereGTK():
             #   ETA
 
             # Basic proportion on how much time left until completion
-            
+
             #tcc_time = self.proportion(currentframe, time_took_until_now, totalframes - currentframe)
             tcc_time_number = average_all*(totalframes-currentframe)
             tcc_time = str(datetime.timedelta(seconds=round(tcc_time_number, 2)))[:-7]
 
             tt_time = time_took_until_now
             tt_time = str(datetime.timedelta(seconds=round(time_took_until_now,2)))[:-5]
- 
+
             now_plus_tcc = str(datetime.datetime.now() + datetime.timedelta(seconds = tcc_time_number))[:-7]
 
 
@@ -510,8 +504,8 @@ class DandereGTK():
             self.tcc.set_text(tcc_text)
 
 
-        
-    
+
+
     # Moved the Scale Factor slider so updating variables
     def switch_changed(self, *data):
 
@@ -524,16 +518,16 @@ class DandereGTK():
         exec("self.%s = %s" % (who, newvalue))
 
         self.smart_messagebox(who)
-        
-        
+
+
 
     # Moved the Scale Factor slider so updating variables
     def slider_changed(self, *data):
-        
+
         # Get what slider were changed
         who = Gtk.Buildable.get_name(data[0])
 
-        
+
 
         # Check if the new value is different from the old one
         if not who == "block_size":
@@ -544,7 +538,7 @@ class DandereGTK():
             if not newvalue == eval("self." + who):
                 self.status(who + " changed to " + str(newvalue))
                 exec("self.%s = %s" % (who, newvalue))
-        
+
         else:
             newvalue = round(float(data[0].get_value()), 4)
             self.status(who + " changed to " + str(newvalue) + "%")
@@ -571,7 +565,7 @@ class DandereGTK():
         self.status("No output file selected")
         dialog.destroy()
         return False
-    
+
 
     # Self explanatory
     def open_dialog(self):
@@ -623,7 +617,7 @@ class DandereGTK():
         # Get id of button in the toolbar
         who = Gtk.Buildable.get_name(data[0])
         print(logprefix + "Open link:", who)
-        
+
         links = {
             "docs": "https://dandere2x.readthedocs.io/en/latest/",
             "reddit": "https://www.reddit.com/r/Dandere2x/",
@@ -640,7 +634,7 @@ class DandereGTK():
 
 
 
-# Get the .glade file 
+# Get the .glade file
 window = DandereGTK(ROOT + os.path.sep + "gui" + os.path.sep + "gtk_dandere2x_gui.glade")
 
 Gtk.main()

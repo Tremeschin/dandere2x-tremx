@@ -19,16 +19,16 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
 from color import color_by_name
 
+
 color = color_by_name("li_blue")
+
 
 class D2XMath():
     def __init__(self, context, utils):
         self.context = context
         self.utils = utils
-
 
     def set_block_size(self):
         # Looks like the sweet spot for percentage block_size is 1.85%
@@ -47,20 +47,16 @@ class D2XMath():
 
         debug_prefix = "[D2XMath.set_block_size]"
 
-        
-
         # As percentages annoying to set manually
         # This one looks like a good number
         if self.context.block_size == "auto":
             self.context.block_size = "1.85%"
-
 
         # self.context.* too long, YOLO
         block_size = self.context.block_size
         resolution = self.context.resolution
         width = resolution[0]
         height = resolution[1]
-
 
         # If the block_size is percentage-based, we basically round,
         # divide, multiply a few stuff to get a theoric block size
@@ -87,12 +83,9 @@ class D2XMath():
             if block_size < 16:
                 self.utils.log(color, debug_prefix, "Block_size is lower than 16, not ideal, hard limitting to 16.")
                 block_size = 16
-        
 
         self.utils.log(color, debug_prefix, "Setting final block_size to %s" % block_size)
         self.context.block_size = block_size
-
-
 
     # Function that sets the video resolution to the nearest multiple of the block_size
     def get_a_valid_input_resolution(self):
@@ -102,23 +95,22 @@ class D2XMath():
         resolution = self.context.resolution
         width = resolution[0]
         height = resolution[1]
-        
+
         block_size = self.context.block_size
 
         trueblock_size_multiples = [block_size*i for i in range(int(max(width, height)/block_size)*2)]
 
         # https://www.geeksforgeeks.org/python-find-closest-number-to-k-in-given-list/
         def closest_number_to(n, lst):
-            return lst[min(range(len(lst)), key = lambda i: abs(lst[i]-n))] 
+            return lst[min(range(len(lst)), key = lambda i: abs(lst[i]-n))]
 
-        closest_width  = closest_number_to(width,  trueblock_size_multiples)
+        closest_width = closest_number_to(width, trueblock_size_multiples)
         closest_height = closest_number_to(height, trueblock_size_multiples)
-
 
         self.utils.log(color, debug_prefix, "Valid output resolution:")
 
         self.utils.log(color, self.context.indentation, "Original resolution: (%sx%s) (WxH)" % (width, height))
-        self.utils.log(color, self.context.indentation, "Recieved block_size: %s" % block_size)     
+        self.utils.log(color, self.context.indentation, "Recieved block_size: %s" % block_size)
         self.utils.log(color, self.context.indentation, "New valid resolution: (%sx%s) (WxH)" % (closest_width, closest_height))
 
         self.context.valid_resolution = [closest_width, closest_height]

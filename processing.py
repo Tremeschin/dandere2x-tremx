@@ -74,8 +74,7 @@ class Processing():
         start_frame.new(self.context.resolution[0] * 2, self.context.resolution[1] * 2)
 
         if self.context.last_processing_frame > 0:
-            # TODO: get the last video frame from the partial upscale
-            pass
+            start_frame.load_from_path_wait(self.context.resume_video_frame)
 
         merged = start_frame
 
@@ -99,7 +98,7 @@ class Processing():
                 time.sleep(0.5)
 
 
-            # print(self.controller.block_match_data)
+            # We won't have data for the last frame as there is not a N+1 frame
             if not frame_number == self.context.frame_count:
                 working_data = self.controller.block_match_data[str(frame_number)]
                 working_vector_ids = working_data["data"].split(";")
@@ -114,13 +113,17 @@ class Processing():
                 self.utils.log(color, debug_prefix, working_vector_ids)
 
 
-            if (working_data["type"]) == "pframe" and not ( working_vector_ids == ['']):
+            if (working_data["type"]) == "pframe" and not (working_vector_ids == ['']):
 
                 # Each Waifu2x outputs the images in a different naming sadly
                 residual_upscaled_file_path = self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
 
                 residual_file_path = self.context.residual + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
                 residual_upscaled.load_from_path_wait(residual_upscaled_file_path)
+
+                if self.controller.stop:
+                    self.utils.log(color, debug_prefix, "Quitting as controller said to stop")
+                    return 0
 
                 residual_dimensions = (residual_upscaled.width, residual_upscaled.height)
 
@@ -170,6 +173,7 @@ class Processing():
 
                 # Update the last processed frame for resume session
                 self.context.last_processing_frame = frame_number
+                self.utils.log(color, debug_prefix, "Context last_processing_frame is now [%s]" % self.context.last_processing_frame)
 
                 self.utils.delete_file(residual_file_path)
                 self.utils.delete_file(residual_upscaled_file_path)
@@ -185,4 +189,3 @@ class Processing():
         self.video.ffmpeg.close_pipe()
 
         self.controller.upscale_finished = True
-        self.controller.exit()

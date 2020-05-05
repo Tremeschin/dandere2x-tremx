@@ -6,7 +6,7 @@ Purpose: Dandere2x C++ wrapper for python, calls the binary
 Syntax:
 
 binary input block_size width height out vectors start_frame bleed \
-residuals_output use_mindisk zero_padding 0 debug_video
+residuals_output use_mindisk zero_padding only_write_debug_video debug_video
 
 Example:
 
@@ -45,9 +45,7 @@ color = rgb(240, 100, 64)
 
 
 class Dandere2xCPPWraper():
-
     def __init__(self, context, utils, controller, video):
-
         debug_prefix = "[Dandere2xCPPWraper.__init__]"
 
         self.context = context
@@ -68,7 +66,6 @@ class Dandere2xCPPWraper():
 
         debug_prefix = "[Dandere2xCPPWraper.generate_run_command]"
 
-
         self.command = [
             self.binary,
             self.context.input_file,
@@ -88,8 +85,6 @@ class Dandere2xCPPWraper():
 
         self.utils.log(color, debug_prefix, "Run command is: %s" % self.command)
         self.utils.log(color, debug_prefix, "[DEBUG] Plain command is: %s" % ' '.join(self.command))
-
-
 
     # Run with SubprocessUtils the d2xcpp binary
     def run(self):

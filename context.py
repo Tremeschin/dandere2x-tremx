@@ -26,7 +26,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
 from color import color_by_name, fg
 
 import os
@@ -38,7 +37,6 @@ color = color_by_name("li_yellow")
 class Context():
 
     def __init__(self, utils):
-
         self.indentation = "··· |"
         debug_prefix = "[Context.__init__]"
 
@@ -132,6 +130,8 @@ class Context():
         self.get_frame_count_method = self.yaml["ffmpeg"]["get_frame_count_method"]
         self.get_frame_rate_method = self.yaml["ffmpeg"]["get_frame_rate_method"]
         self.get_resolution_method = self.yaml["ffmpeg"]["get_resolution_method"]
+        self.deblock_filter = self.yaml["ffmpeg"]["deblock_filter"]
+        self.encode_codec = self.yaml["ffmpeg"]["encode_codec"]
 
         # # Static developer vars across files
 
@@ -157,14 +157,13 @@ class Context():
         self.enable_waifu2x = self.yaml["debug"]["enable_waifu2x"]
         self.write_only_debug_video = self.yaml["debug"]["write_only_debug_video"]
 
-
-
         self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
 
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
             "residual": "//ROOT//|sessions|//SESSION//|residual|",
             "upscaled": "//ROOT//|sessions|//SESSION//|upscaled|",
+            "partial": "//ROOT//|sessions|//SESSION//|partial|",
             "merged": "//ROOT//|sessions|//SESSION//|merged|",
             "processing": "//ROOT//|sessions|//SESSION//|processing",
             "session": "//ROOT//|sessions|//SESSION//"
@@ -175,6 +174,8 @@ class Context():
             "d2x_cpp_plugins_out": "//ROOT//|sessions|//SESSION//|plugins_input.d2x",
             "d2x_cpp_vectors_out": "//ROOT//|sessions|//SESSION//|vectors.d2x",
             "upscaled_video": "//ROOT//|sessions|//SESSION//|upscaled_//INPUTVIDEOFILENAME//",
+            "partial_video": "//ROOT//|sessions|//SESSION//|partial|//NUM//.mkv",  # We make an exception on this in Utils.reset_files
+            "resume_video_frame": "//ROOT//|sessions|//SESSION//|processing|resume_video_frame.jpg",  # We make an exception on this in Utils.reset_files
             "debug_video": "//ROOT//|sessions|//SESSION//|debug_video.mkv",
             "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
             "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
@@ -190,12 +191,14 @@ class Context():
 
         self.residual = None
         self.upscaled = None
+        self.partial = None
         self.merged = None
         self.session = None
 
         self.d2x_cpp_vectors_out = None
         self.d2x_cpp_plugins_out = None
         self.upscaled_video = None
+        self.resume_video_frame = None
         self.debug_video = None
         self.context_vars = None
         self.temp_vpy_script = None
@@ -208,7 +211,6 @@ class Context():
 
         self.plain_dirs = []
         self.plain_files = []
-
 
         # This is a really neat* way of micromanaging lots of self vars, we basically
         # set the self.$name$ with setattr, not much else is happening here other than
@@ -273,8 +275,6 @@ class Context():
 
                 self.utils.log(color, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, subname))
 
-
-
     # We save some selected vars for dandere2x_cpp to read them and work
     # properly based on where stuff actually is
     def save_vars(self):
@@ -298,10 +298,8 @@ class Context():
             "get_video_info_method", "get_resolution_method", "wait_time",
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
-            "processing", "d2x_cpp_vectors_out"
+            "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec"
         ]
-
-
 
         data = {}
 
@@ -316,22 +314,21 @@ class Context():
 
             if isinstance(value, list):
                 try:
-                    if isinstance(value[0], str):
+                    if value == []:
+                        pass
+                    elif isinstance(value[0], str):
                         value = [x.replace(self.ROOT, self.rootfolder_substitution) for x in value]
                 except Exception as e:
-                    self.utils.log(color_by_name("li_red"), debug_prefix, "Exception ocurred on line [%s]: " % self.utils.get_linenumber(), e)
+                    self.utils.log(color_by_name("li_red"), debug_prefix, "Exception ocurred on line [%s]: [%s]" % (self.utils.get_linenumber(), e))
 
             # Atribute
             data[item] = value
-
-
 
         self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
 
         self.utils.save_yaml(data, self.context_vars)
 
         self.utils.log(color, debug_prefix, "Saved")
-
 
     # For resuming, loads into self.* variables the context_vars file
     def load_vars_from_file(self, context_vars_file):
@@ -350,7 +347,9 @@ class Context():
                 value = value.replace(self.rootfolder_substitution, self.ROOT)
 
             if isinstance(value, list):
-                if isinstance(value[0], str):
+                if value == []:
+                    pass
+                elif isinstance(value[0], str):
                     value = [x.replace(self.rootfolder_substitution, self.ROOT) for x in value]
 
             # Log and set self var "self.item" as value

@@ -187,7 +187,8 @@ class Utils():
     # Wrapper for self.reset_file, resets the plain files from context
     def reset_files(self):
         for item in self.context.plain_files:
-            self.reset_file(item)
+            if not "//NUM//" in item:
+                self.reset_file(item)
 
 
 
@@ -480,6 +481,37 @@ class Utils():
             return random.randint(a, 9*a)
 
 
+    def get_partial_video_path(self):
+
+        debug_prefix = "[Utils.get_binary]"
+
+        partial = self.context.partial_video.replace("//NUM//", str(len(os.listdir(self.context.partial))))
+
+        self.log(color, debug_prefix, "Partial video file is: [%s]" % partial)
+
+        return partial
+
+
+    def get_last_partial_video_path(self):
+
+        debug_prefix = "[Utils.get_last_partial_video_path]"
+
+        files = os.listdir(self.context.partial)
+
+        self.log(color, debug_prefix, "All partials:", files)
+
+        # Sort the files numerically
+        files = [int(x.replace(".mkv", "")) for x in files]
+        files.sort()
+        file = [str(x) + ".mkv" for x in files][-1]
+
+        self.log(color, debug_prefix, "Last partial is: " + file)
+
+        last_partial_path = self.context.partial + file
+
+        return last_partial_path
+
+
 
     # f("abc def ggf", 3) -> "ggf"
     def get_nth_word(self, string, N):
@@ -490,7 +522,6 @@ class Utils():
     def get_binary(self, wanted):
 
         debug_prefix = "[Utils.get_binary]"
-
 
         # Linux way of life
         if self.context.os == "linux":

@@ -23,6 +23,7 @@ from color import rgb, color_by_name
 
 import subprocess
 import cv2
+import os
 
 
 color = rgb(30, 200, 60)
@@ -239,7 +240,7 @@ class FFmpegWrapper():
         self.utils.run_subprocess(command)
 
     # Calls a FFmpeg process reading images from stdin
-    # "one time" means it should not be reused ie. wouldn't work into a resume session
+    # This can't be reutilized so we save to a partial video file
     def pipe_one_time(self, output):
 
         debug_prefix = "[FFmpegWrapper.pipe_one_time]"
@@ -255,8 +256,8 @@ class FFmpegWrapper():
                 '-i', '-',
                 '-an',
                 '-crf', '17',
-                '-vcodec', 'libxvid',
-                '-vf', 'pp=hb/vb/dr/fq|32, deband=range=22:blur=false',
+                '-vcodec', self.context.encode_codec,
+                '-vf', self.context.deblock_filter,
                 '-b:v', '5000k',
                 output
         ]
@@ -266,10 +267,6 @@ class FFmpegWrapper():
         self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.utils.log(color, debug_prefix, "Created FFmpeg one time pipe")
-
-    # TODO: FIGURE OUT HOW TO CONCATENATE PREVIOUS VIDEO AND PIPE NEW IMAGES ONTO A NEW ONE
-    def pipe_resume(self, previous, output):
-        self.pipe_one_time(output)
 
     # Write images into pipe
     def write_to_pipe(self, image):
@@ -290,6 +287,59 @@ class FFmpegWrapper():
         self.pipe_subprocess.wait()
 
         self.utils.log(color, debug_prefix, "Closed!!")
+
+
+    def concat_video_folder_reencode(self, folder, output):
+
+        debug_prefix = "[FFmpegWrapper.cocat_video_folder]"
+
+        files = os.listdir(folder)
+
+        # Sort the files numerically
+        files = [int(x.replace(".mkv", "")) for x in files]
+        files.sort()
+        files = [str(x) + ".mkv" for x in files]
+
+        how_much_files = len(files)
+
+        files_path = [folder + file for file in files]
+
+        command = [self.ffmpeg_binary, "-y"]
+
+        # Set input to every file
+        for file_path in files_path:
+            command += ["-i", file_path]
+
+        command += ['-filter_complex']
+
+        concat_option = ""
+
+        for i in range(how_much_files):
+            concat_option += "[%s:v] " % i
+
+        concat_option += "concat=n=%s:v=1 [v] " % how_much_files
+
+        command += [concat_option]
+        command += ["-map", "[v]"]
+        command += [output]
+
+        self.utils.log(color, debug_prefix, "Command to merge partials:")
+        self.utils.log(color, debug_prefix, command)
+
+        self.utils.run_subprocess(command)
+
+
+    def save_last_frame_of_video(self, video, output):
+        # ffmpeg -sseof -3 -i input -update 1 -q:v 1 last.jpg
+
+        debug_prefix = "[FFmpegWrapper.save_last_frame_of_video_ffmpeg]"
+
+        command = [self.ffmpeg_binary, "-y", "-sseof", '-1', '-i', video, '-update', '1', '-q:v', '1', output]
+
+        self.utils.log(color, debug_prefix, "Command to save last frame:")
+        self.utils.log(color, debug_prefix, command)
+
+        self.utils.run_subprocess(command)
 
 
 # This is a multi-class wrapper like we do with Waifu2x,
@@ -419,6 +469,29 @@ class Video():
         self.frame_extractor = VideoFrameExtractor(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Init")
+
+
+    def save_last_frame_of_video_ffmpeg(self, video, output):
+        self.ffmpeg.save_last_frame_of_video(video, output)
+
+
+    # Get the last video frame of a given input
+    def save_last_frame_of_video_cv2(self, video, output):
+
+        debug_prefix = "[Video.save_last_frame_of_video]"
+
+        self.utils.log(color, debug_prefix, "Saving last frame of video [%s] to [%s]" % (video, output))
+
+        capture = cv2.VideoCapture(video)
+
+        while True:
+            success, frame = capture.read()
+            if not success:
+                break
+
+        cv2.imwrite(output, frame)
+
+
 
     # TODO: Should be moved into its own class?
     def get_video_info_with_mediainfo(self, video_path):
