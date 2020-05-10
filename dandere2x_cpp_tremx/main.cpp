@@ -102,7 +102,7 @@ namespace residual_functions {
 
             long double root_n = std::sqrt(N);
 
-            if ( std::pow( static_cast<int>(root_n), 2) == 0) {
+            if (std::pow(static_cast<int>(root_n), 2) == 0) {
                 // The number is a perfect square (because int(root_n)**2 is N itself)
                 a = root_n;
                 b = root_n;
@@ -132,6 +132,8 @@ namespace residual_functions {
             // Get the block number
             int n_blocks = matlist.size();
 
+            int bleeded_block_size = block_size + (2*bleed);
+
             // For cutting the black parts of the residual
             int max_x = 0;
             int max_y = 0;
@@ -139,8 +141,8 @@ namespace residual_functions {
             int this_x_location = 0;
             int this_y_location = 0;
 
-            int block_rows;
-            int block_cols;
+            int block_rows = 0;
+            int block_cols = 0;
 
             cv::Rect crop;
 
@@ -152,8 +154,8 @@ namespace residual_functions {
 
             //std::cout << "best fit dimensions: " << dimensions[0] << ", " << dimensions[1] << " with size: " << n_blocks << std::endl;
 
-            int residual_width  = bleed + ( (bleed + block_size)*dimensions[0] );
-            int residual_height = bleed + ( (bleed + block_size)*dimensions[1] );
+            int residual_width  = bleeded_block_size * dimensions[0];
+            int residual_height = bleeded_block_size * dimensions[1];
 
             //std::cout << "residual size pixels: " << residual_width << ", " << residual_height << std::endl;
 
@@ -178,14 +180,18 @@ namespace residual_functions {
 
                     current_block = matlist[count];
 
-                    this_x_location = bleed + (bleed + block_size)*x;
-                    this_y_location = bleed + (bleed + block_size)*y;
+                    this_x_location = bleeded_block_size * x;
+                    this_y_location = bleeded_block_size * y;
 
                     block_cols = current_block.cols;
                     block_rows = current_block.rows;
 
                     max_x = std::max(max_x, this_x_location + block_cols);
                     max_y = std::max(max_y, this_y_location + block_rows);
+
+
+                    //std::cout << "this x: " << this_x_location << " this y: " << this_y_location
+                    //          << "cols: " << block_cols << " rows: " << block_rows << std::endl;
 
 
                     current_block.copyTo(
@@ -204,8 +210,8 @@ namespace residual_functions {
                 }
             }
 
-            max_x += bleed;
-            max_y += bleed;
+            //max_x += bleed;
+            //max_y += bleed;
 
             // Region of Interest to crop only the parts we want
             crop = cv::Rect(0, 0, max_x, max_y);
@@ -301,7 +307,6 @@ double calculate_psnr(const cv::Mat& I1, const cv::Mat& I2)
     }
 }
 
-
 // NOT USED DEFAULT, HERE FOR REFERENCE
 
 cv::Scalar calculate_mssim( const cv::Mat& i1, const cv::Mat& i2)
@@ -357,7 +362,6 @@ cv::Scalar calculate_mssim( const cv::Mat& i1, const cv::Mat& i2)
     return mssim;
 }
 
-
 // NOT USED, HERE FOR REFERENCE
 
 // SSIM returns [0.815287, 0.785487, 0.776612, 0] for example so we gotta "average" the channels
@@ -373,11 +377,6 @@ double fit_ssim(const double red, const double green, const double blue, double 
 #endif
 
 }
-
-
-
-
-
 
 
 double calculate_mse(cv::Mat I1, cv::Mat I2)
@@ -401,13 +400,6 @@ double calculate_mse(cv::Mat I1, cv::Mat I2)
 
     return mse;
  }
-
-
-
-
-
-
-
 
 
 
@@ -452,6 +444,12 @@ int process_video(const std::string video_path,
     int end_x = 0;
     int end_y = 0;
 
+    int bleeded_start_x = 0;
+    int bleeded_start_y = 0;
+
+    int bleeded_end_x = 0;
+    int bleeded_end_y = 0;
+
 
 
 #if METHOD_USE_MSSIM
@@ -474,25 +472,25 @@ int process_video(const std::string video_path,
         int vector_id = 0;
 
 
-        // Begin slice image into blocks
-        for (int x=0; x < width_iterations; x++) {
+        for (int y=0; y < height_iterations; y++) {
 
-            start_x = (x * block_size)*2;
-            end_x = start_x + (block_size*2);
+            start_y = (y * block_size)*2;
+            end_y = start_y + (block_size*2);
 
-            // If x it surpasses the width
-            end_x = std::min((width*2), end_x);
+            // If y it surpasses the height
+            end_y = std::min((height*2), end_y);
+
+            // Begin slice image into blocks
+            for (int x=0; x < width_iterations; x++) {
+
+                start_x = (x * block_size)*2;
+                end_x = start_x + (block_size*2);
+
+                // If x it surpasses the width
+                end_x = std::min((width*2), end_x);
 
 
-            for (int y=0; y < height_iterations; y++) {
-
-                start_y = (y * block_size)*2;
-                end_y = start_y + (block_size*2);
-
-                // If y it surpasses the height
-                end_y = std::min((height*2), end_y);
-
-                output_vectors_file << vector_id << ";(" << start_x << "," << start_y << "," << end_x-1 << "," << end_y-1 << ")\n";
+                output_vectors_file << vector_id << ";(" << start_y << "," << start_x << "," << end_y-1 << "," << end_x-1 << ")\n";
                 vector_id++;
             }
         }
@@ -528,11 +526,16 @@ int process_video(const std::string video_path,
     cv::Mat frame_a(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
     cv::Mat frame_b;
 
+    cv::Mat bleed_croppable_frame(height + (2*bleed), width + (2*bleed), CV_8UC3, cv::Scalar(0, 0, 0));
+
     cv::Mat noised_frame_a;
     cv::Mat noised_frame_b;
 
     cv::Mat block_a;
     cv::Mat block_b;
+
+    cv::Mat bleeded_block_a;
+    cv::Mat bleeded_block_b;
 
     cv::Mat noised_block_a;
     cv::Mat noised_block_b;
@@ -602,7 +605,7 @@ int process_video(const std::string video_path,
     #if ONLY_FIRST_FRAME
         cv::imwrite("frame_start.jpg", frame_a);
 
-        cv::imencode(".jpg", frame_a, buff, param);
+        cv::imencode("jpg", frame_a, buff, param);
 
         compressed = cv::imdecode(buff, cv::IMREAD_COLOR);
 
@@ -618,7 +621,7 @@ int process_video(const std::string video_path,
 
     cv::randu(uniform_noise, 0, 255);
 
-    uniform_noise *= 0.00;
+    uniform_noise *= 0.08;
 
     noised_frame_a = frame_a.clone();
     noised_frame_a += uniform_noise;
@@ -651,11 +654,22 @@ int process_video(const std::string video_path,
                 return 0;
             }
 
-            compressed = frame_a.clone();
-            compressed += uniform_noise;
+            // Instead of adding black border we set a background of the original frame resized to the
+            // bleeded resolution and just overlay the original image
+            cv::resize(frame_a, bleed_croppable_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
+            frame_a.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame_a.cols, frame_a.rows)));
+
+            // bleed_croppable_frame[bleed:bleed+frame_a.shape[0], bleed:bleed+frame_a.shape[1]] = frame_a;
+
+
+
+            //cv::copyMakeBorder(frame_a, bleed_croppable_frame, bleed, bleed, bleed, bleed, cv::BORDER_CONSTANT, cv::Scalar(0));
 
             noised_frame_a = frame_a.clone();
             noised_frame_a += uniform_noise;
+
+            compressed = noised_frame_a.clone();
+
 
             if (write_only_debug_video) {
                 debug_frame = frame_a.clone();
@@ -672,19 +686,26 @@ int process_video(const std::string video_path,
                 return 0;
             }
 
-            compressed = frame_b.clone();
-            compressed += uniform_noise;
+            // Instead of adding black border we set a background of the original frame resized to the
+            // bleeded resolution and just overlay the original image
+            cv::resize(frame_b, bleed_croppable_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
+            frame_b.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame_b.cols, frame_b.rows)));
+
+            // bleed_croppable_frame[bleed:bleed+frame_b.shape[0], bleed:bleed+frame_b.shape[1]] = frame_b;
+
+            //cv::copyMakeBorder(frame_b, bleed_croppable_frame, bleed, bleed, bleed, bleed, cv::BORDER_CONSTANT, cv::Scalar(0));
 
             noised_frame_b = frame_b.clone();
             noised_frame_b += uniform_noise;
+
+            compressed = noised_frame_b.clone();
+
 
             if (write_only_debug_video) {
                 debug_frame = frame_b.clone();
             }
 
         }
-
-
 
         // // Compress the frame
 
@@ -694,7 +715,7 @@ int process_video(const std::string video_path,
         // Decode the compressed block
         compressed = cv::imdecode(buff, cv::IMREAD_COLOR);
 
-
+        cv::imwrite("frame_compressed.jpg", compressed);
 
         next_output_newline += "pframe;" + std::to_string(count_frame) + "-";
 
@@ -709,22 +730,21 @@ int process_video(const std::string video_path,
         block_id = 0;
 
 
-        // Begin slice image into blocks
-        for (int x=0; x < width_iterations; x++) {
+        for (int y=0; y < height_iterations; y++) {
 
-            start_x = (x * block_size);
+            start_y = (y * block_size);
 
-            // If x it surpasses the width
-            end_x = std::min(width, start_x + block_size);
-
+            // If y it surpasses the height
+            end_y = std::min(height, start_y + block_size);
 
 
-            for (int y=0; y < height_iterations; y++) {
+            // Begin slice image into blocks
+            for (int x=0; x < width_iterations; x++) {
 
-                start_y = (y * block_size);
+                start_x = (x * block_size);
 
-                // If y it surpasses the height
-                end_y = std::min(height, start_y + block_size);
+                // If x it surpasses the width
+                end_x = std::min(width, start_x + block_size);
 
 
 
@@ -736,6 +756,40 @@ int process_video(const std::string video_path,
                 cv::Rect crop = cv::Rect(start_x, start_y, (end_x - start_x), (end_y - start_y));
 
 
+                /*
+                bleeded_start_x = std::max(0, start_x - bleed);
+                bleeded_start_y = std::max(0, start_y - bleed);
+
+                bleeded_end_x = std::min(width, start_x + block_size + bleed);
+                bleeded_end_y = std::min(height, start_y + block_size + bleed);
+                */
+
+                bleeded_start_x = (x * block_size);
+                bleeded_start_y = (y * block_size);
+
+                bleeded_end_x = std::min(width + (2*bleed),  bleeded_start_x + (2*bleed) + block_size);
+                bleeded_end_y = std::min(height + (2*bleed), bleeded_start_y + (2*bleed) + block_size);
+
+
+                //std::cout << "bleeded_start_x: " << bleeded_start_x << ", bleeded_stary_y: " << bleeded_start_y
+                //          << " bleeded_end_x: " << bleeded_end_x << ", bleeded_end_y: " << bleeded_end_y << std::endl;
+
+
+                cv::Rect bleeded_crop = cv::Rect(
+                    bleeded_start_x,
+                    bleeded_start_y,
+                    (bleeded_end_x - bleeded_start_x),
+                    (bleeded_end_y - bleeded_start_y)
+                );
+
+                //cv::Rect bleeded_crop = cv::Rect(
+                //    std::max(0, start_x - bleed),
+                //    std::max(0, start_y - bleed),
+                //    std::min(width, end_x + bleed) - start_x,
+                //    std::min(height, end_y + bleed) - start_y
+                //);
+
+
                 block_a = cv::Mat(frame_a, crop);
                 block_b = cv::Mat(frame_b, crop);
 
@@ -743,6 +797,10 @@ int process_video(const std::string video_path,
                 noised_block_b = cv::Mat(noised_frame_b, crop);
 
                 compressed_block = cv::Mat(compressed, crop);
+
+
+                //std::cout << "start_x: " << start_x << ", stary_y: " << start_y
+                //          << "end_x: " << end_x << ", end_y: " << end_y << std::endl;
 
 
             /*
@@ -768,14 +826,14 @@ int process_video(const std::string video_path,
 
                 // Calculate the MSE of compressed
                 if (this_or_that) {
-                    compressed_mse = calculate_mse(compressed_block, block_a);
+                    compressed_mse = calculate_mse(compressed_block, noised_block_a);
 
                         #if VERBOSE_DEBUG
                             std::cout << "frame:[" << count_frame << "]-block_id:[" << block_id << "]-compressed_mse_a:[" << compressed_mse << "]-raw:[" << raw_block_mse << "],";
                         #endif
 
                 } else {
-                    compressed_mse = calculate_mse(compressed_block, block_b);
+                    compressed_mse = calculate_mse(compressed_block, noised_block_b);
 
                         #if VERBOSE_DEBUG
                             std::cout << "frame:[" << count_frame << "]-block_id:[" << block_id << "]-compressed_mse_b:[" << compressed_mse << "]-raw:[" << raw_block_mse << "]-status:[";
@@ -813,10 +871,25 @@ int process_video(const std::string video_path,
 
                     next_output_newline += ";" + std::to_string(block_id); // << "," << raw_block_mse;
 
+                    //cv::imwrite("bleeded.jpg", bleeded_block_a);
+
+
                     if (this_or_that) {
-                        matched_blocks.push_back(block_a);
+                        //overlayImage(bleed_croppable_frame, frame_a, bleed_croppable_frame, cv::Point(start_x, start_y));
+
+                        //cv::imwrite("a.jpg", bleed_croppable_frame);
+
+                        bleeded_block_a = cv::Mat(bleed_croppable_frame, bleeded_crop);
+                        matched_blocks.push_back(bleeded_block_a);
+
                     } else {
-                        matched_blocks.push_back(block_b);
+                        //overlayImage(bleed_croppable_frame, frame_b, bleed_croppable_frame, cv::Point(bleed, bleed));
+
+                        //cv::imwrite("b.jpg", bleed_croppable_frame);
+
+                        bleeded_block_b = cv::Mat(bleed_croppable_frame, bleeded_crop);
+                        matched_blocks.push_back(bleeded_block_b);
+
                     }
 
                     //std::cout << raw_block_mse << " > " << compressed_mse << " - " << matched_blocks.size() << std::endl;
@@ -827,7 +900,7 @@ int process_video(const std::string video_path,
 
                         //black_block.copyTo(debug_frame(cv::Rect(start_x, start_y, black_block.cols, black_block.rows)));
 
-                        black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(0, 0, 0, 140));
+                        black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(0, 0, 0, 120));
                         overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
                     }
 
@@ -906,16 +979,11 @@ int process_video(const std::string video_path,
 
 
 
-        int grid_colums = static_cast<int>( std::sqrt( matched_blocks.size() ));
-
-        //std::cout << matched_blocks.size() << ", " << grid_colums << std::endl;
-
-
         if (matched_blocks.size() > 0) {
 
             cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
 
-            int max_frames_ahead = 20;
+            int max_frames_ahead = 10;
             int max_frames_ahead_wait = count_frame - max_frames_ahead;
 
             std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";

@@ -135,16 +135,26 @@ class Frame():
 
         debug_prefix = "[Frame.load_from_path]"
 
-        if self.context.loglevel >= 3:
+        if self.context.loglevel >= 9:
             self.utils.log(color, debug_prefix, "Name: [%s]" % filename)
 
-        self.frame = imageio.imread(filename).astype(np.uint8)
+        while True:
+            try:
+                self.frame = imageio.imread(filename).astype(np.uint8)
+                break
+
+            except Exception as e:
+                self.utils.log(color, debug_prefix, "Couldn't load image [%s], retrying" % filename)
+
+            if self.controller.stop:
+                return 0
+
         self.height = self.frame.shape[0]
         self.width = self.frame.shape[1]
         self.resolution = (self.width, self.height)
         self.name = filename
 
-        if self.context.loglevel >= 3:
+        if self.context.loglevel >= 9:
             self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (self.width, self.height))
 
     # Wait on a file if it does not exist yet. Wait can be cancelled via a cancellation token
@@ -158,8 +168,9 @@ class Frame():
         self.utils.until_exist(filename)
 
         if not self.controller.stop:
-            self.utils.log(color, debug_prefix, "Will not load waited file [%s] as controller stopped" % filename)
             self.load_from_path(filename)
+        else:
+            self.utils.log(color, debug_prefix, "Will not load waited file [%s] as controller stopped" % filename)
 
     # Save an image with specific instructions depending on it's extension type.
     def save(self, directory):

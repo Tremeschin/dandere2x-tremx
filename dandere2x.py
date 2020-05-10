@@ -186,22 +186,6 @@ class Dandere2x():
             self.utils.log(color, debug_prefix, "Saving Context vars to file")
             self.context.save_vars()
 
-            # Organization, if any filter applied just print a separator
-            if any([self.context.apply_pre_noise, self.context.use_vapoursynth]):
-                self.utils.log(phasescolor, "# # [Filter phase] # #")
-
-            '''
-            DEPRECATED, C++ ADDS NOISE TO IMAGE
-            # If user chose to do so
-            if self.context.apply_pre_noise:
-
-                # Apply the noise
-                self.video.apply_noise(self.context.input_file, self.context.noisy_video, "-vf noise=c1s=8:c0f=u")
-
-                # As we applied and saved onto new file, that is our new input
-                self.context.input_file = self.context.noisy_video
-            '''
-
             # Apply pre vapoursynth filter
             if self.context.use_vapoursynth:
 
@@ -295,7 +279,7 @@ class Dandere2x():
 
             self.utils.log(color, debug_prefix, "Time since started: %s" % since_started)
 
-            if since_started == 50:
+            if since_started == 50000:
                 self.context.resume = True
                 self.context.save_vars()
                 self.controller.exit()

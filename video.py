@@ -342,116 +342,6 @@ class FFmpegWrapper():
         self.utils.run_subprocess(command)
 
 
-# This is a multi-class wrapper like we do with Waifu2x,
-# we abstract the other class (same) functions into a single "global" class
-class VideoFrameExtractor():
-    def __init__(self, context, utils, controller):
-
-        debug_prefix = "[VideoFrameExtractor.__init__]"
-
-        self.context = context
-        self.utils = utils
-        self.controller = controller
-
-        if self.context.frame_extractor_method == "cv2":
-            self.utils.log(color, debug_prefix, "Method is CV2")
-            self.extract = VideoFrameExtractorCV2(self.context, self.utils, self.controller)
-
-        elif self.context.frame_extractor_method == "ffmpeg":
-            self.utils.log(color, debug_prefix, "Method is FFmpeg")
-            self.extract = VideoFrameExtractorFFMPEG(self.context, self.utils, self.controller)
-
-    # Do the setup required to extract the video frames, mostly useful for CV2 method
-    def setup_video_input(self, video_file):
-        self.extract.setup_video_input(video_file)
-
-    # Seek to that frame, mostly used on CV2
-    def set_current_frame(self, frame_number):
-        self.extract.set_current_frame(frame_number)
-
-    # Extract the next frame on CV2, FFmpeg [TODO]
-    def next_frame(self, save_location):
-        self.extract.next_frame(save_location)
-
-# DEPRECATED, FFMPEG DEALS WITH RESIDUALS, HERE FOR LEGACY
-# MIGHT BE REMOVED LATER IF C++ HANDLES PERFECTLY THE RESIDUALS
-class VideoFrameExtractorCV2():
-    def __init__(self, context, utils, controller):
-
-        debug_prefix = "[VideoFrameExtractorCV2.__init__]"
-
-        self.context = context
-        self.utils = utils
-        self.controller = controller
-
-        self.cap = None
-
-    # Do the setup required to extract the video frames, mostly useful for this class
-    def setup_video_input(self, video_file):
-
-        debug_prefix = "[VideoFrameExtractorCV2.setup_video_input]"
-
-        self.cap = cv2.VideoCapture(video_file)
-
-        if self.cap.isOpened() == False:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] Couldn't open video capture")
-            self.utils.exit()
-
-        if self.context.extracted_images_extension == ".png":
-            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] PNG SET TO EXTRACTED IMAGES WITH OPENCV, IT'S ABOUT 4X SLOWER THAN JPG")
-
-    # Seek to that frame_number
-    def set_current_frame(self, frame_number):
-
-        debug_prefix = "[VideoFrameExtractorCV2.set_current_frame]"
-
-        self.utils.log(color, debug_prefix, "Setting current frame to [%s]" % frame_number)
-
-        self.cap.set(1, frame_number)
-
-    # Extract the next frame
-    def next_frame(self, save_location):
-
-        debug_prefix = "[VideoFrameExtractorCV2.next_frame]"
-
-        # Cap not set
-        if self.cap == None:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "[ERROR] No video cap set")
-            self.utils.exit()
-
-        # Hard debug
-        if self.context.loglevel >= 4:
-            self.utils.log(color, debug_prefix, "Asking new frame, N=[%s], saving to [%s]" % (self.context.last_processing_frame, save_location))
-
-        # Actually get the frame
-        sucess, frame = self.cap.read()
-
-        if sucess == False:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] Cannot read more frames or out of frames??")
-
-        else:
-            if self.context.extracted_images_extension == ".png":
-                cv2.imwrite(save_location, frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
-
-            if self.context.extracted_images_extension == ".jpg":
-                cv2.imwrite(save_location, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
-
-            self.context.last_processing_frame += 1
-
-# DEPRECATED, FFMPEG DEALS WITH RESIDUALS, HERE FOR LEGACY
-# MIGHT BE REMOVED LATER IF C++ HANDLES PERFECTLY THE RESIDUALS
-class VideoFrameExtractorFFMPEG():
-    def __init__(self, context, utils, controller):
-
-        debug_prefix = "[VideoFrameExtractorFFMPEG.__init__]"
-
-        self.context = context
-        self.utils = utils
-        self.controller = controller
-
-    def setup_video_input(self, video_file):
-        pass
-
 
 # The class which abstracts many useful video functions
 class Video():
@@ -466,7 +356,6 @@ class Video():
         self.ROOT = self.context.ROOT
 
         self.ffmpeg = FFmpegWrapper(self.context, self.utils, self.controller)
-        self.frame_extractor = VideoFrameExtractor(self.context, self.utils, self.controller)
 
         self.utils.log(color, debug_prefix, "Init")
 

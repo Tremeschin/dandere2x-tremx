@@ -187,7 +187,7 @@ class Waifu2xLinuxVulkan():
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
-        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "8:16:8"]
+        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "8:8:8"]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
@@ -195,6 +195,10 @@ class Waifu2xLinuxVulkan():
     def upscale(self, input_path, output_path):
 
         debug_prefix = "[Waifu2xLinuxVulkan.upscale]"
+
+        # Remove the last / or \
+        input_path = input_path[:-1]
+        output_path = output_path[:-1]
 
         # Get a clone of basic usage and extend it based on the I/O
         command = self.command + ["-i", input_path, "-o", output_path]
@@ -207,7 +211,13 @@ class Waifu2xLinuxVulkan():
 
         subprocess.from_list(command)
 
-        subprocess.run()
+        if not self.context.linux_enable_mesa_aco_waifu2x_vulkan:
+            subprocess.run()
+        else:
+            self.utils.log(color, debug_prefix, "Running with RADV_PERFTEST=aco")
+            env = os.environ.copy()
+            env["RADV_PERFTEST"] = "aco"
+            subprocess.run(env)
 
         while subprocess.is_alive():
             time.sleep(0.5)

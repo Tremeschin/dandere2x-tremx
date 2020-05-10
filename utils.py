@@ -672,13 +672,16 @@ class SubprocessUtils():
         self.command = list
 
 
-    def run(self):
+    def run(self, env = None):
 
         debug_prefix = "[SubprocessUtils.run]"
 
         self.utils.log(color, debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
 
-        self.process = subprocess.Popen(self.command)
+        if env is None:
+            self.process = subprocess.Popen(self.command)
+        else:
+            self.process = subprocess.Popen(self.command, env=env)
 
 
     def wait(self):

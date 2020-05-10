@@ -49,17 +49,20 @@ class Processing():
         bleed *= 2
         block_size *= 2
 
+        bleeded_block_size = block_size + (2*bleed)
+
         for y in range(rows):
 
-            start_y = bleed + (y * (bleed + block_size))
-            end_y = min(height, start_y + block_size)
+            start_y = bleed + (bleeded_block_size * y)
+            # end_y = min(height, start_y + block_size)
 
             for x in range(columns):
 
-                start_x = bleed + (x * (bleed + block_size))
-                end_x = min(width, start_x + block_size)
+                start_x = bleed + (bleeded_block_size * x)
+                # end_x = min(width, start_x + block_size)
 
-                yield (start_y, start_x, end_y, end_x)
+                # yield (start_y, start_x, end_y, end_x)
+                yield (start_y, start_x)
 
     def run(self):
 
@@ -75,6 +78,12 @@ class Processing():
 
         if self.context.last_processing_frame > 0:
             start_frame.load_from_path_wait(self.context.resume_video_frame)
+
+            self.utils.log(color, debug_prefix, "Is resume session, deleting previous residuals")
+
+            for i in range(self.context.last_processing_frame - 1):
+                previous_residual = self.context.residual + "residual_" + self.utils.pad_zeros(i) + ".jpg"
+                self.utils.delete_file(previous_residual)
 
         merged = start_frame
 
@@ -127,9 +136,12 @@ class Processing():
 
                 residual_dimensions = (residual_upscaled.width, residual_upscaled.height)
 
+                # As we trim the bottom black portion of the image, there can be some weird blocks like
+                # 44x48 resolution, so whenever that happens we just get the ceil of that number
+                # as it'll be 0 < x < 1 for a (1, 1) block grid where 1 is x
                 grid_dimensions = [
-                    math.ceil(((residual_dimensions[0] - (self.context.bleed*2)) / (self.context.bleed + self.context.block_size))/2),
-                    math.ceil(((residual_dimensions[1] - (self.context.bleed*2)) / (self.context.bleed + self.context.block_size))/2)
+                    math.ceil( ((residual_dimensions[0]) / ( (self.context.bleed*2 + self.context.block_size)*2) ) ),
+                    math.ceil( ((residual_dimensions[1]) / ( (self.context.bleed*2 + self.context.block_size)*2) ) )
                 ]
 
                 # columns, rows, width, height, bleed, block_size
@@ -145,23 +157,27 @@ class Processing():
 
                 # print("---")
                 #if self.context.loglevel >= 7:
-                    #self.utils.log(color, debug_prefix, "Grid dimensions: " + ' '.join(grid_dimensions))
-                # print("Grid dimensions: ", grid_dimensions)
+                #    self.utils.log(color, debug_prefix, "Grid dimensions: " + ' '.join(grid_dimensions))
+                print("Grid dimensions: ", grid_dimensions)
+                print("Resolution: ", residual_dimensions)
 
                 for vector_id in working_vector_ids:
                     residual_get_vector = next(this_residual_vector_generator)
                     position_where_vector = self.controller.vectors[vector_id]
 
+                    # print("residual get: ", residual_get_vector)
+                    # print("position_where_vector: ", position_where_vector)
+
                     merged.copy_from(
                         residual_upscaled.frame,
                         merged.frame,
                         [residual_get_vector[0], residual_get_vector[1]],
-                        [position_where_vector[1], position_where_vector[0]],
-                        [position_where_vector[3], position_where_vector[2]]
+                        [position_where_vector[0], position_where_vector[1]],
+                        [position_where_vector[2], position_where_vector[3]]
                     )
 
                     # See the blocks being completed, useful for debug
-                    # merged.save("merged_vector%s.png" % vector_id)
+                    # merged.save("merged/merged_frame_%s_vector_%s.png" % (frame_number, vector_id))
 
                 self.utils.log(color, debug_prefix, "Writing merged image into pipe n=[%s]" % frame_number)
 
@@ -169,14 +185,15 @@ class Processing():
 
                 self.utils.log(color, debug_prefix, "Wrote sucessfully")
 
-                # merged.save(self.context.merged + "merged_%s.jpg" % self.utils.pad_zeros(frame_number))
+                # merged.save("merged/merged_frame_%s.png" % frame_number)
 
                 # Update the last processed frame for resume session
                 self.context.last_processing_frame = frame_number
                 self.utils.log(color, debug_prefix, "Context last_processing_frame is now [%s]" % self.context.last_processing_frame)
 
-                self.utils.delete_file(residual_file_path)
-                self.utils.delete_file(residual_upscaled_file_path)
+                if self.context.mindisk:
+                    self.utils.delete_file(residual_file_path)
+                    self.utils.delete_file(residual_upscaled_file_path)
 
             else:
                 # No vectors to substitute

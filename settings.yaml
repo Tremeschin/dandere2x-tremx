@@ -18,9 +18,8 @@
 # ===============================================================================
 
 
-
 session_name: auto
-waifu2x_type: fake # fake, cpp, vulkan
+waifu2x_type: vulkan # fake, cpp, vulkan
 mindisk: true
 
 basic:
@@ -28,43 +27,41 @@ basic:
   output_file: samples/yn_moving2x.mkv
 
 waifu2x:
-  denoise_level: 3
-  tile_size: 100
+  denoise_level: 2
+  tile_size: 200
+  linux_enable_mesa_aco_waifu2x_vulkan: true  # Only for AMD GPUs
+
+  waifu2x_vulkan_model:
 
 video:
-  apply_pre_noise: false
-  get_video_info_method: ffmpeg # ffmpeg or mediainfo
-  frame_extractor_method: cv2 # only option available right now
+  get_frame_count_method: null_copy  # only option available right now
+  get_frame_rate_method: ffprobe  # only option available right now
+  get_resolution_method: ffprobe  # only option available right now
+  get_video_info_method: ffmpeg  # ffmpeg or mediainfo
 
 ffmpeg:
-  get_frame_count_method: null_copy # only option available right now
-  get_frame_rate_method: ffprobe # only option available right now
-  get_resolution_method: ffprobe # only option available right now
-
-  deblock_filter: pp=hb/vb/dr/fq|32, deband=range=22:blur=false
+  deblock_filter: "pp=hb/vb/dr/fq|32, deband=range=22:blur=false"
   encode_codec: libx264
 
 processing:
   extracted_images_extension: .jpg
   block_size: 20
-  bleed: 1
+  bleed: 2
 
 vapoursynth:
   enabled: false
-
   # To disable these filters set them to "null" or "none"
-  pre: transpose # name of filter within ./vpys/$NAME$, applied BEFORE ffmpeg noise and upscaled
-  pos: transpose # name of filter within ./vpys/$NAME$, applied after everything
+  pre: transpose  # name of filter within ./vpys/$NAME$, applied BEFORE ffmpeg noise and upscaled
+  pos: transpose  # name of filter within ./vpys/$NAME$, applied after everything
 
 developer:
   loglevel: 8
   wait_time_exists: 0.05
-  waifu2x_wait_for_residuals: 1 # time waifu2x sleeps after upscaling everything or nothing from residuals
+  waifu2x_wait_for_residuals: 0.1  # time waifu2x sleeps after upscaling everything or nothing from residuals
 
-specific: # just ideas at the moment
-  colors_output: true # doesn't work yet
-  log_full_path: false # Log full path instead of relative path to D2X's ROOT folder
+specific:  # just ideas at the moment
+  colors_output: true  # doesn't work yet
 
 debug:
-  write_only_debug_video: false
+  write_only_debug_video: true
   enable_waifu2x: true

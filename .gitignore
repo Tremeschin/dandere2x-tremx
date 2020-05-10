@@ -6,12 +6,19 @@
 *.png
 *.d2x
 *.code-workspace
+*.flac
 
 .vscode
 
 sessions/*
 frames/*
 externals/*
+
+d2x_introduction_video/
+
+docs/
+
+rnd/
 
 dandere2x_cpp_tremx/blocks
 dandere2x_cpp_tremx/frames

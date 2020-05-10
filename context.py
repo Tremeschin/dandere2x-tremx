@@ -113,6 +113,8 @@ class Context():
         # Waifu2x settings
         self.denoise_level = self.yaml["waifu2x"]["denoise_level"]
         self.tile_size = self.yaml["waifu2x"]["tile_size"]
+        print(self.yaml["waifu2x"])
+        self.linux_enable_mesa_aco_waifu2x_vulkan = self.yaml["waifu2x"]["linux_enable_mesa_aco_waifu2x_vulkan"]
 
         # Create default variables
         self.resolution = []
@@ -122,14 +124,12 @@ class Context():
         self.frame_rate = None
 
         # Video related variables
-        self.apply_pre_noise = self.yaml["video"]["apply_pre_noise"]
-        self.frame_extractor_method = self.yaml["video"]["frame_extractor_method"]
         self.get_video_info_method = self.yaml["video"]["get_video_info_method"]
+        self.get_frame_count_method = self.yaml["video"]["get_frame_count_method"]
+        self.get_frame_rate_method = self.yaml["video"]["get_frame_rate_method"]
+        self.get_resolution_method = self.yaml["video"]["get_resolution_method"]
 
         # FFmpeg / FFprobe related
-        self.get_frame_count_method = self.yaml["ffmpeg"]["get_frame_count_method"]
-        self.get_frame_rate_method = self.yaml["ffmpeg"]["get_frame_rate_method"]
-        self.get_resolution_method = self.yaml["ffmpeg"]["get_resolution_method"]
         self.deblock_filter = self.yaml["ffmpeg"]["deblock_filter"]
         self.encode_codec = self.yaml["ffmpeg"]["encode_codec"]
 
@@ -293,8 +293,7 @@ class Context():
             "plain_files", "denoise_level", "tile_size", "last_processing_frame",
             "get_frame_count_method", "get_frame_rate_method", "zero_padding",
             "loglevel", "input_filename", "output_filename", "extracted_images_extension",
-            "mindisk", "use_vapoursynth", "vapoursynth_pre", "vapoursynth_pos",
-            "frame_count", "apply_pre_noise", "frame_extractor_method",
+            "mindisk", "use_vapoursynth", "vapoursynth_pre", "vapoursynth_pos", "frame_count",
             "get_video_info_method", "get_resolution_method", "wait_time",
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
