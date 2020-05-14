@@ -33,6 +33,7 @@ import shutil
 import yaml
 import time
 import os
+import re
 
 try:
     import hashlib
@@ -366,6 +367,9 @@ class Utils():
     # This "follows" updating files, yields the new stuff written
     def updating_file(self, filename):
 
+        with open(filename, "w") as f:
+            f.write("")
+
         ufile = open(filename, "r")
         ufile.seek(0, 2)
 
@@ -391,11 +395,9 @@ class Utils():
 
         self.log(color, debug_prefix, "Checking")
 
-        vars_file = self.context.context_vars
+        if os.path.isfile(self.context.context_vars):
 
-        if os.path.isfile(vars_file):
-
-            data = self.load_yaml(vars_file)
+            data = self.load_yaml(self.context.context_vars)
 
             if "resume" in data:
 
@@ -517,6 +519,8 @@ class Utils():
     def get_nth_word(self, string, N):
         return string.split(' ')[N-1]
 
+    def get_first_number_of_string(self, string):
+        return int(re.search(r'\d+', string).group())
 
     # Search binary in path first then externals for Linux and Windows directly into externals
     def get_binary(self, wanted):

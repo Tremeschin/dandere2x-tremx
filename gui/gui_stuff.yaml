@@ -1,20 +1,7 @@
 gtk_gui:
-  first_time_ffmpeg_pipe: false
   first_time_greetings: false
   first_time_minimal_disk: false
-  first_time_use_temp: false
   messages:
-    ffmpeg_pipe:
-    - FFmpeg Pipe is an advanced option!!
-    - 'ON: Dandere2x "pipes" the merged (quadruple resolution) images directly into
-      FFmpeg''s STDIN (input) so there''s no need for saving the merged files on disk
-
-
-      OFF: Dandere2x saves all merged images into the workspace.
-
-
-      WARNING: Huge disk usage if option is OFF, as example, 1080p videos each frame
-      will be around 3 MB of data.'
     greetings:
     - Greetings to the Dandere2x project!!
     - 'Looks like it''s your first time opening the program.
@@ -36,11 +23,3 @@ gtk_gui:
 
 
       DEFAULT: ON'
-    use_temp:
-    - Use TEMP dir is an advanced option!!
-    - 'ON: Dandere2x will set its workspace into your OS''s temp directory, LINUX:
-      /usr/tmp (def), WINDOWS: %temp%
-
-
-      OFF: Dandere2x will set its workspace based on the configured YAML file according
-      to yout OS, defaults to the path dandere2x/src/workspace/default/'

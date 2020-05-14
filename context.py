@@ -138,6 +138,7 @@ class Context():
         # How much time in seconds to wait for waiting operations like until_exist()
         self.wait_time = self.yaml["developer"]["wait_time_exists"]
         self.waifu2x_wait_for_residuals = self.yaml["developer"]["waifu2x_wait_for_residuals"]
+        self.safety_ruthless_residual_eliminator_range = self.yaml["developer"]["safety_ruthless_residual_eliminator_range"]
 
         # # # Literal constants
 
@@ -297,7 +298,8 @@ class Context():
             "get_video_info_method", "get_resolution_method", "wait_time",
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
-            "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec"
+            "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
+            "safety_ruthless_residual_eliminator_range"
         ]
 
         data = {}

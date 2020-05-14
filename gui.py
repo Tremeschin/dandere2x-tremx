@@ -23,8 +23,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from dandere2x import Dandere2x
 from playsound import playsound
-from gi.repository import Gtk
-from context import Context
+from gi.repository import Gtk, GObject
+from color import rgb
+import multiprocessing
 import webbrowser
 import threading
 import datetime
@@ -37,9 +38,14 @@ import gi
 
 gi.require_version('Gtk', '3.0')
 
+GObject.threads_init()
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+color = rgb(200, 120, 255)
 
+dandere2x = None
+dandere2x_thread = None
+dandere2x_start_thread = False
 
 def progressbar_thread():
     global window
@@ -47,27 +53,45 @@ def progressbar_thread():
     while True:
         # Wait until frame count and current frame exists
         try:
-            frame_count = window.dandere2x.context.frame_count
+            last_processing_frame = window.dandere2x.context.last_processing_frame
         except Exception:
             time.sleep(1)
-            # print(logprefix + "Waiting for frame count to exist")
+            # dandere2x.utils.log(color, debug_prefix, "Waiting for frame count to exist")
 
-    for x in range(window.dandere2x.context.frame_count - 1):
+    for x in range(window.dandere2x.context.last_processing_frame - 1):
 
         # Wait until merged_count changes
         while (x >= window.dandere2x.context.signal_merged_count):
             time.sleep(1/30) # 30 Fps
 
         # Update progress bar
-        window.update_progress_bar(x+1, frame_count)
+        window.update_progress_bar(x+1, last_processing_frame)
 
 
-threading.Thread(target=progressbar_thread).start()
 
 
 def play_sound_threaded(audio):
     playsound(ROOT + os.path.sep + "data" + os.path.sep + audio + ".wav")
 
+
+def thread_d2x():
+    global dandere2x, dandere2x_thread, dandere2x_start_thread
+
+    while True:
+        if dandere2x_start_thread == True:
+            print("breaking")
+            break
+        time.sleep(0.2)
+        print("keeping")
+
+    print("Running d2x")
+
+    dandere2x.run()
+
+    dandere2x_start_thread = False
+
+threading.Thread(target=progressbar_thread).start()
+threading.Thread(target=thread_d2x).start()
 
 def sound(audio):
     # Gotta thread of GUI hangs
@@ -75,11 +99,16 @@ def sound(audio):
 
 
 class DandereGTK():
+    global dandere2x, dandere2x_thread, dandere2x_start_thread
 
     def __init__(self, windowfile):
+        global dandere2x, dandere2x_thread, dandere2x_start_thread
 
         # More verbosely print stuff that is happening, might leave on?
         self.debug = True
+
+        dandere2x = Dandere2x({"force": False})
+        dandere2x.load()
 
         # The builder object from GTK as for adding the gui .glade file
         self.builder = Gtk.Builder()
@@ -95,6 +124,8 @@ class DandereGTK():
             "update_waifu_type": self.update_waifu_type,
             "file_clicked": self.file_clicked,
 
+            "load_session": self.point_to_session_for_resume,
+
             "resources": self.resources,
 
             "quit": Gtk.main_quit  # TODO: does not quit python?
@@ -108,17 +139,16 @@ class DandereGTK():
         # Sliders
         self.scale_factor = 2
         self.denoise_level = 3
-        self.image_quality = 85
-        self.block_size = "1.85%"
+        self.block_size = "20"
 
         # Switches
-        self.use_temp = False
         self.minimal_disk = True
-        self.ffmpeg_pipe = True
+        self.resume = False
 
         # Files
         self.input_file = ""
         self.output_file = ""
+        self.session_name = "auto"
 
         # Progress bar and averages
         self.progressbar = self.builder.get_object("progressbar")
@@ -136,7 +166,7 @@ class DandereGTK():
         self.can_toggle = True
         self.time_start = None
         self.time_took_frames = [0 for _ in range(self.n_frames_average)]
-        self.dandere2x = None  # For not creating two dandere2x processes
+
         self.can_change_options = False
 
         if self.n_frames_average < 10:
@@ -155,9 +185,10 @@ class DandereGTK():
         self.window = self.builder.get_object("mainwindow")
         self.window.show_all()
 
-        logprefix = "[gtk_dandere2x_gui.__init__] "
+        debug_prefix = "[DandereGTK.__init__]"
 
-        print(logprefix + "Init done")
+        dandere2x.utils.log(color, debug_prefix, "Init done")
+
 
     # Calls the GTK MessageDialog
     def message_box(self, title, content):
@@ -174,7 +205,6 @@ class DandereGTK():
         dialog.destroy()
 
 
-
     # (/s) Smartly chooses which dialog message to call the MessageDialog
     def smart_messagebox(self, message_type=""):
 
@@ -185,7 +215,6 @@ class DandereGTK():
         with open(configfile, "r") as read_file:
             config = yaml.safe_load(read_file)
 
-
         # This section checks which message_type is being requested and
         # calls the message_box modular function to show up the dialog
 
@@ -194,7 +223,7 @@ class DandereGTK():
             message = config["gtk_gui"]["messages"][message_type]
             config["gtk_gui"]["first_time_%s" % message_type] = False
 
-            sound("pop")
+            #sound("pop")
             self.message_box(message[0], message[1])
 
 
@@ -206,31 +235,29 @@ class DandereGTK():
 
 
     # This function toggles the user-interactible widgets but the upscale and stop button
-    def toggle_gui_options(self):
-
-        # T-FLIP-FLOP the can_change_options
-        self.can_change_options = not self.can_change_options
+    def toggle_gui_options(self, to=None):
 
         # List the widgets IDs we gonna disable
-        option_widgets_ids = ["block_size", "image_quality", "waifutype", "scale_factor",
-                              "denoise_level", "ffmpeg_pipe", "minimal_disk", "use_temp",
-                              "output", "input"]
+        option_widgets_ids = ["block_size", "waifutype", "scale_factor",
+                              "denoise_level", "minimal_disk",
+                              "output", "input", "suspendbutton"]
 
-        # TODO: PROPER IMPLEMENT SUSPEND BUTTON
-        option_widgets_ids.append("suspendbutton")
+        if to == None:
+            # T-FLIP-FLOP the can_change_options
+            self.can_change_options = not self.can_change_options
+        else:
+            self.can_change_options = to
 
         for widget in option_widgets_ids:
-
             # Set the widget sensitive or insensitive (enabled/disabled)
             self.builder.get_object(widget).set_sensitive(self.can_change_options)
-
 
 
     # Change the status label at bottom left of the GUI, the spinner button
     # is off by default and can be called if True is set as a second argument
     def status(self, new_status, spin = False):
 
-        logprefix = "[gtk_dandere2x_gui.status] "
+        debug_prefix = "[DandereGTK.status]"
 
         # Get the builder object of the status label and set the new status
         self.builder.get_object("status").set_label(new_status)
@@ -242,7 +269,7 @@ class DandereGTK():
             self.builder.get_object("spinner").stop()
 
         if self.debug:
-            print(logprefix + new_status)
+            dandere2x.utils.log(color, debug_prefix, new_status)
 
 
 
@@ -266,7 +293,7 @@ class DandereGTK():
 
     def action_buttons(self, data):
 
-        logprefix = "[gtk_dandere2x_gui.action_buttons] "
+        debug_prefix = "[DandereGTK.action_buttons]"
 
         # Alternate between upscale and stop, the two toggle buttons
 
@@ -292,30 +319,29 @@ class DandereGTK():
 
                     if self.test_good_to_go() == True:
 
-                        if not upscalebutton.get_label() == "Return Upscaling":
+                        if not upscalebutton.get_label() == "Resume Session":
                             sound("start")
                         else:
                             sound("resume")
 
-                        self.can_toggle = False # Avoid infinite loop
+                        self.can_toggle = False  # Avoid infinite loop
                         self.current_mode = "upscale"
 
-                        suspendbutton.set_active(False)
-                        suspendbutton.set_label("Suspend Session [BETA, DNE]")
+                        suspendbutton.set_label("Suspend Session")
                         upscalebutton.set_label("Upscaling in Process...")
 
                         self.time_start = time.time()
                         self.last_frame_time_completed = time.time()
-                        self.toggle_gui_options()
+                        self.toggle_gui_options(False)
                         self.upscale()
 
-                        print(logprefix + "Upscale button clicked")
+                        dandere2x.utils.log(color, debug_prefix, "Upscale button clicked")
 
                     else:
                         sound("error")
                         self.can_toggle = False
                         upscalebutton.set_active(False)
-                        print(logprefix + "Couldn't start upscale, not good to go")
+                        dandere2x.utils.log(color, debug_prefix, "Couldn't start upscale, not good to go")
 
 
             if who == "suspendbutton":
@@ -333,22 +359,23 @@ class DandereGTK():
                     self.can_toggle = False # Avoid infinite loop
                     upscalebutton.set_active(False)
                     self.current_mode = "stopped"
+                    dandere2x.controller.exit()
                     suspendbutton.set_label("Session Suspended")
-                    upscalebutton.set_label("Return Upscaling")
-                    print(logprefix + "Stop session button clicked")
+                    upscalebutton.set_label("Resume Session")
+                    dandere2x.utils.log(color, debug_prefix, "Stop session button clicked")
 
         else:
             self.can_toggle = True
 
 
-
     # Test if input file is file and output file not empty
     # TODO: check if valid directory set for the outfile?
-    # TODO: autoset a output file?
-    # TODO: ONLY CAFFE SUPPORTS 2X UPSCALING
     # TODO: LINUX DOES NOT SUPPORT CAFFE
 
     def test_good_to_go(self):
+
+        if self.resume:
+            return True
 
         self.status("Testing good to go options...", True)
 
@@ -372,58 +399,47 @@ class DandereGTK():
 
         self.status("Upscale function called")
 
-        # If dandere2x class Dandere2x() object does not exist
-        if self.dandere2x == None:
 
-            self.status("Loading config YAML file", True)
+        self.status("Loading config YAML file", True)
 
-            # Get the YAML config file based on OS
-            configfile = "dandere2x_%s.yaml" % get_operating_system()
+        # Get the YAML config file based on OS
+        configfile = ROOT + os.path.sep + "settings.yaml"
 
-            with open(ROOT + os.path.sep + configfile, "r") as read_file:
-                config = yaml.safe_load(read_file)
+        with open(configfile, "r") as read_file:
+            self.config = yaml.safe_load(read_file)
 
 
-            # Change values based on GUI ones
+        # Change values based on GUI ones
 
-            self.status("Changing configs accordinly to GUI", True)
+        self.status("Changing configs accordinly to GUI", True)
 
-            config['dandere2x']['usersettings']['block_size'] = self.block_size
-            config['dandere2x']['usersettings']['scale_factor'] = self.scale_factor
-            config['dandere2x']['usersettings']['denoise_level'] = self.denoise_level
-            config['dandere2x']['usersettings']['quality_minimum'] = self.image_quality
+        self.config['processing']['block_size'] = self.block_size
+        self.config['waifu2x']['denoise_level'] = self.denoise_level
 
-            config['dandere2x']['usersettings']['input_file'] = self.input_file
-            config['dandere2x']['usersettings']['output_file'] = self.output_file
+        self.config['basic']['input_file'] = self.input_file
+        self.config['basic']['output_file'] = self.output_file
 
-            config['dandere2x']['usersettings']['waifu2x_type'] = self.waifu2x_type
+        self.config['waifu2x_type'] = self.waifu2x_type
 
-            config['dandere2x']['min_disk_settings']['use_min_disk'] = self.minimal_disk
-            config['dandere2x']['developer_settings']['ffmpeg_pipe_encoding'] = self.ffmpeg_pipe
-            config['dandere2x']['developer_settings']['workspace_use_temp'] = self.use_temp
+        self.config['mindisk'] = self.minimal_disk
+        self.config['session_name'] = self.session_name
 
 
-            # Run Dandere2x the old way. But be aware, we should not hang the gui as it
-            # needs to be updated because the progress bar so we thread the dandere2x.start()
+        #self.config['scale_factor'] = self.scale_factor
 
-            self.status("Creating Dandere2x Context class...", True)
-            self.context = Context(config)
+        print(self.config)
 
-            self.status("Creating Dandere2x main class...", True)
-            self.dandere2x = Dandere2x(self.context)
+        self.status("Running Dandere2x setup() function...", True)
 
-            # TODO: Creation of dirs being managed by context.py, not ideal?
+        dandere2x.setup()
 
-            self.status("Threading-start Dandere2x main start() function...", True)
+        self.status("Threading-start Dandere2x run() function...", True)
 
-            threading.Thread(target=self.dandere2x.start()).start()
+        dandere2x_start_thread = True
 
-            self.status("Dandere2x start() called")
+        self.status("Dandere2x run() called")
 
-            self.status("Upscaling...", True)
-
-        else:
-            self.status("Dandere2x already running... But, how you got here? Resume not supported yet")
+        self.status("Upscaling...", True)
 
 
 
@@ -608,15 +624,55 @@ class DandereGTK():
                     self.builder.get_object(who).set_text(self.input_file)
                     sound("input_file")
 
+                    # Set an auto output value
+                    auto_out = os.path.split(self.input_file)
+                    auto_out = auto_out[0] + os.path.sep + "2x_" + auto_out[1]
+                    self.builder.get_object("output").set_text(auto_out)
+                    self.output_file = auto_out
+
+
+    # Self explanatory
+    def point_to_session_for_resume(self, *data):
+
+        self.status("Select the session folder you want to resume", True)
+
+        dialog = Gtk.FileChooserDialog(
+            'Select the session', None,
+            Gtk.FileChooserAction.SELECT_FOLDER,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        if dialog.run() == Gtk.ResponseType.OK:
+            self.session_to_resume = dialog.get_filename()
+            self.status("Input file selected")
+
+            session_name = os.path.basename(self.session_to_resume)
+
+            upscalebutton = self.builder.get_object("upscalebutton")
+            upscalebutton.set_label("Resume session")
+
+            self.session_name = session_name
+            dialog.destroy()
+            self.resume = True
+            self.toggle_gui_options(False)
+
+            return 0
+
+        self.resume = False
+        self.status("No resume session folder selected")
+        dialog.destroy()
+        return 0
+
+
 
     # Collections of links to Dandere2x related places
     def resources(self, *data):
 
-        logprefix = "[gtk_dandere2x_gui.resources] "
+        debug_prefix = "[DandereGTK.resources]"
 
         # Get id of button in the toolbar
         who = Gtk.Buildable.get_name(data[0])
-        print(logprefix + "Open link:", who)
+        dandere2x.utils.log(color, debug_prefix, "Open link:", who)
 
         links = {
             "docs": "https://dandere2x.readthedocs.io/en/latest/",
@@ -630,8 +686,6 @@ class DandereGTK():
         webbrowser.open(links[who], new=0)
 
         self.status("Open link in default browser: " + links[who])
-
-
 
 
 # Get the .glade file

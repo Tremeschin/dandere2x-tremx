@@ -67,9 +67,10 @@ class Processing():
     def run(self):
 
         # TODO: WAIT FOR CPP CONTENTS
-        time.sleep(2)
+        # time.sleep(2)
 
         debug_prefix = "[Processing.run]"
+
 
         residual_upscaled = copy.copy(self.frame)
         start_frame = copy.copy(self.frame)
@@ -87,13 +88,17 @@ class Processing():
 
         merged = start_frame
 
-        # For each frame since the one we started with
-        for frame_number in range(self.context.last_processing_frame, self.context.frame_count + 1):
 
-            if not self.context.resume:
-                if frame_number == 300:
-                    self.utils.log(color, debug_prefix, "[DEBUG] Quitting on this frame for testing resume mode")
-                    self.controller.exit()
+        # For each frame since the one we started with
+
+        #for frame_number in range(self.context.last_processing_frame, self.context.frame_count + 1):
+        frame_number = self.context.last_processing_frame
+
+        while True:
+            #if not self.context.resume:
+            #    if frame_number == 300:
+            #        self.utils.log(color, debug_prefix, "[DEBUG] Quitting on this frame for testing resume mode")
+            #        self.controller.exit()
 
             # Wait for file to exist or quit if controller says so
             while True:
@@ -108,11 +113,12 @@ class Processing():
 
 
             # We won't have data for the last frame as there is not a N+1 frame
-            if not frame_number == self.context.frame_count:
-                working_data = self.controller.block_match_data[str(frame_number)]
-                working_vector_ids = working_data["data"].split(";")
-            else:
-                working_vector_ids = ['']
+            #if not frame_number == self.context.frame_count:
+            working_data = self.controller.block_match_data[str(frame_number)]
+            working_vector_ids = working_data["data"].split(";")
+            type = working_data["type"]
+            #else:
+            #    working_vector_ids = ['']
 
             # print("working_data", working_data)
             # print("vector ids", working_vector_ids)
@@ -122,7 +128,7 @@ class Processing():
                 self.utils.log(color, debug_prefix, working_vector_ids)
 
 
-            if (working_data["type"]) == "pframe" and not (working_vector_ids == ['']):
+            if (type == "pframe") and (not working_vector_ids == ['']):
 
                 # Each Waifu2x outputs the images in a different naming sadly
                 residual_upscaled_file_path = self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
@@ -191,13 +197,20 @@ class Processing():
                 self.context.last_processing_frame = frame_number
                 self.utils.log(color, debug_prefix, "Context last_processing_frame is now [%s]" % self.context.last_processing_frame)
 
-                if self.context.mindisk:
-                    self.utils.delete_file(residual_file_path)
-                    self.utils.delete_file(residual_upscaled_file_path)
+                frame_number += 1
+
+                #if self.context.mindisk:
+                #    self.utils.delete_file(residual_file_path)
+                #    self.utils.delete_file(residual_upscaled_file_path)
 
             else:
                 # No vectors to substitute
                 self.video.ffmpeg.write_to_pipe(merged.frame)
+
+                if type == "end":
+                    break
+
+                frame_number += 1
 
 
         self.utils.log(color, debug_prefix, "All merged images done, closing pipe")
@@ -206,3 +219,4 @@ class Processing():
         self.video.ffmpeg.close_pipe()
 
         self.controller.upscale_finished = True
+        self.controller.stop()

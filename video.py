@@ -170,9 +170,9 @@ class FFmpegWrapper():
         # # Get the frame count
 
         # Get the frame count
-        if self.context.get_frame_count_method == "null_copy":
+        if self.context.get_frame_count_method == "null_copy" and not self.context.write_only_debug_video:
             self.utils.log(color, debug_prefix, "[INFO] Getting video [frame_count] info with [NULL COPY] method")
-            video_info["frame_count"] = self.get_frame_count_with_null_copy(video_file)
+            #video_info["frame_count"] = self.get_frame_count_with_null_copy(video_file)
 
         # Get the resolution
         if self.context.get_resolution_method == "ffprobe":
@@ -259,6 +259,7 @@ class FFmpegWrapper():
                 '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
                 '-b:v', '5000k',
+                '-r', self.context.frame_rate,
                 output
         ]
 

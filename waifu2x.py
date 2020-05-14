@@ -93,6 +93,48 @@ class Waifu2x():
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
         return self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
 
+    def ruthless_residual_eliminator(self):
+
+        debug_prefix = "[Waifu2x.ruthless_residual_eliminator]"
+
+        while not self.controller.stop:
+            for residual in os.scandir(self.context.residual):
+
+                residual_path = residual.path
+                residual_filename = residual.name
+
+                residual_number = self.utils.get_first_number_of_string(residual_filename)
+                upscaled_path = self.get_residual_upscaled_file_path_output_frame_number(residual_number)
+
+                if ( (self.context.last_processing_frame - residual_number) > self.context.safety_ruthless_residual_eliminator_range ):
+                    self.utils.log(color, debug_prefix, "Residual number [%s] exists in residual dir and is out of bound, deleting" % residual_number)
+
+                    #print(residual_path)
+                    #print(upscaled_path)
+
+                    self.utils.delete_file(residual_path)
+                    self.utils.delete_file(upscaled_path)
+
+
+            for upscaled in os.scandir(self.context.upscaled):
+
+                upscaled_path = upscaled.path
+                upscaled_filename = upscaled.name
+
+                upscaled_number = self.utils.get_first_number_of_string(upscaled_filename)
+
+                equivalent_residual = self.context.residual + "residual_%s.jpg" % self.utils.pad_zeros(upscaled_number)
+
+                if ( (self.context.last_processing_frame - upscaled_number) > self.context.safety_ruthless_residual_eliminator_range ):
+
+                    if os.path.isfile(equivalent_residual):
+
+                        self.utils.log(color, debug_prefix, "Deleting equivalent residual as upscale already exists: [%s]" % equivalent_residual)
+
+                        self.utils.delete_file(equivalent_residual)
+
+            time.sleep(0.05)
+
 
 class NotFakeWaifu2x():
     def init(self, context, utils, controller):

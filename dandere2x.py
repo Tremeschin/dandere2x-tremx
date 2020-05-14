@@ -132,6 +132,12 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Generating run command from Waifu2x")
         self.waifu2x.generate_run_command()
 
+        # Warn the user and log mindisk mode
+        if self.context.mindisk:
+            self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [ON]")
+        else:
+            self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [OFF]")
+
         # Check if context_vars file exist and is set to be resume
         # If force argument is set, force not resume session
         if not self.args["force"]:
@@ -140,12 +146,6 @@ class Dandere2x():
         else:
             self.utils.log(rgb(255,100,0), debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
             self.context.resume = False
-
-        # Warn the user and log mindisk mode
-        if self.context.mindisk:
-            self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [ON]")
-        else:
-            self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [OFF]")
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
@@ -223,8 +223,17 @@ class Dandere2x():
         else:
             self.utils.log(color_by_name("li_red"), debug_prefix, "IS RESUME SESSION")
 
-            self.utils.log(color, debug_prefix, "Loading Context vars from context_vars file")
+            self.utils.log(color, debug_prefix, "[FAILSAFE] DELETING RESIDUAL, UPSCALE DIR AND PLUGINS INPUT FILE")
 
+            self.utils.reset_dir(self.context.residual)
+            self.utils.reset_dir(self.context.upscaled)
+
+            self.utils.reset_file(self.context.d2x_cpp_plugins_out)
+
+            self.utils.log(color, debug_prefix, "[FAILSAFE] REGENERATING DIRS")
+            self.utils.check_dirs()
+
+            self.utils.log(color, debug_prefix, "Loading Context vars from context_vars file")
             self.context.load_vars_from_file(self.context.context_vars)
 
             self.video.save_last_frame_of_video_ffmpeg(self.utils.get_last_partial_video_path(), self.context.resume_video_frame)
@@ -366,4 +375,11 @@ if __name__ == "__main__":
     d2x = Dandere2x(args)
     d2x.load()
     d2x.setup()
-    d2x.run()
+
+    try:
+        d2x.run()
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt catched, saving and exiting..")
+        d2x.controller.exit()
+        d2x.context.resume = True
+        d2x.context.save_vars()

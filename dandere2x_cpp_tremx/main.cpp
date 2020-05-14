@@ -230,9 +230,6 @@ exit_iteration:
 
 
 
-
-
-
 //http://jepsonsblog.blogspot.com/2012/10/overlay-transparent-image-in-opencv.html
 void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location)
 {
@@ -523,30 +520,25 @@ int process_video(const std::string video_path,
 
 
     // Initialize as black image
-    cv::Mat frame_a(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
-    cv::Mat frame_b;
+    cv::Mat frame(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::Mat last_matched(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
 
     cv::Mat bleed_croppable_frame(height + (2*bleed), width + (2*bleed), CV_8UC3, cv::Scalar(0, 0, 0));
 
-    cv::Mat noised_frame_a;
-    cv::Mat noised_frame_b;
+    cv::Mat noised_frame;
 
-    cv::Mat block_a;
-    cv::Mat block_b;
+    cv::Mat block;
+    cv::Mat last_matched_block;
+    cv::Mat bleeded_block;
+    cv::Mat noised_block;
 
-    cv::Mat bleeded_block_a;
-    cv::Mat bleeded_block_b;
-
-    cv::Mat noised_block_a;
-    cv::Mat noised_block_b;
-
-    cv::Mat compressed_block;
+    //cv::Mat compressed_block;
     cv::Mat black_block;
 
     cv::Size resolution;
 
-    cv::Mat compressed;
-    cv::Mat not_compressed;
+    //cv::Mat compressed;
+    //cv::Mat not_compressed;
     cv::Mat debug_frame;
 
     // The matched blocks for generating the input residual
@@ -566,158 +558,72 @@ int process_video(const std::string video_path,
 
 
     // // Frame relevant vars
-    double frame_psnr = 0;
+    //double frame_psnr = 0;
     int count_frame = 0;
     int block_id = 0;
     int remaining_frames = 0;
 
     // Division by zero if 0 on counting the blocks
-    int total_blocks = 1;
-    int dont_need_upscaling = 0;
-    int need_upscaling = 0;
+    long int total_blocks = 1;
+    long int dont_need_upscaling = 0;
+    long int need_upscaling = 0;
 
     double raw_block_mse = 0;
-    double compressed_mse = 0;
+    double mse_threshhold = 0.01;
+    //double compressed_mse = 0;
 
     std::string next_output_newline;
 
 
-    // // Compression
 
-    // buffer for compressing, 50 MB
-    std::vector<uchar> buff(1024*1024*50);
-    std::vector<int> param(2);
-
-    param[0] = cv::IMWRITE_JPEG_QUALITY;
-    param[1] = 80; //default(95) 0-100
-
-
-
-    // If start frame is not zero, we get to the start frame by reading and dumping the frames
     if (start_frame > 0) {
         std::cout << "Seeking to " << start_frame - 1 << std::endl;
 
         video.set(cv::CAP_PROP_POS_FRAMES, start_frame - 1);
-        video >> frame_a;
+        video >> frame;
 
         count_frame = start_frame;
-
-    #if ONLY_FIRST_FRAME
-        cv::imwrite("frame_start.jpg", frame_a);
-
-        cv::imencode("jpg", frame_a, buff, param);
-
-        compressed = cv::imdecode(buff, cv::IMREAD_COLOR);
-
-        cv::imwrite("frame_compressed.jpg", compressed);
-    #endif
 
     }
 
 
 
-
-    cv::Mat uniform_noise = cv::Mat::zeros(height, width, CV_8UC3);
-
-    cv::randu(uniform_noise, 0, 255);
-
-    uniform_noise *= 0.08;
-
-    noised_frame_a = frame_a.clone();
-    noised_frame_a += uniform_noise;
-
-    //std::cout << uniform_noise << std::endl;
-    //return 0;
-
-
-
-
-    // T-flip-flop mechanism
-    bool this_or_that = true;
-
     // Main routine
     while (true) {
 
-        next_output_newline = "";
-
-        // Invert next iteration
-        this_or_that = !this_or_that;
-
-        // Get next frame with a T flip flop mechanism
-        if (this_or_that) {
-
-            video >> frame_a;
-
-            if (frame_a.empty()) {
-                std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
-                output_file.close();
-                return 0;
-            }
-
-            // Instead of adding black border we set a background of the original frame resized to the
-            // bleeded resolution and just overlay the original image
-            cv::resize(frame_a, bleed_croppable_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
-            frame_a.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame_a.cols, frame_a.rows)));
-
-            // bleed_croppable_frame[bleed:bleed+frame_a.shape[0], bleed:bleed+frame_a.shape[1]] = frame_a;
+        next_output_newline = "pframe;" + std::to_string(count_frame) + "-";
 
 
+        video >> frame;
 
-            //cv::copyMakeBorder(frame_a, bleed_croppable_frame, bleed, bleed, bleed, bleed, cv::BORDER_CONSTANT, cv::Scalar(0));
-
-            noised_frame_a = frame_a.clone();
-            noised_frame_a += uniform_noise;
-
-            compressed = noised_frame_a.clone();
-
-
-            if (write_only_debug_video) {
-                debug_frame = frame_a.clone();
-            }
-
-
-        } else {
-
-            video >> frame_b;
-
-            if (frame_b.empty()) {
-                std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
-                output_file.close();
-                return 0;
-            }
-
-            // Instead of adding black border we set a background of the original frame resized to the
-            // bleeded resolution and just overlay the original image
-            cv::resize(frame_b, bleed_croppable_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
-            frame_b.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame_b.cols, frame_b.rows)));
-
-            // bleed_croppable_frame[bleed:bleed+frame_b.shape[0], bleed:bleed+frame_b.shape[1]] = frame_b;
-
-            //cv::copyMakeBorder(frame_b, bleed_croppable_frame, bleed, bleed, bleed, bleed, cv::BORDER_CONSTANT, cv::Scalar(0));
-
-            noised_frame_b = frame_b.clone();
-            noised_frame_b += uniform_noise;
-
-            compressed = noised_frame_b.clone();
-
-
-            if (write_only_debug_video) {
-                debug_frame = frame_b.clone();
-            }
-
+        if (frame.empty()) {
+            std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
+            output_file << "end;" + std::to_string(count_frame) + "-";
+            output_file.flush();
+            output_file.close();
+            return 0;
         }
 
-        // // Compress the frame
+        // Instead of adding black border we set a background of the original frame resized to the
+        // bleeded resolution and just overlay the original image
+        cv::resize(frame, bleed_croppable_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
+        frame.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame.cols, frame.rows)));
 
-        // Encode into a buffer
-        cv::imencode(".jpg", compressed, buff, param);
+        if (write_only_debug_video) {
+            debug_frame = frame.clone();
+        }
 
-        // Decode the compressed block
-        compressed = cv::imdecode(buff, cv::IMREAD_COLOR);
+        // <++> EXPERIMENTAL NOISE
+        // WITHOUT Writing debug frame: [238/238], (Need / Don't need) upscaling: [51474/195174], Total blocks: [246649], Recylcled percentage: 79.1303
+        // WITH Writing debug frame: [238/238], (Need / Don't need) upscaling: [54365/192283], Total blocks: [246649], Recylcled percentage: 77.9582
+        GaussianBlur( frame, frame, cv::Size( 3, 3 ), 0, 0 );
 
-        cv::imwrite("frame_compressed.jpg", compressed);
+        // Denoising is too slow :(
+        // cv::fastNlMeansDenoising(frame, frame, 10, 7, 21);
 
-        next_output_newline += "pframe;" + std::to_string(count_frame) + "-";
+
+
+
 
         remaining_frames = total_frame_count - count_frame;
 
@@ -728,7 +634,6 @@ int process_video(const std::string video_path,
 
         // Current block_id, matches the vectors
         block_id = 0;
-
 
         for (int y=0; y < height_iterations; y++) {
 
@@ -746,23 +651,12 @@ int process_video(const std::string video_path,
                 // If x it surpasses the width
                 end_x = std::min(width, start_x + block_size);
 
-
-
                 // The resolution of our block
                 resolution = cv::Size(end_x - start_x, end_y - start_y);
-
 
                 // Region of Interest to crop the block
                 cv::Rect crop = cv::Rect(start_x, start_y, (end_x - start_x), (end_y - start_y));
 
-
-                /*
-                bleeded_start_x = std::max(0, start_x - bleed);
-                bleeded_start_y = std::max(0, start_y - bleed);
-
-                bleeded_end_x = std::min(width, start_x + block_size + bleed);
-                bleeded_end_y = std::min(height, start_y + block_size + bleed);
-                */
 
                 bleeded_start_x = (x * block_size);
                 bleeded_start_y = (y * block_size);
@@ -782,64 +676,21 @@ int process_video(const std::string video_path,
                     (bleeded_end_y - bleeded_start_y)
                 );
 
-                //cv::Rect bleeded_crop = cv::Rect(
-                //    std::max(0, start_x - bleed),
-                //    std::max(0, start_y - bleed),
-                //    std::min(width, end_x + bleed) - start_x,
-                //    std::min(height, end_y + bleed) - start_y
-                //);
 
-
-                block_a = cv::Mat(frame_a, crop);
-                block_b = cv::Mat(frame_b, crop);
-
-                noised_block_a = cv::Mat(noised_frame_a, crop);
-                noised_block_b = cv::Mat(noised_frame_b, crop);
-
-                compressed_block = cv::Mat(compressed, crop);
-
+                block = cv::Mat(frame, crop);
+                last_matched_block = cv::Mat(last_matched, crop);
 
                 //std::cout << "start_x: " << start_x << ", stary_y: " << start_y
                 //          << "end_x: " << end_x << ", end_y: " << end_y << std::endl;
 
 
-            /*
-            #if METHOD_USE_MSSIM
-
-                block_msee_scalar = calculate_mssim(block_a, block_b);
-
-                raw_block_mse = fit_ssim(block_msee_scalar[0], block_msee_scalar[1], block_msee_scalar[2], block_msee_scalar[3]);
-
-                if (true) {
-                    next_output_newline += ";" + std::to_string(block_id);
-                }
-
-            #endif
-            */
-
 
             #if METHOD_USE_MSE
 
                 // Raw MSE between two blocks
-                raw_block_mse = calculate_mse(noised_block_a, noised_block_b);
+                raw_block_mse = calculate_mse(block, last_matched_block);
+                raw_block_mse /= block.total();
 
-
-                // Calculate the MSE of compressed
-                if (this_or_that) {
-                    compressed_mse = calculate_mse(compressed_block, noised_block_a);
-
-                        #if VERBOSE_DEBUG
-                            std::cout << "frame:[" << count_frame << "]-block_id:[" << block_id << "]-compressed_mse_a:[" << compressed_mse << "]-raw:[" << raw_block_mse << "],";
-                        #endif
-
-                } else {
-                    compressed_mse = calculate_mse(compressed_block, noised_block_b);
-
-                        #if VERBOSE_DEBUG
-                            std::cout << "frame:[" << count_frame << "]-block_id:[" << block_id << "]-compressed_mse_b:[" << compressed_mse << "]-raw:[" << raw_block_mse << "]-status:[";
-                        #endif
-
-                }
 
 
             #if VERBOSE_DEBUG
@@ -860,41 +711,25 @@ int process_video(const std::string video_path,
 
                 total_blocks++;
 
-                // Validate
-                if (raw_block_mse > compressed_mse) {
 
-                #if VERBOSE_DEBUG
-                    std::cout << "accepted]" << std::endl;
-                #endif
+                // Validate
+
+                if (raw_block_mse > mse_threshhold) {
 
                     need_upscaling++;
 
-                    next_output_newline += ";" + std::to_string(block_id); // << "," << raw_block_mse;
+                    block.copyTo(
+                        last_matched(
+                            crop
+                        )
+                    );
 
-                    //cv::imwrite("bleeded.jpg", bleeded_block_a);
+                    next_output_newline += ";" + std::to_string(block_id);
 
-
-                    if (this_or_that) {
-                        //overlayImage(bleed_croppable_frame, frame_a, bleed_croppable_frame, cv::Point(start_x, start_y));
-
-                        //cv::imwrite("a.jpg", bleed_croppable_frame);
-
-                        bleeded_block_a = cv::Mat(bleed_croppable_frame, bleeded_crop);
-                        matched_blocks.push_back(bleeded_block_a);
-
-                    } else {
-                        //overlayImage(bleed_croppable_frame, frame_b, bleed_croppable_frame, cv::Point(bleed, bleed));
-
-                        //cv::imwrite("b.jpg", bleed_croppable_frame);
-
-                        bleeded_block_b = cv::Mat(bleed_croppable_frame, bleeded_crop);
-                        matched_blocks.push_back(bleeded_block_b);
-
-                    }
+                    bleeded_block = cv::Mat(bleed_croppable_frame, bleeded_crop);
+                    matched_blocks.push_back(bleeded_block);
 
                     //std::cout << raw_block_mse << " > " << compressed_mse << " - " << matched_blocks.size() << std::endl;
-
-
 
                     if (write_only_debug_video) {
 
@@ -906,12 +741,7 @@ int process_video(const std::string video_path,
 
 
                 } else {
-
                     dont_need_upscaling++;
-
-                #if VERBOSE_DEBUG
-                    std::cout << "denied]" << std::endl;
-                #endif
                 }
 
 
@@ -923,25 +753,12 @@ int process_video(const std::string video_path,
 
                 std::string savename = "blocks/block_frame_" + std::to_string(count_frame) + "_" + std::to_string(start_x) + "_" + std::to_string(start_y) + "-" + std::to_string(end_x) + "_" + std::to_string(end_y) + "-";
 
-                std::string block_a_savepath = savename + "a-raw:" + std::to_string(raw_block_mse) + "_compressed-"  + std::to_string(compressed_mse) + ".jpg";
+                std::string block_savepath = savename + "a-raw:" + std::to_string(raw_block_mse) + "_compressed-"  + std::to_string(compressed_mse) + ".jpg";
                 std::string block_b_savepath = savename + "b.raw:" + std::to_string(raw_block_mse) + "_compressed-"  + std::to_string(compressed_mse) + ".jpg";;
 
-                cv::imwrite(block_a_savepath, block_a);
+                cv::imwrite(block_savepath, block);
                 cv::imwrite(block_b_savepath, block_b);
 
-            #endif
-
-
-            #if VERBOSE_DEBUG
-                std::cout << "Frame: " << count_frame
-                          << " // "
-                          << x << "-" << y << " // "
-                          << "startx: " << start_x << " endx: " << end_x
-                          << " // "
-                          << "starty: " << start_y << " endy: " << end_y
-                          << " // "
-                          << "diff: " << raw_block_mse
-                          << std::endl;
             #endif
 
                 block_id++;
@@ -962,7 +779,12 @@ int process_video(const std::string video_path,
         //cv::imshow( "Frame", debug_frame );
 
         if (write_only_debug_video) {
-            debug_video.write(debug_frame);
+
+            // <++>
+            if (false) {
+                debug_video.write(debug_frame);
+            }
+
             std::cout << "Writing debug frame: [" << count_frame << "/" << total_frame_count << "]"
                       << ", (Need / Don't need) upscaling: [" << need_upscaling << "/" << dont_need_upscaling << "]"
                       << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << static_cast<double>(100)*dont_need_upscaling / total_blocks << std::endl;
@@ -970,20 +792,22 @@ int process_video(const std::string video_path,
 
         next_output_newline += '\n';
 
-        output_file << next_output_newline;
-
-        output_file.flush();
+        // <++>
+        if (!write_only_debug_video) {
+            output_file << next_output_newline;
+            output_file.flush();
+        }
 
 
         // // Make the input residual image
 
 
 
-        if (matched_blocks.size() > 0) {
+        if ( (matched_blocks.size() > 0) && (!write_only_debug_video)) {
 
             cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
 
-            int max_frames_ahead = 10;
+            int max_frames_ahead = 40;
             int max_frames_ahead_wait = count_frame - max_frames_ahead;
 
             std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
@@ -1020,7 +844,7 @@ int process_video(const std::string video_path,
         std::string previous_filename = "frames/frame_" + std::to_string(count_frame) + "-1-previous_full.jpg";
         std::string next_filename =     "frames/frame_" + std::to_string(count_frame) + "-2-next_full.jpg";
 
-        cv::imwrite(previous_filename, frame_a);
+        cv::imwrite(previous_filename, frame);
         cv::imwrite(next_filename, frame_b);
     #endif
 
@@ -1048,7 +872,7 @@ int process_video(const std::string video_path,
 int main(int argc, char** argv) {
 
     /*
-    cv::Mat image = cv::imread("frame_a.jpg");
+    cv::Mat image = cv::imread("frame.jpg");
 
     cv::Mat uniform_noise = cv::Mat::zeros (image.rows, image.cols, CV_8UC1);
 
@@ -1065,7 +889,7 @@ int main(int argc, char** argv) {
     // Another way to generate the random values form the same distribution is to use
     // functions randu and randn
 
-    //cv::Mat image = cv::imread("frame_a.jpg");
+    //cv::Mat image = cv::imread("frame.jpg");
 
     // Let's first create a zero image with the same dimensions of the loaded image
 
@@ -1089,10 +913,10 @@ int main(int argc, char** argv) {
     /*
     std::vector<cv::Mat> ints;
 
-    cv::Mat frame_a(10, 10, CV_8UC3, cv::Scalar(0, 255, 0));
+    cv::Mat frame(10, 10, CV_8UC3, cv::Scalar(0, 255, 0));
     cv::Mat frame_b(20, 15, CV_8UC3, cv::Scalar(0, 0, 255));
 
-    ints.push_back(frame_a);
+    ints.push_back(frame);
     ints.push_back(frame_b);
 
     for(std::size_t i=0; i < ints.size(); ++i) {

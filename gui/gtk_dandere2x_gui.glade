@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.2 
+<!-- Generated with glade 3.36.0 
 
 Copyright (C) 
 
@@ -30,8 +30,7 @@ Author: aka_katto, Tremeschin
   <object class="GtkFileFilter"/>
   <object class="GtkAdjustment" id="adj-block-size">
     <property name="upper">100</property>
-    <property name="value">1.8500000000000001</property>
-    <property name="step_increment">0.01</property>
+    <property name="value">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adj-denoise-level">
@@ -58,154 +57,6 @@ Author: aka_katto, Tremeschin
     <property name="icon">data/icon/dandere2x.png</property>
     <signal name="delete-event" handler="quit" swapped="no"/>
     <signal name="destroy" handler="quit" swapped="no"/>
-    <child type="titlebar">
-      <object class="GtkGrid">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="column_homogeneous">True</property>
-        <child>
-          <object class="GtkHeaderBar">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="tooltip_text" translatable="yes">Yeah, this is where you close, minimize or maximize stuff.</property>
-            <property name="title" translatable="yes">Dandere2x - Fast Waifu2x Upscaling!!</property>
-            <property name="show_close_button">True</property>
-            <signal name="destroy" handler="quit" swapped="no"/>
-            <signal name="remove" handler="quit" swapped="no"/>
-            <child>
-              <object class="GtkMenuBar">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkMenuBar">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkMenuItem">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">_File</property>
-                    <property name="use_underline">True</property>
-                    <child type="submenu">
-                      <object class="GtkMenu">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <child>
-                          <object class="GtkMenuItem">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Load Session</property>
-                            <property name="use_underline">True</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkSeparatorMenuItem">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkMenuItem">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Quit</property>
-                            <property name="use_underline">True</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkMenuItem">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">SEND HALP</property>
-                    <property name="label" translatable="yes">_Help</property>
-                    <property name="use_underline">True</property>
-                    <child type="submenu">
-                      <object class="GtkMenu">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <child>
-                          <object class="GtkMenuItem" id="github">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">GitHub</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="resources" swapped="no"/>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkMenuItem" id="telegram">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Telegram Server</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="resources" swapped="no"/>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkMenuItem" id="reddit">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Reddit</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="resources" swapped="no"/>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkMenuItem" id="docs">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Docs</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="resources" swapped="no"/>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkMenuItem">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">About section, mostly links to resources.</property>
-                    <property name="label" translatable="yes">_About</property>
-                    <property name="use_underline">True</property>
-                    <child type="submenu">
-                      <object class="GtkMenu">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <child>
-                          <object class="GtkMenuItem" id="howitworks">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">How it works?</property>
-                            <property name="use_underline">True</property>
-                            <signal name="activate" handler="resources" swapped="no"/>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -230,7 +81,8 @@ Author: aka_katto, Tremeschin
             <property name="can_focus">False</property>
             <property name="margin_left">7</property>
             <property name="margin_right">7</property>
-            <property name="margin_bottom">2</property>
+            <property name="margin_start">15</property>
+            <property name="margin_end">15</property>
             <property name="row_spacing">4</property>
             <property name="column_spacing">18</property>
             <child>
@@ -247,53 +99,6 @@ Author: aka_katto, Tremeschin
               </packing>
             </child>
             <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="GtkAccelLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Tries to use a temporary folder for the workspace.
-
-On Linux it'll use /tmp
-
-On Windows it's the %temp% directory.</property>
-                    <property name="label" translatable="yes">Use Temporary Directory</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSwitch" id="use_temp">
-                    <property name="visible">True</property>
-                    <property name="sensitive">False</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">Tries to use a temporary folder for the workspace.
-
-On Linux it'll use /tmp
-
-On Windows it's the %temp% directory.</property>
-                    <property name="halign">end</property>
-                    <property name="hexpand">True</property>
-                    <signal name="state-set" handler="switch_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">4</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkSeparator">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -304,43 +109,6 @@ On Windows it's the %temp% directory.</property>
                 <property name="left_attach">0</property>
                 <property name="top_attach">5</property>
                 <property name="width">5</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToggleButton" id="suspendbutton">
-                <property name="label" translatable="yes">Stopped</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Yes you can suspend the session after initializing it at (not 100% guarantee) any time.
-
-Loading sessions is still messy at this point in time so the best is to upscale all in a single run or stop session and keep program open.</property>
-                <property name="active">True</property>
-                <property name="inconsistent">True</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="action_buttons" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">4</property>
-                <property name="top_attach">6</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToggleButton" id="upscalebutton">
-                <property name="label" translatable="yes">Upscale!!</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Start or resume the upscale process.
-
-Note: This will lock every option in the top since things can't change middle run.</property>
-                <property name="inconsistent">True</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="action_buttons" swapped="no"/>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">6</property>
               </packing>
             </child>
             <child>
@@ -357,54 +125,24 @@ Note: This will lock every option in the top since things can't change middle ru
               </packing>
             </child>
             <child>
-              <object class="GtkAccelLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Waifu2x / Dandere2x internal settings for the end user. If more advanced options wanted, take a look at the yaml file from your operating system in the program folder.</property>
-                <property name="halign">center</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Settings</property>
-                <attributes>
-                  <attribute name="style" value="normal"/>
-                  <attribute name="scale" value="2"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkAccelLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Main Dandere2x actions, please note stopping the session and resuming not supported in this GUI yet.</property>
-                <property name="halign">center</property>
-                <property name="hexpand">True</property>
-                <property name="label" translatable="yes">Actions</property>
-                <property name="width_chars">40</property>
-                <attributes>
-                  <attribute name="style" value="normal"/>
-                  <attribute name="scale" value="2"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">6</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkGrid">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="row_spacing">5</property>
+                <property name="row_spacing">4</property>
                 <child>
-                  <object class="GtkAccelLabel">
+                  <object class="GtkToggleButton" id="upscalebutton">
+                    <property name="label" translatable="yes">Upscale</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">center</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Start or resume the upscale process.
+
+Note: This will lock every option in the top since things can't change middle run.</property>
                     <property name="hexpand">True</property>
-                    <property name="label" translatable="yes">Select Output Video</property>
+                    <property name="vexpand">True</property>
+                    <property name="inconsistent">True</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="action_buttons" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -412,14 +150,20 @@ Note: This will lock every option in the top since things can't change middle ru
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="output">
+                  <object class="GtkToggleButton" id="suspendbutton">
+                    <property name="label" translatable="yes">Stopped</property>
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Yes you can suspend the session after initializing it at (not 100% guarantee) any time.
+
+Loading sessions is still messy at this point in time so the best is to upscale all in a single run or stop session and keep program open.</property>
                     <property name="hexpand">True</property>
-                    <property name="width_chars">40</property>
-                    <property name="placeholder_text" translatable="yes">Output file</property>
-                    <signal name="button-press-event" handler="file_clicked" swapped="no"/>
+                    <property name="vexpand">True</property>
+                    <property name="active">True</property>
+                    <property name="inconsistent">True</property>
+                    <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="action_buttons" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -463,6 +207,34 @@ Note: This will lock every option in the top since things can't change middle ru
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAccelLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">Select Output Video</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="output">
+                    <property name="visible">True</property>
+                    <property name="sensitive">False</property>
+                    <property name="can_focus">True</property>
+                    <property name="hexpand">True</property>
+                    <property name="width_chars">40</property>
+                    <property name="placeholder_text" translatable="yes">Output file</property>
+                    <signal name="button-press-event" handler="file_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
               </object>
@@ -572,7 +344,7 @@ Note: This will lock every option in the top since things can't change middle ru
                 <property name="tooltip_text" translatable="yes">Set up the desired input video for upscaling and the output one.</property>
                 <property name="halign">center</property>
                 <property name="hexpand">True</property>
-                <property name="label" translatable="yes">File</property>
+                <property name="label" translatable="yes">File / Actions</property>
                 <attributes>
                   <attribute name="style" value="normal"/>
                   <attribute name="scale" value="2"/>
@@ -581,92 +353,6 @@ Note: This will lock every option in the top since things can't change middle ru
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="vexpand">False</property>
-                <child>
-                  <object class="GtkAccelLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Pipes the merged images (the final ones you see in the finished video) directly onto a FFMPEG subprocess reducing the need of saving those images in the disk.</property>
-                    <property name="label" translatable="yes">FFMPEG Pipe Mode</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSwitch" id="ffmpeg_pipe">
-                    <property name="visible">True</property>
-                    <property name="sensitive">False</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">Pipes the merged images (the final ones you see in the finished video) directly onto a FFMPEG subprocess reducing the need of saving those images in the disk.</property>
-                    <property name="halign">end</property>
-                    <property name="hexpand">True</property>
-                    <property name="active">True</property>
-                    <signal name="state-set" handler="switch_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">4</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="vexpand">False</property>
-                <child>
-                  <object class="GtkAccelLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Limits how many images file can exist concurrently on the workspace folder and deletes already used files, greatly reducing Dandere2x folder size at any time but does not reduce total usage of files written on the device.
-
-Should always be on by default unless debugging.</property>
-                    <property name="halign">start</property>
-                    <property name="hexpand">True</property>
-                    <property name="label" translatable="yes">Minimal Disk Mode</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSwitch" id="minimal_disk">
-                    <property name="visible">True</property>
-                    <property name="sensitive">False</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">Limits how many images file can exist concurrently on the workspace folder and deletes already used files, greatly reducing Dandere2x folder size at any time but does not reduce total usage of files written on the device.
-
-Should always be on by default unless debugging.</property>
-                    <property name="halign">end</property>
-                    <property name="hexpand">True</property>
-                    <property name="active">True</property>
-                    <signal name="state-set" handler="switch_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">4</property>
-                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
@@ -705,7 +391,6 @@ Please ensure you have the proper graphic drivers for running Waifu2x.
 Caffe doesn't works on Linux as it's not ported, make sure you got the packages from your distro and the dandere2x_linux.yaml file points to the right path of the binarie.
 
 NOTE: If you running waifu2x-ncnn-vulkan on Linux please do NOT use the ACO (Amd COmpiler) patches in mesa graphics driver from Steam as it'll result in black images being generated from Waifu2x. A solution is to launch Dandere2x with the following var: RADV_PERFTEST=llvm #normal command here#</property>
-                    <property name="halign">end</property>
                     <property name="valign">center</property>
                     <property name="hexpand">True</property>
                     <property name="active">1</property>
@@ -727,208 +412,6 @@ NOTE: If you running waifu2x-ncnn-vulkan on Linux please do NOT use the ACO (Amd
               <packing>
                 <property name="left_attach">2</property>
                 <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">The image compression quality. Higher values means low compression so better quality at cost of bigger image file sizes.
-
-Not really an concern if Minimal Disk Mode is enabled since it deletes already used files and limit how many there could be.</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">False</property>
-                    <property name="label" translatable="yes">Image Quality:    </property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScale" id="image_quality">
-                    <property name="visible">True</property>
-                    <property name="sensitive">False</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">The image compression quality. Higher values means low compression so better quality at cost of bigger image file sizes.
-
-Not really an concern if Minimal Disk Mode is enabled since it deletes already used files and limit how many there could be.</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="adjustment">adj-image-quality</property>
-                    <property name="show_fill_level">True</property>
-                    <property name="round_digits">0</property>
-                    <property name="digits">0</property>
-                    <property name="value_pos">right</property>
-                    <signal name="value-changed" handler="slider_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="hexpand">False</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">This will get the block_sized based on a percentage of the mininum(video_height, video_width).
-
-This is because a fixed let's say 20 pixels gets way less "area" on a 1080p video than a 480p one, so we're "balancing" the block_size by dynamically setting it.
-
-Sweet spot - and the default value - is 1.85%.</property>
-                    <property name="halign">start</property>
-                    <property name="hexpand">False</property>
-                    <property name="label" translatable="yes">Block Size (%):    </property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="block_size">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">This will get the block_sized based on a percentage of the mininum(video_height, video_width).
-
-This is because a fixed let's say 20 pixels gets way less "area" on a 1080p video than a 480p one, so we're "balancing" the block_size by dynamically setting it.
-
-Sweet spot - and the default value - is 1.85%.</property>
-                    <property name="hexpand">True</property>
-                    <property name="input_purpose">number</property>
-                    <property name="adjustment">adj-block-size</property>
-                    <property name="climb_rate">1</property>
-                    <property name="digits">2</property>
-                    <property name="numeric">True</property>
-                    <signal name="value-changed" handler="slider_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">The scale factor of the video, 2x makes 720p -&gt; 1440p, 1080p -&gt; 2160p (4k), etc.
-
-Only Waifu2x Caffe on Windows supports other values other than two.</property>
-                    <property name="halign">start</property>
-                    <property name="hexpand">False</property>
-                    <property name="label" translatable="yes">Scale Factor:</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScale" id="scale_factor">
-                    <property name="visible">True</property>
-                    <property name="sensitive">False</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">The scale factor of the video, 2x makes 720p -&gt; 1440p, 1080p -&gt; 2160p (4k), etc.
-
-Only Waifu2x Caffe on Windows supports other values other than two.</property>
-                    <property name="valign">center</property>
-                    <property name="margin_left">11</property>
-                    <property name="hexpand">True</property>
-                    <property name="adjustment">adj-scale-factor</property>
-                    <property name="show_fill_level">True</property>
-                    <property name="round_digits">0</property>
-                    <property name="digits">0</property>
-                    <property name="value_pos">right</property>
-                    <signal name="adjust-bounds" handler="slider_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkGrid">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="valign">center</property>
-                <property name="vexpand">True</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">How much denoise Waifu2x will apply to the video like removing upscaling artifacts by masking them. Minor quality loss on higher values but better upscaled file "sharpness" overhaul.</property>
-                    <property name="halign">start</property>
-                    <property name="hexpand">False</property>
-                    <property name="label" translatable="yes">Denoise level:</property>
-                    <property name="width_chars">11</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScale" id="denoise_level">
-                    <property name="visible">True</property>
-                    <property name="sensitive">False</property>
-                    <property name="can_focus">True</property>
-                    <property name="tooltip_text" translatable="yes">How much denoise Waifu2x will apply to the video like removing upscaling artifacts by masking them. Minor quality loss on higher values but better upscaled file "sharpness" overhaul.</property>
-                    <property name="valign">center</property>
-                    <property name="hexpand">True</property>
-                    <property name="adjustment">adj-denoise-level</property>
-                    <property name="show_fill_level">True</property>
-                    <property name="round_digits">0</property>
-                    <property name="digits">0</property>
-                    <property name="value_pos">right</property>
-                    <signal name="adjust-bounds" handler="slider_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
@@ -980,6 +463,7 @@ Only Waifu2x Caffe on Windows supports other values other than two.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Yeah, if you see this spinning the GUI isn't hanging, so everything might be ok?</property>
                     <property name="margin_left">5</property>
+                    <property name="margin_start">8</property>
                     <property name="active">True</property>
                   </object>
                   <packing>
@@ -1007,6 +491,259 @@ Only Waifu2x Caffe on Windows supports other values other than two.</property>
               </packing>
             </child>
             <child>
+              <object class="GtkAccelLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Waifu2x / Dandere2x internal settings for the end user. If more advanced options wanted, take a look at the yaml file from your operating system in the program folder.</property>
+                <property name="halign">center</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">Settings</property>
+                <attributes>
+                  <attribute name="style" value="normal"/>
+                  <attribute name="scale" value="2"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="height">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="left_attach">3</property>
+                <property name="top_attach">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="left_attach">3</property>
+                <property name="top_attach">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="valign">center</property>
+                <property name="vexpand">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">The scale factor of the video, 2x makes 720p -&gt; 1440p, 1080p -&gt; 2160p (4k), etc.
+
+Only Waifu2x Caffe on Windows supports other values other than two.</property>
+                    <property name="halign">start</property>
+                    <property name="hexpand">False</property>
+                    <property name="label" translatable="yes">Scale Factor:</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScale" id="scale_factor">
+                    <property name="visible">True</property>
+                    <property name="sensitive">False</property>
+                    <property name="can_focus">True</property>
+                    <property name="tooltip_text" translatable="yes">The scale factor of the video, 2x makes 720p -&gt; 1440p, 1080p -&gt; 2160p (4k), etc.
+
+Only Waifu2x Caffe on Windows supports other values other than two.</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="adjustment">adj-scale-factor</property>
+                    <property name="show_fill_level">True</property>
+                    <property name="round_digits">0</property>
+                    <property name="digits">0</property>
+                    <property name="value_pos">right</property>
+                    <signal name="adjust-bounds" handler="slider_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">4</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="valign">center</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">This will get the block_sized based on a percentage of the mininum(video_height, video_width).
+
+This is because a fixed let's say 20 pixels gets way less "area" on a 1080p video than a 480p one, so we're "balancing" the block_size by dynamically setting it.
+
+Sweet spot - and the default value - is 1.85%.</property>
+                    <property name="halign">start</property>
+                    <property name="hexpand">False</property>
+                    <property name="label" translatable="yes">Block Size (pixels or percentage):    </property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="block_size">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="tooltip_text" translatable="yes">This will get the block_sized based on a percentage of the mininum(video_height, video_width).
+
+This is because a fixed let's say 20 pixels gets way less "area" on a 1080p video than a 480p one, so we're "balancing" the block_size by dynamically setting it.
+
+Sweet spot - and the default value - is 1.85%.</property>
+                    <property name="hexpand">True</property>
+                    <property name="text" translatable="yes">1,00</property>
+                    <property name="input_purpose">number</property>
+                    <property name="adjustment">adj-block-size</property>
+                    <property name="climb_rate">1</property>
+                    <property name="digits">2</property>
+                    <property name="numeric">True</property>
+                    <property name="value">1</property>
+                    <signal name="value-changed" handler="slider_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="valign">center</property>
+                <property name="vexpand">True</property>
+                <property name="column_homogeneous">True</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">How much denoise Waifu2x will apply to the video like removing upscaling artifacts by masking them. Minor quality loss on higher values but better upscaled file "sharpness" overhaul.</property>
+                    <property name="halign">start</property>
+                    <property name="hexpand">False</property>
+                    <property name="label" translatable="yes">Denoise level:</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScale" id="denoise_level">
+                    <property name="visible">True</property>
+                    <property name="sensitive">False</property>
+                    <property name="can_focus">True</property>
+                    <property name="tooltip_text" translatable="yes">How much denoise Waifu2x will apply to the video like removing upscaling artifacts by masking them. Minor quality loss on higher values but better upscaled file "sharpness" overhaul.</property>
+                    <property name="valign">center</property>
+                    <property name="hexpand">True</property>
+                    <property name="adjustment">adj-denoise-level</property>
+                    <property name="show_fill_level">True</property>
+                    <property name="round_digits">0</property>
+                    <property name="digits">0</property>
+                    <property name="value_pos">right</property>
+                    <signal name="adjust-bounds" handler="slider_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">4</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="valign">center</property>
+                <property name="vexpand">False</property>
+                <child>
+                  <object class="GtkAccelLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Limits how many images file can exist concurrently on the workspace folder and deletes already used files, greatly reducing Dandere2x folder size at any time but does not reduce total usage of files written on the device.
+
+Should always be on by default unless debugging.</property>
+                    <property name="halign">start</property>
+                    <property name="hexpand">True</property>
+                    <property name="label" translatable="yes">Minimal Disk Mode</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="minimal_disk">
+                    <property name="visible">True</property>
+                    <property name="sensitive">False</property>
+                    <property name="can_focus">True</property>
+                    <property name="tooltip_text" translatable="yes">Limits how many images file can exist concurrently on the workspace folder and deletes already used files, greatly reducing Dandere2x folder size at any time but does not reduce total usage of files written on the device.
+
+Should always be on by default unless debugging.</property>
+                    <property name="halign">end</property>
+                    <property name="hexpand">True</property>
+                    <property name="active">True</property>
+                    <signal name="state-set" handler="switch_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">4</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="width_chars">30</property>
+              </object>
+              <packing>
+                <property name="left_attach">4</property>
+                <property name="top_attach">6</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
               <placeholder/>
             </child>
             <child>
@@ -1017,6 +754,155 @@ Only Waifu2x Caffe on Windows supports other values other than two.</property>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkGrid">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="column_homogeneous">True</property>
+        <child>
+          <object class="GtkHeaderBar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="tooltip_text" translatable="yes">Yeah, this is where you close, minimize or maximize stuff.</property>
+            <property name="title" translatable="yes">Dandere2x - Fast Waifu2x Upscaling!!</property>
+            <property name="show_close_button">True</property>
+            <signal name="destroy" handler="quit" swapped="no"/>
+            <signal name="remove" handler="quit" swapped="no"/>
+            <child>
+              <object class="GtkMenuBar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuBar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkMenuItem">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">_File</property>
+                    <property name="use_underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkMenuItem" id="load_session">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Load Session</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="load_session" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSeparatorMenuItem">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Quit</property>
+                            <property name="use_underline">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkMenuItem">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">SEND HALP</property>
+                    <property name="label" translatable="yes">_Help</property>
+                    <property name="use_underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkMenuItem" id="github">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">GitHub</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="resources" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="telegram">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Telegram Server</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="resources" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="reddit">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Reddit</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="resources" swapped="no"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkMenuItem" id="docs">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Docs</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="resources" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkMenuItem">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">About section, mostly links to resources.</property>
+                    <property name="label" translatable="yes">_About</property>
+                    <property name="use_underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkMenuItem" id="howitworks">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">How it works?</property>
+                            <property name="use_underline">True</property>
+                            <signal name="activate" handler="resources" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
       </object>

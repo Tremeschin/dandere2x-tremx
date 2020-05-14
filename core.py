@@ -72,6 +72,10 @@ class Core():
         else:
             self.utils.log(debug_color(), debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")
 
+
+        self.controller.threads["ruthless_residual_eliminator"] = threading.Thread(target=self.waifu2x.ruthless_residual_eliminator)
+        self.utils.log(color, debug_prefix, "Created thread Waifu2x.ruthless_residual_eliminator")
+
         # Start the threads, warn the user that the output is no more linear
         self.utils.log(debug_color(), debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
 
