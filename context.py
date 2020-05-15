@@ -78,15 +78,28 @@ class Context():
         self.input_file = self.yaml["basic"]["input_file"]
         self.output_file = self.yaml["basic"]["output_file"]
 
+        self.input_filename = self.utils.get_basename(self.input_file)
+
         # If the user did not sent us a absolute path
         if not os.path.isabs(self.input_file):
             self.input_file = self.ROOT + os.path.sep + self.input_file
 
-        if not os.path.isabs(self.output_file):
-            self.output_file = self.ROOT + os.path.sep + self.output_file
+        if not os.path.isfile(self.input_file):
+            self.utils.log(color, debug_prefix, "[ERROR] INPUT FILE IS NOT A FILE")
+            exit()
 
-        self.input_filename = self.utils.get_basename(self.input_file)
+        # Output file can be auto, that is, append 2x_ at the start of the filename
+        if not self.output_file == "auto":
+            if not os.path.isabs(self.output_file):
+                self.output_file = self.ROOT + os.path.sep + self.output_file
+        else:
+            self.output_file = self.input_file.replace(self.input_filename, "2x_" + self.input_filename)
+            self.utils.log(color, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
+
         self.output_filename = self.utils.get_basename(self.output_file)
+
+        print(self.input_file)
+        print(self.output_file)
 
         # #
 
@@ -145,10 +158,11 @@ class Context():
         # Default zero padding level for saving files,
         # we change it based on the frame count as it fullfils our necessity
         self.zero_padding = 8
+        self.total_upscale_time = 0
 
         # # # # # # # # # # # # # # # # # # # #
 
-        # Resume options, TODO
+        # Resume options
         self.resume = False
         self.last_processing_frame = 0
 
@@ -299,7 +313,7 @@ class Context():
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
             "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
-            "safety_ruthless_residual_eliminator_range"
+            "safety_ruthless_residual_eliminator_range", "total_upscale_time"
         ]
 
         data = {}

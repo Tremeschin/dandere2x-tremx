@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from color import rgb, color_by_name
+from PIL import Image
 
 import subprocess
 import cv2
@@ -247,12 +248,15 @@ class FFmpegWrapper():
 
         command = [
                 self.ffmpeg_binary,
+                '-loglevel', 'panic',
+                '-nostats',
+                '-hide_banner',
                 '-y',
                 '-f', 'rawvideo',
                 '-vcodec', 'rawvideo',
-                '-s', '%sx%s' % (self.context.resolution[0]*2, self.context.resolution[1]*2),
-                '-pix_fmt', 'rgb24',
-                '-r', self.context.frame_rate,
+                '-video_size', '%sx%s' % (self.context.resolution[0]*2, self.context.resolution[1]*2),
+                '-pixel_format', 'rgb24',
+                '-framerate', self.context.frame_rate,
                 '-i', '-',
                 '-an',
                 '-crf', '17',

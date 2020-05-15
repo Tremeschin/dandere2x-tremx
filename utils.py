@@ -435,6 +435,8 @@ class Utils():
 
             time.sleep(self.context.wait_time)
 
+            #self.log(color, debug_prefix, "[DEBUG] DNE [%s]" % path)
+
 
 
     # Rename file or directory

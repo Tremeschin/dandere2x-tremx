@@ -19,12 +19,12 @@
 
 
 session_name: auto
-waifu2x_type: vulkan # fake, cpp, vulkan
+waifu2x_type: fake # fake, cpp, vulkan
 mindisk: true
 
 basic:
   input_file: samples/yn_moving_480.mkv
-  output_file: samples/yn_moving_480_2x.mkv
+  output_file: auto
 
 waifu2x:
   denoise_level: 3
@@ -46,7 +46,7 @@ ffmpeg:
 processing:
   extracted_images_extension: .jpg
   block_size: 20
-  bleed: 2
+  bleed: 1
 
 vapoursynth:
   enabled: false
@@ -55,7 +55,7 @@ vapoursynth:
   pos: transpose  # name of filter within ./vpys/$NAME$, applied after everything
 
 developer:
-  loglevel: 8
+  loglevel: 4
   safety_ruthless_residual_eliminator_range: 3
   wait_time_exists: 0.05
   waifu2x_wait_for_residuals: 0.1  # time waifu2x sleeps after upscaling everything or nothing from residuals

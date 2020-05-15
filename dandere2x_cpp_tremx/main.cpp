@@ -1,17 +1,16 @@
-/*/
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
  *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
  *
- * DISCLAIMER
- *
- * Tremx is new to CPP so there might be quite some weird things going on here
- *
- *
- * NEED HEAVY HEAVY REFACTORING
- * NEED HEAVY HEAVY CLEANUP
- *
- *
-/*/
-
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 
 #include <opencv2/opencv.hpp>
@@ -28,30 +27,7 @@
 #include <thread>
 
 
-
-
-
-#define ONLY_FIRST_FRAME 0
-
-#define DEBUG_SAVE_BLOCKS 0
-#define DEBUG_SAVE_FRAMES 0
-
-#define SHOW_MAIN_OPTIONS 0
-
-#define VERBOSE_DEBUG 0
-#define SHOW_STATS 0
-
-
-#define METHOD_USE_MSSIM 0
-#define METHOD_USE_MSE 1
-
-
-
-
-
-
-
-
+// Namespace of utils we might end up needing to use
 namespace utils {
     bool file_exists (const std::string& fname) {
         std::ifstream f(fname.c_str());
@@ -59,9 +35,7 @@ namespace utils {
     }
 }
 
-
-
-
+// Where we make the residuals
 namespace residual_functions {
 
     namespace best_fit {
@@ -90,7 +64,6 @@ namespace residual_functions {
 
                 b -= ((a*b)-N)/b;
             }
-
             return std::vector<int> {a, b};
         }
 
@@ -129,94 +102,82 @@ namespace residual_functions {
 
         cv::Mat from_block_vectors(std::vector<cv::Mat> matlist, const int block_size, const int bleed) {
 
-            // Get the block number
+            // Get the block number and the bleeded size
             int n_blocks = matlist.size();
-
             int bleeded_block_size = block_size + (2*bleed);
 
             // For cutting the black parts of the residual
             int max_x = 0;
             int max_y = 0;
 
+            // Iteration of the block position on the residual
             int this_x_location = 0;
             int this_y_location = 0;
+            int block_width = 0;
+            int block_height = 0;
 
-            int block_rows = 0;
-            int block_cols = 0;
-
-            cv::Rect crop;
-
-            // Get the best fit dimensions, see residual_functions::best_fit for the functions
+            // Get the best fit dimensions on a AxB grid according to the number of blocks
             std::vector<int> dimensions = residual_functions::best_fit::best_grid_fit(n_blocks);
 
             // Calculate the cv::Mat dimensions with bleed added for Width and Height
-            // Bleed is applied between blocks and on the image borders
-
-            //std::cout << "best fit dimensions: " << dimensions[0] << ", " << dimensions[1] << " with size: " << n_blocks << std::endl;
-
+            // Bleed is a "overcrop", it's already applied on the matlist which are the blocks
             int residual_width  = bleeded_block_size * dimensions[0];
             int residual_height = bleeded_block_size * dimensions[1];
 
-            //std::cout << "residual size pixels: " << residual_width << ", " << residual_height << std::endl;
-
+            // Create a blank frame for the residual
             cv::Mat residual(residual_height, residual_width, CV_8UC3, cv::Scalar(0, 0, 0));
 
-            //for(std::size_t i=0; i < matlist.size(); ++i) {
-            //    std::cout << matlist[i] << std::endl;
-            //}
-
+            // Crop related vars
+            cv::Rect black_borders_crop;
             cv::Mat current_block;
+
+            // Count the blocks for stopping the loop
             int count = 0;
 
             for(int y=0; y < dimensions[1]; y++) {
                 for(int x=0; x < dimensions[0]; x++) {
-
-                    //std::cout << y << " - " << x << std::endl;
 
                     // If out of bounds, exit this loop
                     if (count >= n_blocks) {
                         goto exit_iteration;
                     }
 
+                    // This block we're going to copy to
                     current_block = matlist[count];
 
+                    // Where the X an Y start are
                     this_x_location = bleeded_block_size * x;
                     this_y_location = bleeded_block_size * y;
 
-                    block_cols = current_block.cols;
-                    block_rows = current_block.rows;
+                    // DRY: resolution of the block
+                    block_width = current_block.cols;
+                    block_height = current_block.rows;
 
-                    max_x = std::max(max_x, this_x_location + block_cols);
-                    max_y = std::max(max_y, this_y_location + block_rows);
+                    // Update the maximum coordinates we're copying blocks to
+                    max_x = std::max(max_x, this_x_location + block_width);
+                    max_y = std::max(max_y, this_y_location + block_height);
 
-
-                    //std::cout << "this x: " << this_x_location << " this y: " << this_y_location
-                    //          << "cols: " << block_cols << " rows: " << block_rows << std::endl;
-
-
+                    // Actually copy the block to the residual frame
                     current_block.copyTo(
                         residual(
                             cv::Rect(
                                 this_x_location,
                                 this_y_location,
-                                block_cols,
-                                block_rows
+                                block_width,
+                                block_height
                             )
                         )
                     );
-
 
                     count++;
                 }
             }
 
-            //max_x += bleed;
-            //max_y += bleed;
-
             // Region of Interest to crop only the parts we want
-            crop = cv::Rect(0, 0, max_x, max_y);
+            black_borders_crop = cv::Rect(0, 0, max_x, max_y);
 
-            residual = cv::Mat(residual, crop);
+            // Crop the residual, remove parts we don't need
+            residual = cv::Mat(residual, black_borders_crop);
 
 exit_iteration:
             return residual;
@@ -224,184 +185,81 @@ exit_iteration:
     }
 }
 
+// props to: http://jepsonsblog.blogspot.com/2012/10/overlay-transparent-image-in-opencv.html
+void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location) {
 
-
-
-
-
-
-//http://jepsonsblog.blogspot.com/2012/10/overlay-transparent-image-in-opencv.html
-void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location)
-{
     background.copyTo(output);
 
-
     // start at the row indicated by location, or at row 0 if location.y is negative.
-    for(int y = std::max(location.y , 0); y < background.rows; ++y)
-    {
+    for(int y = std::max(location.y , 0); y < background.rows; ++y) {
         int fY = y - location.y; // because of the translation
 
         // we are done of we have processed all rows of the foreground image.
-        if(fY >= foreground.rows)
-        break;
+        if(fY >= foreground.rows) break;
 
         // start at the column indicated by location,
 
         // or at column 0 if location.x is negative.
         for(int x = std::max(location.x, 0); x < background.cols; ++x)
         {
-        int fX = x - location.x; // because of the translation.
+            int fX = x - location.x; // because of the translation.
 
-        // we are done with this row if the column is outside of the foreground image.
-        if(fX >= foreground.cols)
-            break;
+            // we are done with this row if the column is outside of the foreground image.
+            if(fX >= foreground.cols)
+                break;
 
-        // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
-        double opacity =
-            ((double)foreground.data[fY * foreground.step + fX * foreground.channels() + 3])
+            // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
+            double opacity =
+                ((double)foreground.data[fY * foreground.step + fX * foreground.channels() + 3])
 
-            / 255.;
+                / 255.;
 
-
-        // and now combine the background and foreground pixel, using the opacity,
-
-        // but only if opacity > 0.
-        for(int c = 0; opacity > 0 && c < output.channels(); ++c)
-        {
-            unsigned char foregroundPx =
-            foreground.data[fY * foreground.step + fX * foreground.channels() + c];
-            unsigned char backgroundPx =
-            background.data[y * background.step + x * background.channels() + c];
-            output.data[y*output.step + output.channels()*x + c] =
-            backgroundPx * (1.-opacity) + foregroundPx * opacity;
-        }
+            // And now combine the background and foreground pixel, using the opacity,
+            // But only if opacity > 0
+            for(int c = 0; opacity > 0 && c < output.channels(); ++c) {
+                unsigned char foregroundPx =
+                foreground.data[fY * foreground.step + fX * foreground.channels() + c];
+                unsigned char backgroundPx =
+                background.data[y * background.step + x * background.channels() + c];
+                output.data[y*output.step + output.channels()*x + c] =
+                backgroundPx * (1.-opacity) + foregroundPx * opacity;
+            }
         }
     }
-}
-
-
-
-// NOT USED, HERE FOR REFERENCE
-
-double calculate_psnr(const cv::Mat& I1, const cv::Mat& I2)
-{
-    cv::Mat s1;
-    absdiff(I1, I2, s1);       // |I1 - I2|
-    s1.convertTo(s1, CV_32F);  // cannot make a square on 8 bits
-    s1 = s1.mul(s1);           // |I1 - I2|^2
-
-    cv::Scalar s = sum(s1);         // sum elements per channel
-
-    double sse = s.val[0] + s.val[1] + s.val[2]; // sum channels
-
-    if( sse <= 1e-10) // for small values return zero
-        return 0;
-    else
-    {
-        double mse = sse /(double)(I1.channels() * I1.total());
-        double psnr = 10.0*log10((255*255)/mse);
-        return psnr;
-    }
-}
-
-// NOT USED DEFAULT, HERE FOR REFERENCE
-
-cv::Scalar calculate_mssim( const cv::Mat& i1, const cv::Mat& i2)
-{
-    const double C1 = 6.5025, C2 = 58.5225;
-    /***************************** INITS **********************************/
-    int d     = CV_32F;
-
-    cv::Mat I1, I2;
-    i1.convertTo(I1, d);           // cannot calculate on one byte large values
-    i2.convertTo(I2, d);
-
-    cv::Mat I2_2   = I2.mul(I2);        // I2^2
-    cv::Mat I1_2   = I1.mul(I1);        // I1^2
-    cv::Mat I1_I2  = I1.mul(I2);        // I1 * I2
-
-    /***********************PRELIMINARY COMPUTING ******************************/
-
-    cv::Mat mu1, mu2;   //
-    GaussianBlur(I1, mu1, cv::Size(11, 11), 1.5);
-    GaussianBlur(I2, mu2, cv::Size(11, 11), 1.5);
-
-    cv::Mat mu1_2   =   mu1.mul(mu1);
-    cv::Mat mu2_2   =   mu2.mul(mu2);
-    cv::Mat mu1_mu2 =   mu1.mul(mu2);
-
-    cv::Mat sigma1_2, sigma2_2, sigma12;
-
-    GaussianBlur(I1_2, sigma1_2, cv::Size(11, 11), 1.5);
-    sigma1_2 -= mu1_2;
-
-    GaussianBlur(I2_2, sigma2_2, cv::Size(11, 11), 1.5);
-    sigma2_2 -= mu2_2;
-
-    GaussianBlur(I1_I2, sigma12, cv::Size(11, 11), 1.5);
-    sigma12 -= mu1_mu2;
-
-    ///////////////////////////////// FORMULA ////////////////////////////////
-    cv::Mat t1, t2, t3;
-
-    t1 = 2 * mu1_mu2 + C1;
-    t2 = 2 * sigma12 + C2;
-    t3 = t1.mul(t2);              // t3 = ((2*mu1_mu2 + C1).*(2*sigma12 + C2))
-
-    t1 = mu1_2 + mu2_2 + C1;
-    t2 = sigma1_2 + sigma2_2 + C2;
-    t1 = t1.mul(t2);               // t1 =((mu1_2 + mu2_2 + C1).*(sigma1_2 + sigma2_2 + C2))
-
-    cv::Mat ssim_map;
-    cv::divide(t3, t1, ssim_map);      // ssim_map =  t3./t1;
-
-    cv::Scalar mssim = mean( ssim_map ); // mssim = average of ssim map
-    return mssim;
-}
-
-// NOT USED, HERE FOR REFERENCE
-
-// SSIM returns [0.815287, 0.785487, 0.776612, 0] for example so we gotta "average" the channels
-double fit_ssim(const double red, const double green, const double blue, double alpha) {
-
-    // We discart alpha as it's a video..
-
-#if 1
-
-    // Simple average
-    return (red + green + blue)/3;
-
-#endif
-
 }
 
 
 double calculate_mse(cv::Mat I1, cv::Mat I2)
 {
-    cv::Mat s1;
+    cv::Mat absdiff;
 
+    // Convert to a number that can hold the squares
     I1.convertTo(I1, CV_32S);
     I2.convertTo(I2, CV_32S);
 
-    cv::absdiff(I1, I2, s1); // |I1 - I2|
+    // absolute_value(A - B)
+    cv::absdiff(I1, I2, absdiff);
 
-    s1.convertTo(s1, CV_32S); // cannot make a square on 8 bits
+    // Convert to a number that can hold big values
+    absdiff.convertTo(absdiff, CV_32S);
 
-    s1 = s1.mul(s1); // |I1 - I2|^2
+    // (A - B)^2
+    absdiff = absdiff.mul(absdiff);
 
-    cv::Scalar s = sum(s1); // sum elements per channel
+    // Sum elements per channel into their own channels
+    cv::Scalar channels = sum(absdiff);
 
-    double sse = s.val[0] + s.val[1] + s.val[2]; // sum channels
+    // Sum all the channels
+    double sse = channels.val[0] + channels.val[1] + channels.val[2];
 
+    // Calculate the final mse
     double mse  = sse / (double)(I1.channels() * I1.total());
 
     return mse;
  }
 
 
-
-
-
+// Main implementation of Dandere2x block matching
 int process_video(const std::string video_path,
                   const int block_size,
                   const int width,
@@ -419,7 +277,6 @@ int process_video(const std::string video_path,
 
     std::string debug_prefix = "[main.cpp/process_video] ";
 
-
     // // Set up output file.d2x
     std::ofstream output_file;
 
@@ -428,7 +285,6 @@ int process_video(const std::string video_path,
 
     // Open file in overwrite mode
     // output_file.open(output_d2x_file);
-
 
     // // Get iteration info on how much to break the video into blocks
     int width_iterations = std::ceil(static_cast<double>(width) / block_size);
@@ -447,27 +303,14 @@ int process_video(const std::string video_path,
     int bleeded_end_x = 0;
     int bleeded_end_y = 0;
 
-
-
-#if METHOD_USE_MSSIM
-    cv::Scalar block_msee_scalar;
-#endif
-
-
-
     // Generate and write block vectors to file
     {
-
-    #if VERBOSE_DEBUG
-        std::cout << debug_prefix << "Generating vector files.. " << std::endl;
-    #endif
-
+        // The output vectors file
         std::ofstream output_vectors_file;
 
         output_vectors_file.open(output_vectors_path);
 
         int vector_id = 0;
-
 
         for (int y=0; y < height_iterations; y++) {
 
@@ -486,23 +329,17 @@ int process_video(const std::string video_path,
                 // If x it surpasses the width
                 end_x = std::min((width*2), end_x);
 
-
                 output_vectors_file << vector_id << ";(" << start_y << "," << start_x << "," << end_y-1 << "," << end_x-1 << ")\n";
                 vector_id++;
             }
         }
-
-    #if VERBOSE_DEBUG
-        std::cout << debug_prefix << "Generated vector files" << std::endl;
-    #endif
-        output_vectors_file << "END"; // signal python we ended
+        // Signal Python we ended
+        output_vectors_file << "END";
         output_vectors_file.flush();
         output_vectors_file.close();
     };
 
-
     // // Set up video
-
     cv::VideoCapture video(video_path);
 
     // Check if video opened successfully
@@ -514,51 +351,33 @@ int process_video(const std::string video_path,
     // Subtract 2 as it starts on zero and can't compare frame LAST with LAST+1
     int total_frame_count = video.get(cv::CAP_PROP_FRAME_COUNT) - 2;
 
-#if VERBOSE_DEBUG
-    std::cout << "Total frame count is: " << total_frame_count << std::endl;
-#endif
-
-
     // Initialize as black image
     cv::Mat frame(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
+
+    // Create all the cv::Mat in the world!!
     cv::Mat last_matched(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
-
     cv::Mat bleed_croppable_frame(height + (2*bleed), width + (2*bleed), CV_8UC3, cv::Scalar(0, 0, 0));
-
     cv::Mat noised_frame;
-
+    cv::Mat debug_frame;
     cv::Mat block;
     cv::Mat last_matched_block;
     cv::Mat bleeded_block;
     cv::Mat noised_block;
-
-    //cv::Mat compressed_block;
     cv::Mat black_block;
 
     cv::Size resolution;
 
-    //cv::Mat compressed;
-    //cv::Mat not_compressed;
-    cv::Mat debug_frame;
-
     // The matched blocks for generating the input residual
     std::vector<cv::Mat> matched_blocks;
-
-
 
     cv::VideoWriter debug_video;
 
     if (write_only_debug_video) {
-
         std::string debug_video_filename = debug_video_output;
         debug_video = cv::VideoWriter(debug_video_filename, cv::VideoWriter::fourcc('M','J','P','G'), 24, cv::Size(width, height));
-
     }
 
-
-
     // // Frame relevant vars
-    //double frame_psnr = 0;
     int count_frame = 0;
     int block_id = 0;
     int remaining_frames = 0;
@@ -570,12 +389,11 @@ int process_video(const std::string video_path,
 
     double raw_block_mse = 0;
     double mse_threshhold = 0.01;
-    //double compressed_mse = 0;
 
     std::string next_output_newline;
 
-
-
+    // If start frame is > 0, start with the last frame we were processing
+    // ie. seek to video[start_frame]
     if (start_frame > 0) {
         std::cout << "Seeking to " << start_frame - 1 << std::endl;
 
@@ -583,16 +401,13 @@ int process_video(const std::string video_path,
         video >> frame;
 
         count_frame = start_frame;
-
     }
-
-
 
     // Main routine
     while (true) {
 
+        // The string we're going to write the position of the block vectors we matched
         next_output_newline = "pframe;" + std::to_string(count_frame) + "-";
-
 
         video >> frame;
 
@@ -621,16 +436,7 @@ int process_video(const std::string video_path,
         // Denoising is too slow :(
         // cv::fastNlMeansDenoising(frame, frame, 10, 7, 21);
 
-
-
-
-
         remaining_frames = total_frame_count - count_frame;
-
-    #if SHOW_STATS
-        std::cout << "[" << count_frame << "/" << total_frame_count << "] [" << remaining_frames << "]" << std::endl;;
-    #endif
-
 
         // Current block_id, matches the vectors
         block_id = 0;
@@ -641,7 +447,6 @@ int process_video(const std::string video_path,
 
             // If y it surpasses the height
             end_y = std::min(height, start_y + block_size);
-
 
             // Begin slice image into blocks
             for (int x=0; x < width_iterations; x++) {
@@ -657,18 +462,14 @@ int process_video(const std::string video_path,
                 // Region of Interest to crop the block
                 cv::Rect crop = cv::Rect(start_x, start_y, (end_x - start_x), (end_y - start_y));
 
-
+                // Calculate where both X and Y starts / ends on the bleeded crop
                 bleeded_start_x = (x * block_size);
                 bleeded_start_y = (y * block_size);
 
                 bleeded_end_x = std::min(width + (2*bleed),  bleeded_start_x + (2*bleed) + block_size);
                 bleeded_end_y = std::min(height + (2*bleed), bleeded_start_y + (2*bleed) + block_size);
 
-
-                //std::cout << "bleeded_start_x: " << bleeded_start_x << ", bleeded_stary_y: " << bleeded_start_y
-                //          << " bleeded_end_x: " << bleeded_end_x << ", bleeded_end_y: " << bleeded_end_y << std::endl;
-
-
+                // Generate the bleeded crop
                 cv::Rect bleeded_crop = cv::Rect(
                     bleeded_start_x,
                     bleeded_start_y,
@@ -676,48 +477,24 @@ int process_video(const std::string video_path,
                     (bleeded_end_y - bleeded_start_y)
                 );
 
+                //std::cout << "bleeded_start_x: " << bleeded_start_x << ", bleeded_stary_y: " << bleeded_start_y
+                //          << " bleeded_end_x: " << bleeded_end_x << ", bleeded_end_y: " << bleeded_end_y << std::endl;
 
                 block = cv::Mat(frame, crop);
                 last_matched_block = cv::Mat(last_matched, crop);
-
-                //std::cout << "start_x: " << start_x << ", stary_y: " << start_y
-                //          << "end_x: " << end_x << ", end_y: " << end_y << std::endl;
-
-
-
-            #if METHOD_USE_MSE
 
                 // Raw MSE between two blocks
                 raw_block_mse = calculate_mse(block, last_matched_block);
                 raw_block_mse /= block.total();
 
-
-
-            #if VERBOSE_DEBUG
-                std::cout << "frame: " << count_frame << ", block_id: " << block_id << std::endl;
-                std::cout << "Compressed block mse: " << compressed_mse << " - Raw mse: " << raw_block_mse << std::endl;
-            #endif
-
-            #if WRITE_COMPRESSED
-
-                cv::imwrite("frame_compressed.jpg", compressed);
-
-                cv::imwrite("compressed_block.jpg", compressed_block);
-
-                return 0;
-
-            #endif
-
-
                 total_blocks++;
 
-
                 // Validate
-
                 if (raw_block_mse > mse_threshhold) {
 
                     need_upscaling++;
 
+                    // Copy the block into our last matched frame
                     block.copyTo(
                         last_matched(
                             crop
@@ -726,6 +503,7 @@ int process_video(const std::string video_path,
 
                     next_output_newline += ";" + std::to_string(block_id);
 
+                    // Create bleeded block and add it to the upscaling list
                     bleeded_block = cv::Mat(bleed_croppable_frame, bleeded_crop);
                     matched_blocks.push_back(bleeded_block);
 
@@ -739,53 +517,28 @@ int process_video(const std::string video_path,
                         overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
                     }
 
-
                 } else {
                     dont_need_upscaling++;
                 }
 
-
-
-            #endif
-
-
-            #if DEBUG_SAVE_BLOCKS
-
-                std::string savename = "blocks/block_frame_" + std::to_string(count_frame) + "_" + std::to_string(start_x) + "_" + std::to_string(start_y) + "-" + std::to_string(end_x) + "_" + std::to_string(end_y) + "-";
-
-                std::string block_savepath = savename + "a-raw:" + std::to_string(raw_block_mse) + "_compressed-"  + std::to_string(compressed_mse) + ".jpg";
-                std::string block_b_savepath = savename + "b.raw:" + std::to_string(raw_block_mse) + "_compressed-"  + std::to_string(compressed_mse) + ".jpg";;
-
-                cv::imwrite(block_savepath, block);
-                cv::imwrite(block_b_savepath, block_b);
-
-            #endif
-
                 block_id++;
-
-            #if VERBOSE_DEBUG
-                std::cout << "\n\n#################\n\n" << std::endl;
-            #endif
-
             }
-
-
         }
 
-        // Press  ESC on keyboard to exit
-        char c=(char)cv::waitKey(25);
-        if(c==27)
-            break;
-        //cv::imshow( "Frame", debug_frame );
-
         if (write_only_debug_video) {
+
+            // Press  ESC on keyboard to exit
+            char c=(char)cv::waitKey(25);
+            if(c==27)
+                break;
+            cv::imshow( "Frame", debug_frame );
 
             // <++>
             if (false) {
                 debug_video.write(debug_frame);
             }
 
-            std::cout << "Writing debug frame: [" << count_frame << "/" << total_frame_count << "]"
+            std::cout << "Debug frame: [" << count_frame << "/" << total_frame_count << "]"
                       << ", (Need / Don't need) upscaling: [" << need_upscaling << "/" << dont_need_upscaling << "]"
                       << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << static_cast<double>(100)*dont_need_upscaling / total_blocks << std::endl;
         }
@@ -798,11 +551,7 @@ int process_video(const std::string video_path,
             output_file.flush();
         }
 
-
         // // Make the input residual image
-
-
-
         if ( (matched_blocks.size() > 0) && (!write_only_debug_video)) {
 
             cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
@@ -823,12 +572,10 @@ int process_video(const std::string video_path,
                 #endif
 
             }
-
             cv::imwrite(residual_name, residual);
-
         }
 
-
+        // Empty the vector
         for (cv::Mat item : matched_blocks)
         {
             item.release();
@@ -836,105 +583,19 @@ int process_video(const std::string video_path,
 
         matched_blocks.clear();
 
-        // //
-
-
-
-    #if DEBUG_SAVE_FRAMES
-        std::string previous_filename = "frames/frame_" + std::to_string(count_frame) + "-1-previous_full.jpg";
-        std::string next_filename =     "frames/frame_" + std::to_string(count_frame) + "-2-next_full.jpg";
-
-        cv::imwrite(previous_filename, frame);
-        cv::imwrite(next_filename, frame_b);
-    #endif
-
         count_frame++;
-
-
-    #if ONLY_FIRST_FRAME
-        return 0; std::endl;
-    #endif
-
     }
 
     output_file.close();
 }
 
 
-
-
-
-
-
-
-
-
 int main(int argc, char** argv) {
-
-    /*
-    cv::Mat image = cv::imread("frame.jpg");
-
-    cv::Mat uniform_noise = cv::Mat::zeros (image.rows, image.cols, CV_8UC1);
-
-    cv::randu(uniform_noise, 0, 255);
-    //cv::imshow("Uniform random noise", uniform_noise );
-    //cv::waitKey();
-
-    cv::imwrite("uniform1.jpg", uniform_noise);
-    cv::imwrite("uniform0.5.jpg", uniform_noise*0.5);
-    cv::imwrite("uniform0.2.jpg", uniform_noise*0.2);
-    cv::imwrite("uniform0.1.jpg", uniform_noise*0.1);
-    */
-
-    // Another way to generate the random values form the same distribution is to use
-    // functions randu and randn
-
-    //cv::Mat image = cv::imread("frame.jpg");
-
-    // Let's first create a zero image with the same dimensions of the loaded image
-
-    //cv::Mat gaussian_noise = cv::Mat::zeros (image.rows, image.cols, CV_8UC1);
-
-    //cv::imshow("All zero values", gaussian_noise);
-    //cv::waitKey();
-
-    // now, we can set the pixel values as a Gaussian noise
-    // we have set a mean value to 128 and a standard deviation to 20
-    //cv::randn(gaussian_noise, 50, 20);
-
-    // Let's plot this image and see how it looks like
-    //cv::imshow("Gaussian noise", gaussian_noise);
-    //cv::waitKey();
-
-    //cv::imwrite("Gaussian random noise.jpg", gaussian_noise);
-
-
-
-    /*
-    std::vector<cv::Mat> ints;
-
-    cv::Mat frame(10, 10, CV_8UC3, cv::Scalar(0, 255, 0));
-    cv::Mat frame_b(20, 15, CV_8UC3, cv::Scalar(0, 0, 255));
-
-    ints.push_back(frame);
-    ints.push_back(frame_b);
-
-    for(std::size_t i=0; i < ints.size(); ++i) {
-      std::cout << ints[i] << std::endl;
-    }
-
-    return 0;
-
-    */
-
 
     std::string debug_prefix = "[main.cpp/main] ";
 
-
     // Failsafe number of arguments
-
     const int expected_args = 14;
-
 
 #if SHOW_MAIN_OPTIONS
     std::cout << debug_prefix << "You have entered the following arguments:" << "\n\n";
@@ -948,7 +609,6 @@ int main(int argc, char** argv) {
         std::cout << expected_args << " arguments expected, read " << argc << '\n';
         return -1;
     }
-
 
     /* The argument orders must be:
      *
@@ -966,7 +626,6 @@ int main(int argc, char** argv) {
      * - write_only_debug_video
      * - debug_video_output
      */
-
 
     std::string video_path = argv[1];
 
@@ -992,9 +651,6 @@ int main(int argc, char** argv) {
     bool write_only_debug_video;
     bool mindisk;
 
-
-
-#if SHOW_MAIN_OPTIONS
     // Show the info
     {
         std::cout << '\n' << debug_prefix << "The loaded input values are:" << '\n';
@@ -1030,8 +686,6 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Pass\n";
-
-#endif
 
 
     if (mindisk_argv == 1) {

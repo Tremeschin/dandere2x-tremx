@@ -29,7 +29,7 @@ import time
 import copy
 import os
 
-color = rgb(0, 115, 255)
+color = rgb(0, 255, 0)
 
 class Processing():
     def __init__(self, context, utils, controller, frame, video, waifu2x):
@@ -72,8 +72,8 @@ class Processing():
         debug_prefix = "[Processing.run]"
 
 
-        residual_upscaled = copy.copy(self.frame)
-        start_frame = copy.copy(self.frame)
+        residual_upscaled = self.frame(self.context, self.utils, self.controller)
+        start_frame = self.frame(self.context, self.utils, self.controller)
 
         start_frame.new(self.context.resolution[0] * 2, self.context.resolution[1] * 2)
 
@@ -86,7 +86,7 @@ class Processing():
                 previous_residual = self.context.residual + "residual_" + self.utils.pad_zeros(i) + ".jpg"
                 self.utils.delete_file(previous_residual)
 
-        merged = start_frame
+        self.merged = start_frame
 
 
         # For each frame since the one we started with
@@ -95,14 +95,11 @@ class Processing():
         frame_number = self.context.last_processing_frame
 
         while True:
-            #if not self.context.resume:
-            #    if frame_number == 300:
-            #        self.utils.log(color, debug_prefix, "[DEBUG] Quitting on this frame for testing resume mode")
-            #        self.controller.exit()
 
             # Wait for file to exist or quit if controller says so
             while True:
-                if self.controller.stop is True:
+                if self.controller.stop == True:
+                    self.utils.log(color, debug_prefix, "[DEBUG] Stopping processing as controller stop is True")
                     return 0
                 if str(frame_number) in self.controller.block_match_data:
                     break
@@ -112,19 +109,15 @@ class Processing():
                 time.sleep(0.5)
 
 
-            # We won't have data for the last frame as there is not a N+1 frame
-            #if not frame_number == self.context.frame_count:
             working_data = self.controller.block_match_data[str(frame_number)]
             working_vector_ids = working_data["data"].split(";")
             type = working_data["type"]
-            #else:
-            #    working_vector_ids = ['']
 
             # print("working_data", working_data)
             # print("vector ids", working_vector_ids)
 
             if self.context.loglevel >= 12:
-                self.utils.log(color, debug_prefix, "Working vector ids:")
+                self.utils.log(color, debug_prefix, "[%s] Working vector ids:" % frame_number)
                 self.utils.log(color, debug_prefix, working_vector_ids)
 
 
@@ -174,9 +167,9 @@ class Processing():
                     # print("residual get: ", residual_get_vector)
                     # print("position_where_vector: ", position_where_vector)
 
-                    merged.copy_from(
+                    self.merged.copy_from(
                         residual_upscaled.frame,
-                        merged.frame,
+                        self.merged.frame,
                         [residual_get_vector[0], residual_get_vector[1]],
                         [position_where_vector[0], position_where_vector[1]],
                         [position_where_vector[2], position_where_vector[3]]
@@ -185,32 +178,37 @@ class Processing():
                     # See the blocks being completed, useful for debug
                     # merged.save("merged/merged_frame_%s_vector_%s.png" % (frame_number, vector_id))
 
-                self.utils.log(color, debug_prefix, "Writing merged image into pipe n=[%s]" % frame_number)
 
-                self.video.ffmpeg.write_to_pipe(merged.frame)
+                self.utils.log(color, debug_prefix, "Merged image is from upscaled residual")
 
-                self.utils.log(color, debug_prefix, "Wrote sucessfully")
-
-                # merged.save("merged/merged_frame_%s.png" % frame_number)
-
-                # Update the last processed frame for resume session
-                self.context.last_processing_frame = frame_number
-                self.utils.log(color, debug_prefix, "Context last_processing_frame is now [%s]" % self.context.last_processing_frame)
-
-                frame_number += 1
-
-                #if self.context.mindisk:
-                #    self.utils.delete_file(residual_file_path)
-                #    self.utils.delete_file(residual_upscaled_file_path)
 
             else:
                 # No vectors to substitute
-                self.video.ffmpeg.write_to_pipe(merged.frame)
 
                 if type == "end":
+                    self.utils.log(color, debug_prefix, "Writing the same previous merged frame as type==exit")
                     break
 
-                frame_number += 1
+                self.utils.log(color, debug_prefix, "Writing the same previous merged frame as vectors==null")
+
+
+            self.utils.log(color, debug_prefix, "Writing merged image into pipe n=[%s]" % frame_number)
+
+            #merged.save("merged/merged_frame_%s.png" % frame_number)
+            #self.merged.save("merged/merged.png")
+
+            self.video.ffmpeg.write_to_pipe(self.merged.frame)
+
+            self.utils.log(color, debug_prefix, "Wrote merged frame")
+
+            # Update the last processed frame
+            self.context.last_processing_frame = frame_number
+            self.utils.log(color, debug_prefix, "Context last_processing_frame is now [%s]" % self.context.last_processing_frame)
+
+            self.utils.log(color, debug_prefix, "[FAILSAFE] Saving context vars if Dandere2x crashes")
+            self.context.save_vars()
+
+            frame_number += 1
 
 
         self.utils.log(color, debug_prefix, "All merged images done, closing pipe")
@@ -219,4 +217,4 @@ class Processing():
         self.video.ffmpeg.close_pipe()
 
         self.controller.upscale_finished = True
-        self.controller.stop()
+        self.controller.exit()

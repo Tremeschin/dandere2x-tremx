@@ -35,10 +35,11 @@ color = rgb(255, 200, 10)
 
 class Waifu2x():
 
-    def __init__(self, context, utils, controller):
+    def __init__(self, context, utils, controller, frame):
         self.context = context
         self.utils = utils
         self.controller = controller
+        self.frame = frame(self.context, self.utils, self.controller)
 
         self.waifu2x = None
 
@@ -124,14 +125,25 @@ class Waifu2x():
                 upscaled_number = self.utils.get_first_number_of_string(upscaled_filename)
 
                 equivalent_residual = self.context.residual + "residual_%s.jpg" % self.utils.pad_zeros(upscaled_number)
+                equivalent_residual_number = self.utils.get_first_number_of_string(equivalent_residual)
+
+                if os.path.isfile(equivalent_residual):
+
+                    if self.frame.is_valid_image(upscaled_path):
+
+                        if ( (self.context.last_processing_frame - equivalent_residual_number) > self.context.safety_ruthless_residual_eliminator_range ):
+                            self.utils.log(color, debug_prefix, "Deleting equivalent residual as upscale already exists: [%s]" % equivalent_residual)
+                            self.utils.delete_file(equivalent_residual)
+                    else:
+                        self.utils.log(color, debug_prefix, "[FAILSAFE] Partial saved or corrupted (?) upscaled image: [%s]" % upscaled_path)
+
 
                 if ( (self.context.last_processing_frame - upscaled_number) > self.context.safety_ruthless_residual_eliminator_range ):
 
-                    if os.path.isfile(equivalent_residual):
+                    if os.path.isfile(upscaled_path):
 
-                        self.utils.log(color, debug_prefix, "Deleting equivalent residual as upscale already exists: [%s]" % equivalent_residual)
-
-                        self.utils.delete_file(equivalent_residual)
+                        self.utils.log(color, debug_prefix, "Deleting upscaled as passed safety limit [%s]" % upscaled_path)
+                        self.utils.delete_file(upscaled_path)
 
             time.sleep(0.05)
 
@@ -177,7 +189,7 @@ class NotFakeWaifu2x():
                         cv2.imwrite(output, resized)
 
                         #self.utils.delete_file(output)
-                        self.utils.delete_file(input)
+                        #self.utils.delete_file(input)
 
                     except Exception:
                         pass
@@ -263,7 +275,7 @@ class Waifu2xLinuxVulkan():
 
         while subprocess.is_alive():
             time.sleep(0.5)
-            if self.controller.stop is True:
+            if self.controller.stop == True:
                 subprocess.terminate()
 
     # Persistent upscaling
@@ -347,7 +359,7 @@ class Waifu2xLinuxCPP():
 
         while subprocess.is_alive():
             time.sleep(0.5)
-            if self.controller.stop is True:
+            if self.controller.stop == True:
                 subprocess.terminate()
 
     # Persistent upscaling

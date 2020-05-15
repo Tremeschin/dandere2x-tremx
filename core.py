@@ -224,6 +224,6 @@ class Core():
             self.parse_cpp_out_newline(newstuff)
 
             # Debug
-            if self.context.loglevel >= 12:
-                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
-                self.utils.log(debug_color(), debug_prefix, "[DEBUG]", self.controller.block_match_data)
+            #if self.context.loglevel >= 12:
+            #    self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
+            #    self.utils.log(debug_color(), debug_prefix, "[DEBUG]", self.controller.block_match_data)

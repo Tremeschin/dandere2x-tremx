@@ -86,9 +86,13 @@ class Dandere2x():
         self.utils.log(color, debug_prefix, "Creating Video()")
         self.video = Video(self.context, self.utils, self.controller)
 
+        # Deals with images, mostly numpy wrapper and special functions like block substitution
+        self.utils.log(color, debug_prefix, "Creating Frame()")
+        self.frame = Frame
+
         # Our upscale wrapper, on which the default is Waifu2x
         self.utils.log(color, debug_prefix, "Creating Waifu2x()")
-        self.waifu2x = Waifu2x(self.context, self.utils, self.controller)
+        self.waifu2x = Waifu2x(self.context, self.utils, self.controller, self.frame)
 
         # Math utils, specific cases for Dandere2x
         self.utils.log(color, debug_prefix, "Creating D2XMath()")
@@ -97,10 +101,6 @@ class Dandere2x():
         # Dandere2x C++ wrapper
         self.utils.log(color, debug_prefix, "Creating Dandere2xCPPWraper()")
         self.d2xcpp = Dandere2xCPPWraper(self.context, self.utils, self.controller, self.video)
-
-        # Deals with images, mostly numpy wrapper and special functions like block substitution
-        self.utils.log(color, debug_prefix, "Creating Frame()")
-        self.frame = Frame(self.context, self.utils, self.controller)
 
         # "Layers" of processing before the actual upscale from Waifu2x
         self.utils.log(color, debug_prefix, "Creating Processing()")
@@ -275,9 +275,11 @@ class Dandere2x():
 
         self.core.get_d2xcpp_vectors()
 
+        self.context.resume = True
+
         # Show the user we're still alive
 
-        since_started = 0
+        since_started = self.context.total_upscale_time
 
         while True:
             if self.controller.stop:
@@ -286,7 +288,7 @@ class Dandere2x():
             if self.controller.upscale_finished:
                 break
 
-            self.utils.log(color, debug_prefix, "Time since started: %s" % since_started)
+            self.utils.log(color, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
 
             if since_started == 50000:
                 self.context.resume = True
@@ -294,7 +296,7 @@ class Dandere2x():
                 self.controller.exit()
                 return 0
 
-            since_started += 1
+            self.context.total_upscale_time += 1
             time.sleep(1)
 
         # When we exit the while loop either we finished or we stopped
@@ -344,6 +346,8 @@ class Dandere2x():
             self.utils.delete_file(self.context.upscaled_video)
             self.utils.rename(self.context.joined_audio, self.context.output_file)
 
+            self.utils.log(color, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
+            
             self.controller.exit()
 
             # Happy upscaled video :)

@@ -81,7 +81,7 @@ class Frame():
             A_slices = tuple(map(slice, A_start, A_start + shape + 1))
             B[B_slices] = A[A_slices]
 
-            if self.context.loglevel >= 9:
+            if self.context.loglevel >= 30:
                 self.utils.log(color, debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
 
         except ValueError as e:
@@ -129,6 +129,21 @@ class Frame():
 
         if self.context.loglevel >= 3:
             self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (width, height))
+
+    # See if can open image, if it's good
+    def is_valid_image(self, path):
+
+        debug_prefix = "[Frame.is_valid_image]"
+
+        try:
+            imageio.imread(path)
+            return True
+        except SyntaxError:
+            self.utils.log(color, debug_prefix, "[DEBUG] NOT GOOD IMAGE SyntaxError [%s]" % path)
+            return False
+        except ValueError:
+            self.utils.log(color, debug_prefix, "[DEBUG] NOT GOOD IMAGE ValueError [%s]" % path)
+            return False
 
     # Load file based on the filename
     def load_from_path(self, filename):
