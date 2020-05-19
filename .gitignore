@@ -21,6 +21,8 @@ docs/
 
 rnd/
 
+dandere2x_cpp_tremx/opencv
+
 dandere2x_cpp_tremx/blocks
 dandere2x_cpp_tremx/frames
 dandere2x_cpp_tremx/CMakeFiles

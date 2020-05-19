@@ -4,3 +4,6 @@ packages (pacman):
     hdf5
     cmake
     make
+    
+    cross compile:
+    	mingw-w64-{binutils,cmake,configure,crt,eigen,environment,gcc,giflib,headers,libjpeg-turbo,libpng,libtiff,libwebp,make,openblas-lapack,opencv,pkg-config,winpthreads,xz,zlib}

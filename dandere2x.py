@@ -27,7 +27,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from color import rgb, color_by_name
 
 from d2xcpp import Dandere2xCPPWraper
-from vp import VapourSynthWrapper
+#from vp import VapourSynthWrapper
 from controller import Controller
 from processing import Processing
 from d2xmath import D2XMath
@@ -38,7 +38,6 @@ from video import Video
 from utils import Utils
 from core import Core
 
-import argparse
 import time
 import os
 
@@ -49,11 +48,12 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 class Dandere2x():
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, config):
+        self.config = config
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
         os.system("sh dandere2x_cpp_tremx/linux_compile_full.sh")
+        os.system("sh dandere2x_cpp_tremx/linux_cross_compile_windows.sh")
         #exit()
 
     # This function loads up the "core" variables and objects
@@ -62,13 +62,14 @@ class Dandere2x():
         debug_prefix = "[Dandere2x.load]"
 
         self.utils = Utils()
+        self.utils.clean_set_log()
 
         self.utils.log(phasescolor, "# # [Load phase] # #")
         self.utils.log(color, debug_prefix, "Created Utils()")
 
         # Communication between files, static
         self.utils.log(color, debug_prefix, "Creating Context()")
-        self.context = Context(self.utils)
+        self.context = Context(self.utils, self.config)
 
         # Communication between files, depends on runtime
         self.utils.log(color, debug_prefix, "Creating Controller()")
@@ -111,8 +112,8 @@ class Dandere2x():
         self.core = Core(self.context, self.utils, self.controller, self.waifu2x, self.d2xcpp, self.processing)
 
         # Vapoursynth wrapper
-        self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
-        self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
+        #self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
+        #self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
 
     # This function mainly configures things before upscaling and verifies stuff,
     # sees if it's a resume session, etc
@@ -140,12 +141,13 @@ class Dandere2x():
 
         # Check if context_vars file exist and is set to be resume
         # If force argument is set, force not resume session
-        if not self.args["force"]:
-            self.utils.log(color, debug_prefix, "Checking if is Resume session")
-            self.context.resume = self.utils.check_resume()
-        else:
+        if self.context.force:
             self.utils.log(rgb(255,100,0), debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
             self.context.resume = False
+        else:
+            self.utils.log(color, debug_prefix, "Checking if is Resume session")
+            self.context.resume = self.utils.check_resume()
+
 
         # NOT RESUME SESSION, delete previous session, load up and check directories
         if not self.context.resume:
@@ -347,7 +349,7 @@ class Dandere2x():
             self.utils.rename(self.context.joined_audio, self.context.output_file)
 
             self.utils.log(color, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
-            
+
             self.controller.exit()
 
             # Happy upscaled video :)
@@ -355,35 +357,3 @@ class Dandere2x():
         else:
             # Save progress for later resuming
             self.context.save_vars()
-
-
-if __name__ == "__main__":
-
-    # Create ArgumentParser
-    args = argparse.ArgumentParser(description='Optional arguments for Dandere2x')
-
-    # # Arguments
-
-    # Force deletion of session, don't resume
-    args.add_argument('-f', '--force', required=False, action="store_true", help="Forces deletion of session")
-
-    # Parse args and make dictionary
-    args = args.parse_args()
-
-    args = {
-        "force": args.force
-    }
-
-    # Run Dandere2x
-
-    d2x = Dandere2x(args)
-    d2x.load()
-    d2x.setup()
-
-    try:
-        d2x.run()
-    except KeyboardInterrupt:
-        print("KeyboardInterrupt catched, saving and exiting..")
-        d2x.controller.exit()
-        d2x.context.resume = True
-        d2x.context.save_vars()

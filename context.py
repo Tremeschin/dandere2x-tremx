@@ -36,11 +36,16 @@ color = color_by_name("li_yellow")
 
 class Context():
 
-    def __init__(self, utils):
+    def __init__(self, utils, config):
         self.indentation = "··· |"
         debug_prefix = "[Context.__init__]"
 
         self.utils = utils
+        self.config = config
+
+        # Session
+        self.force = self.config["danger_zone"]["force"]
+
 
         # Set the (static) rootfolder substitution for changing paths session folders
         self.rootfolder_substitution = "//ROOTFOLDER//"
@@ -55,10 +60,8 @@ class Context():
         # Load up the yaml file
         self.utils.log(color, debug_prefix, "Loading settings YAML file")
 
-        self.yaml = self.utils.load_yaml(self.ROOT + os.path.sep + "settings.yaml")
-
         # Loglevel
-        self.loglevel = self.yaml["developer"]["loglevel"]
+        self.loglevel = self.config["developer"]["loglevel"]
 
         self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
@@ -75,8 +78,8 @@ class Context():
 
         # # Video I/O
 
-        self.input_file = self.yaml["basic"]["input_file"]
-        self.output_file = self.yaml["basic"]["output_file"]
+        self.input_file = self.config["basic"]["input_file"]
+        self.output_file = self.config["basic"]["output_file"]
 
         self.input_filename = self.utils.get_basename(self.input_file)
 
@@ -91,7 +94,7 @@ class Context():
         # Output file can be auto, that is, append 2x_ at the start of the filename
         if not self.output_file == "auto":
             if not os.path.isabs(self.output_file):
-                self.output_file = self.ROOT + os.path.sep + self.output_file
+                self.output_file = self.ROOT + self.output_file
         else:
             self.output_file = self.input_file.replace(self.input_filename, "2x_" + self.input_filename)
             self.utils.log(color, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
@@ -104,19 +107,19 @@ class Context():
         # #
 
         # Load processing variables
-        self.extracted_images_extension = self.yaml["processing"]["extracted_images_extension"]
-        self.block_size = self.yaml["processing"]["block_size"]
-        self.bleed = self.yaml["processing"]["bleed"]
+        self.extracted_images_extension = self.config["processing"]["extracted_images_extension"]
+        self.block_size = self.config["processing"]["block_size"]
+        self.bleed = self.config["processing"]["bleed"]
 
         # "Global" or non-indented options as they're "major"
-        self.session_name = self.yaml["session_name"]
-        self.waifu2x_type = self.yaml["waifu2x_type"]
-        self.mindisk = self.yaml["mindisk"]
+        self.session_name = self.config["session_name"]
+        self.waifu2x_type = self.config["waifu2x_type"]
+        self.mindisk = self.config["mindisk"]
 
         # Vapoursynth settings
-        self.use_vapoursynth = self.yaml["vapoursynth"]["enabled"]
-        self.vapoursynth_pre = self.yaml["vapoursynth"]["pre"]
-        self.vapoursynth_pos = self.yaml["vapoursynth"]["pos"]
+        self.use_vapoursynth = self.config["vapoursynth"]["enabled"]
+        self.vapoursynth_pre = self.config["vapoursynth"]["pre"]
+        self.vapoursynth_pos = self.config["vapoursynth"]["pos"]
 
         # # The special case where the session name is "auto",
         # so we set it according to the input file "a.mkv" -> "a"
@@ -124,10 +127,10 @@ class Context():
             self.session_name = self.utils.get_auto_session_name(self.input_file)
 
         # Waifu2x settings
-        self.denoise_level = self.yaml["waifu2x"]["denoise_level"]
-        self.tile_size = self.yaml["waifu2x"]["tile_size"]
-        print(self.yaml["waifu2x"])
-        self.linux_enable_mesa_aco_waifu2x_vulkan = self.yaml["waifu2x"]["linux_enable_mesa_aco_waifu2x_vulkan"]
+        self.denoise_level = self.config["waifu2x"]["denoise_level"]
+        self.tile_size = self.config["waifu2x"]["tile_size"]
+        print(self.config["waifu2x"])
+        self.linux_enable_mesa_aco_waifu2x_vulkan = self.config["waifu2x"]["linux_enable_mesa_aco_waifu2x_vulkan"]
 
         # Create default variables
         self.resolution = []
@@ -137,21 +140,21 @@ class Context():
         self.frame_rate = None
 
         # Video related variables
-        self.get_video_info_method = self.yaml["video"]["get_video_info_method"]
-        self.get_frame_count_method = self.yaml["video"]["get_frame_count_method"]
-        self.get_frame_rate_method = self.yaml["video"]["get_frame_rate_method"]
-        self.get_resolution_method = self.yaml["video"]["get_resolution_method"]
+        self.get_video_info_method = self.config["video"]["get_video_info_method"]
+        self.get_frame_count_method = self.config["video"]["get_frame_count_method"]
+        self.get_frame_rate_method = self.config["video"]["get_frame_rate_method"]
+        self.get_resolution_method = self.config["video"]["get_resolution_method"]
 
         # FFmpeg / FFprobe related
-        self.deblock_filter = self.yaml["ffmpeg"]["deblock_filter"]
-        self.encode_codec = self.yaml["ffmpeg"]["encode_codec"]
+        self.deblock_filter = self.config["ffmpeg"]["deblock_filter"]
+        self.encode_codec = self.config["ffmpeg"]["encode_codec"]
 
         # # Static developer vars across files
 
         # How much time in seconds to wait for waiting operations like until_exist()
-        self.wait_time = self.yaml["developer"]["wait_time_exists"]
-        self.waifu2x_wait_for_residuals = self.yaml["developer"]["waifu2x_wait_for_residuals"]
-        self.safety_ruthless_residual_eliminator_range = self.yaml["developer"]["safety_ruthless_residual_eliminator_range"]
+        self.wait_time = self.config["developer"]["wait_time_exists"]
+        self.waifu2x_wait_for_residuals = self.config["developer"]["waifu2x_wait_for_residuals"]
+        self.safety_ruthless_residual_eliminator_range = self.config["developer"]["safety_ruthless_residual_eliminator_range"]
 
         # # # Literal constants
 
@@ -169,8 +172,8 @@ class Context():
         # # Debug stuff
 
         # This might sound dumb but it's good to debug as waifu2x doens't upscale and mindisk remove stuff
-        self.enable_waifu2x = self.yaml["debug"]["enable_waifu2x"]
-        self.write_only_debug_video = self.yaml["debug"]["write_only_debug_video"]
+        self.enable_waifu2x = self.config["debug"]["enable_waifu2x"]
+        self.write_only_debug_video = self.config["debug"]["write_only_debug_video"]
 
         self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
 

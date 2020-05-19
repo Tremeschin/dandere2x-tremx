@@ -54,10 +54,7 @@ class Dandere2xCPPWraper():
         self.video = video
 
         # Get the binary of dandere2x_cpp according to the OS
-        if self.context.os == "linux":
-            self.binary = self.utils.get_binary("dandere2x_cpp")
-        else:
-            self.binary = self.utils.get_binary("dandere2x_cpp.exe")
+        self.binary = self.utils.get_binary("dandere2x_cpp")
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 

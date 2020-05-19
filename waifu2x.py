@@ -65,7 +65,7 @@ class Waifu2x():
             "linux-vulkan":   Waifu2xLinuxVulkan(),
             "linux-cpp":      Waifu2xLinuxCPP(),
 
-            "windows-vulkan": Waifu2xWindowsVulkan(),
+            "windows-vulkan": Waifu2xLinuxVulkan(),
             "windows-cpp":    Waifu2xWindowsVulkan(),
             "windows-caffe":  Waifu2xWindowsCaffe(),
 

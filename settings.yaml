@@ -19,11 +19,11 @@
 
 
 session_name: auto
-waifu2x_type: fake # fake, cpp, vulkan
+waifu2x_type: vulkan # fake, cpp, vulkan
 mindisk: true
 
 basic:
-  input_file: samples/yn_moving_480.mkv
+  input_file: samples\yn_moving_480.mkv
   output_file: auto
 
 waifu2x:
@@ -33,11 +33,14 @@ waifu2x:
 
   waifu2x_vulkan_model:
 
+danger_zone:
+  force: false  # Forces resume=False
+
 video:
-  get_frame_count_method: null_copy  # only option available right now
-  get_frame_rate_method: ffprobe  # only option available right now
-  get_resolution_method: ffprobe  # only option available right now
-  get_video_info_method: ffmpeg  # ffmpeg or mediainfo
+  get_frame_count_method: null_copy  # Only option available right now
+  get_frame_rate_method: ffprobe  # Only option available right now
+  get_resolution_method: ffprobe  # Only option available right now
+  get_video_info_method: ffmpeg  # FFmpeg or mediainfo
 
 ffmpeg:
   deblock_filter: "pp=hb/vb/dr/fq|32, deband=range=22:blur=false"

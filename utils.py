@@ -53,7 +53,6 @@ class Utils():
     # Init the log file
     def __init__(self):
         self.ROOT = self.get_root()
-        self.clean_set_log()
 
 
     # As we gotta close the file for exiting and potentially save session here?
@@ -87,7 +86,7 @@ class Utils():
 
         debug_prefix = "[Utils.get_auto_session_name]"
 
-        session_name = ''.join(input_file.split(".")[:-1]).split("/")[-1]
+        session_name = os.path.splitext(os.path.basename(input_file))[0]
 
         self.log(color, debug_prefix, "Session name is AUTO, setting it to: [%s]" % session_name)
 
@@ -160,7 +159,11 @@ class Utils():
         if os.path.isfile(filename):
             if self.context.loglevel >= 12:
                 self.log(color, debug_prefix, "File exists, deleting it: [%s]" % filename)
-            os.remove(filename)
+            try:
+                os.remove(filename)
+            except (PermissionError, FileNotFoundError):
+                self.log(color, debug_prefix, "PermissionError, FileNotFoundError deleting [%s]" % filename)
+                time.sleep(0.016)
         else:
             if self.context.loglevel >= 12:
                 self.log(color, debug_prefix, "File does NOT exist")
@@ -235,9 +238,16 @@ class Utils():
 
         debug_prefix = "[Utils.get_os]"
 
+        name = os.name
+
+        self.log(color, debug_prefix, "os.name is [%s]" % name)
+
         # Not really specific but should work?
-        if os.name == "posix":
+        if name == "posix":
             os_name = "linux"
+
+        if name == "nt":
+            os_name = "windows"
 
         self.log(color, debug_prefix, "Got operating system:", os_name)
         return os_name
@@ -340,11 +350,12 @@ class Utils():
 
 
     # Safely load yaml file, just for cleaness of code
-    def load_yaml(self, filename):
+    def load_yaml(self, filename, log=True):
 
         debug_prefix = "[Utils.load_yaml]"
 
-        self.log(color, debug_prefix, "Loading YAML file: [%s]" % filename)
+        if log:
+            self.log(color, debug_prefix, "Loading YAML file: [%s]" % filename)
 
         with open(filename, "r") as f:
             data = yaml.safe_load(f)
@@ -367,9 +378,26 @@ class Utils():
     # This "follows" updating files, yields the new stuff written
     def updating_file(self, filename):
 
-        with open(filename, "w") as f:
-            f.write("")
+        while True:
 
+            if self.controller.stop:
+                break
+
+            with open(filename, "r") as f:
+
+                for line in f:
+
+                    #print(line)
+
+                    if not line:
+                        continue
+                    
+                    yield line
+                
+            #with open(filename, "w") as f:
+            #    f.write("")
+
+        '''
         ufile = open(filename, "r")
         ufile.seek(0, 2)
 
@@ -385,6 +413,7 @@ class Utils():
                 continue
 
             yield line
+        '''
 
 
 
@@ -445,9 +474,9 @@ class Utils():
         debug_prefix = "[Utils.rename]"
 
         if self.context.loglevel >= 3:
-            self.log(color, debug_prefix, "Renaming [%s] --> [%s]" % (old, new))
+            self.log(color, debug_prefix, "Moving [%s] --> [%s]" % (old, new))
 
-        os.rename(old, new)
+        shutil.move(old, new)
 
 
 

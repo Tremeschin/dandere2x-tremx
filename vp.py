@@ -43,7 +43,7 @@ class VapourSynthWrapper():
         debug_prefix = "[VapourSynthWrapper.__init__]"
 
         # Windows users install packages with vsrepo
-        if self.context.os == "windows":
+        if self.context.os == "windows" and False: # <++>
 
             # This is a repo name which is cloned in the externals folder
             vsrepo_path = self.context.ROOT + os.path.sep + "externals" + os.path.sep + "vsrepo"

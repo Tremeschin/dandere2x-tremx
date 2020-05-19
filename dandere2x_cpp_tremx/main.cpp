@@ -96,8 +96,6 @@ namespace residual_functions {
         }
     }
 
-
-
     namespace make_residual {
 
         cv::Mat from_block_vectors(std::vector<cv::Mat> matlist, const int block_size, const int bleed) {
@@ -184,6 +182,7 @@ exit_iteration:
         }
     }
 }
+
 
 // props to: http://jepsonsblog.blogspot.com/2012/10/overlay-transparent-image-in-opencv.html
 void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location) {
@@ -340,10 +339,11 @@ int process_video(const std::string video_path,
     };
 
     // // Set up video
+    std::cout << "video_path: " << video_path << std::endl;
     cv::VideoCapture video(video_path);
 
     // Check if video opened successfully
-    if(!video.isOpened()){
+    if(video.isOpened() == false){
         std::cout << "Error opening video stream or file" << '\n';
         return -1;
     }
@@ -566,11 +566,6 @@ int process_video(const std::string video_path,
             // Mindisk utility, wait for the file - max_frames_ahead to be deleted
             while (mindisk && utils::file_exists(residual_name_mindisk)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-                #if VERBOSE_DEBUG
-                    std::cout << "Waiting for residual [" << residual_name_mindisk << "] to be deleted" << std::endl;
-                #endif
-
             }
             cv::imwrite(residual_name, residual);
         }
@@ -597,13 +592,11 @@ int main(int argc, char** argv) {
     // Failsafe number of arguments
     const int expected_args = 14;
 
-#if SHOW_MAIN_OPTIONS
     std::cout << debug_prefix << "You have entered the following arguments:" << "\n\n";
 
     for (int i = 0; i < argc; ++i) {
         std::cout << debug_prefix << "Argv [" << i << "]: " << argv[i] << '\n' ;
     }
-#endif
 
     if (argc != expected_args) {
         std::cout << expected_args << " arguments expected, read " << argc << '\n';
@@ -658,14 +651,14 @@ int main(int argc, char** argv) {
         std::cout << debug_prefix << "block_size: " << block_size << '\n';
         std::cout << debug_prefix << "width: " << width << '\n';
         std::cout << debug_prefix << "height: " << height << '\n';
-        std::cout << debug_prefix << "video_path: \"" << output_vectors_path << "\"\n";
+        std::cout << debug_prefix << "output_vectors_path: \"" << output_vectors_path << "\"\n";
         std::cout << debug_prefix << "start_frame: " << start_frame << '\n';
         std::cout << debug_prefix << "bleed: " << bleed << '\n';
         std::cout << debug_prefix << "residuals_output: " << residuals_output << '\n';
         std::cout << debug_prefix << "mindisk_argv: " << mindisk_argv << '\n';
         std::cout << debug_prefix << "zero_padding: " << zero_padding << '\n';
         std::cout << debug_prefix << "write_only_debug_video: " << write_only_debug_video << '\n';
-        std::cout << debug_prefix << "debug_video_output: " << debug_video_output << '\n';
+        std::cout << debug_prefix << "debug_video_output: \"" << debug_video_output << "\"\n";
         std::cout << '\n' << debug_prefix << "Any zero value on int is invalid, cheking.. ";
     };
 

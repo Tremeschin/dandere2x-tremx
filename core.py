@@ -76,6 +76,10 @@ class Core():
         self.controller.threads["ruthless_residual_eliminator"] = threading.Thread(target=self.waifu2x.ruthless_residual_eliminator)
         self.utils.log(color, debug_prefix, "Created thread Waifu2x.ruthless_residual_eliminator")
 
+        self.utils.log(color, debug_prefix, "Reseting CPP out file: [%s]" % self.context.d2x_cpp_plugins_out)
+        with open(self.context.d2x_cpp_plugins_out, "w") as f:
+            f.write("")
+
         # Start the threads, warn the user that the output is no more linear
         self.utils.log(debug_color(), debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
 
@@ -219,7 +223,7 @@ class Core():
         for newstuff in self.utils.updating_file(self.context.d2x_cpp_plugins_out):
 
             # TODO GET A SAFE WAY OF WAITING D2XCPP TO WRITE TO PLUGINS OUT FILE, TEMPORARY SLEEP
-            time.sleep(0.016)
+            #time.sleep(0.016)
 
             self.parse_cpp_out_newline(newstuff)
 
