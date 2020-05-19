@@ -1,6 +1,5 @@
 # Tremx
 *.mp4
-*.mkv
 *.log
 *.jpg
 *.png
@@ -12,13 +11,20 @@
 
 sessions/*
 frames/*
-externals/*
 deviation/*
+
+externals/mediainfo
+externals/thedlls
+externals/ff*
+externals/dandere2x_cpp
+externals/waifu2x*
+
+tremxsamples
 
 d2x_introduction_video/
 
 docs/
-
+trivia
 rnd/
 
 dandere2x_cpp_tremx/opencv
@@ -38,7 +44,7 @@ dandere2x_cpp_tremx/oldreference.cpp
 vpys/sample*
 
 vsrepo
-samples
+
 
 
 # Byte-compiled / optimized / DLL files
