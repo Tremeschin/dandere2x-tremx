@@ -67,7 +67,7 @@ class Waifu2x():
 
             "windows-vulkan": Waifu2xVulkan(),
             "windows-cpp":    Waifu2xCPP(),
-            
+
             "windows-caffe":  Waifu2xWindowsCaffe(),
 
             "linux-fake":     NotFakeWaifu2x(),
@@ -247,7 +247,7 @@ class Waifu2xVulkan():
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
-        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "8:8:8"]
+        self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "4:4:4"]
 
         # Windows needs the model dirs
         if self.context.os == "windows":
@@ -275,13 +275,17 @@ class Waifu2xVulkan():
 
         subprocess.from_list(command)
 
-        if not self.context.linux_enable_mesa_aco_waifu2x_vulkan:
-            subprocess.run()
-        else:
-            self.utils.log(color, debug_prefix, "Running with RADV_PERFTEST=aco")
-            env = os.environ.copy()
-            env["RADV_PERFTEST"] = "aco"
-            subprocess.run(env)
+        if self.context.os == "windows":
+            subprocess.run(working_directory=os.path.dirname(self.binary))
+
+        elif self.context.os == "linux":
+            if not self.context.linux_enable_mesa_aco_waifu2x_vulkan:
+                subprocess.run()
+            else:
+                self.utils.log(color, debug_prefix, "Running with RADV_PERFTEST=aco")
+                env = os.environ.copy()
+                env["RADV_PERFTEST"] = "aco"
+                subprocess.run(env=env)
 
         while subprocess.is_alive():
             time.sleep(0.5)
@@ -369,7 +373,11 @@ class Waifu2xCPP():
 
         subprocess.from_list(command)
 
-        subprocess.run()
+        if self.context.os == "windows":
+            subprocess.run(working_directory=os.path.dirname(self.binary))
+
+        elif self.context.os == "linux":
+            subprocess.run()
 
         while subprocess.is_alive():
             time.sleep(0.5)

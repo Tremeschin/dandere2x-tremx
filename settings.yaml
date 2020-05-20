@@ -19,7 +19,7 @@
 
 
 session_name: auto
-waifu2x_type: cpp # fake, cpp, vulkan
+waifu2x_type: vulkan # fake, cpp, vulkan
 mindisk: true
 
 basic:

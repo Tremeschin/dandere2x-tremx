@@ -378,42 +378,45 @@ class Utils():
     # This "follows" updating files, yields the new stuff written
     def updating_file(self, filename):
 
-        while True:
+        if self.context.os == "windows":
 
-            if self.controller.stop:
-                break
+            # [NOTE] Linux implementation is somewhat better, Windows doesn't have the readline on a updating file
+            # [TODO] Any better way to make this happen?
 
-            with open(filename, "r") as f:
+            while True:
+                if self.controller.stop:
+                    break
 
-                for line in f:
+                with open(filename, "r") as f:
+                    for line in f:
+                        if not line:
+                            continue
+                        yield line
+            
+            # Doesn't work, it doesn't lock the file from being written
+            # with open(filename, "w") as f:
+            #     f.write("")
 
-                    #print(line)
+        elif self.context.os == "linux":
+            
+            # [NOTE] This doesn't work on Windows, here we don't read every line but only the new ones which is optimal
+            
+            while True:
+                ufile = open(filename, "r")
+                ufile.seek(0, 2)
+
+                while True:
+
+                    if self.controller.stop:
+                        break
+
+                    line = ufile.readline()
 
                     if not line:
+                        time.sleep(0.1)
                         continue
-                    
+
                     yield line
-                
-            #with open(filename, "w") as f:
-            #    f.write("")
-
-        '''
-        ufile = open(filename, "r")
-        ufile.seek(0, 2)
-
-        while True:
-
-            if self.controller.stop:
-                break
-
-            line = ufile.readline()
-
-            if not line:
-                time.sleep(0.1)
-                continue
-
-            yield line
-        '''
 
 
 
@@ -707,16 +710,19 @@ class SubprocessUtils():
         self.command = list
 
 
-    def run(self, env = None):
+    def run(self, working_directory=None, env=None):
 
         debug_prefix = "[SubprocessUtils.run]"
 
         self.utils.log(color, debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
 
         if env is None:
-            self.process = subprocess.Popen(self.command)
-        else:
+            env = os.environ.copy()
+        
+        if working_directory == None:
             self.process = subprocess.Popen(self.command, env=env)
+        else:
+            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory)
 
 
     def wait(self):
