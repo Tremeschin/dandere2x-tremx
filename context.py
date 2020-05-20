@@ -129,6 +129,7 @@ class Context():
         # Waifu2x settings
         self.denoise_level = self.config["waifu2x"]["denoise_level"]
         self.tile_size = self.config["waifu2x"]["tile_size"]
+        self.waifu2x_model = self.config["waifu2x"]["waifu2x_model"]
         print(self.config["waifu2x"])
         self.linux_enable_mesa_aco_waifu2x_vulkan = self.config["waifu2x"]["linux_enable_mesa_aco_waifu2x_vulkan"]
 

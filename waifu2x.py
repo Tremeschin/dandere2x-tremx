@@ -62,11 +62,12 @@ class Waifu2x():
         # we define a init instead of a __init__ function
         self.waifu2x = {
 
-            "linux-vulkan":   Waifu2xLinuxVulkan(),
-            "linux-cpp":      Waifu2xLinuxCPP(),
+            "linux-vulkan":   Waifu2xVulkan(),
+            "linux-cpp":      Waifu2xCPP(),
 
-            "windows-vulkan": Waifu2xLinuxVulkan(),
-            "windows-cpp":    Waifu2xWindowsVulkan(),
+            "windows-vulkan": Waifu2xVulkan(),
+            "windows-cpp":    Waifu2xCPP(),
+            
             "windows-caffe":  Waifu2xWindowsCaffe(),
 
             "linux-fake":     NotFakeWaifu2x(),
@@ -148,6 +149,7 @@ class Waifu2x():
             time.sleep(0.05)
 
 
+# Welp, only upscales the file by 2x with traditional algorithms
 class NotFakeWaifu2x():
     def init(self, context, utils, controller):
 
@@ -200,18 +202,22 @@ class NotFakeWaifu2x():
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
         return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
 
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Linux
+# Both OS working Waifu2x wrappers
 
 # # For verifying waifu2x binary is in path:
 
+#   Linux:
 # bash: type: waifu2x-ncnn-vulkan is /usr/bin/waifu2x-ncnn-vulkan
 # bash: type: waifu2x-ncnn-vulka: not found
-# [TODO]: This only finds waifu2x's in PATH]
+# 
+#   Windows:
+# Search through externals/**
 
 
-# Waifu2x Linux Vulkan (ncnn) wrapper
-class Waifu2xLinuxVulkan():
+# Waifu2x Vulkan (ncnn) wrapper
+class Waifu2xVulkan():
 
     def init(self, context, utils, controller):
 
@@ -219,14 +225,14 @@ class Waifu2xLinuxVulkan():
         self.utils = utils
         self.controller = controller
 
-        debug_prefix = "[Waifu2xLinuxVulkan.__init__]"
+        debug_prefix = "[Waifu2xVulkan.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
     # Get the binary if it exist
     def verify(self):
 
-        debug_prefix = "[Waifu2xLinuxVulkan.verify]"
+        debug_prefix = "[Waifu2xVulkan.verify]"
 
         self.utils.log(color, debug_prefix, "Verifying and getting binary")
 
@@ -237,18 +243,22 @@ class Waifu2xLinuxVulkan():
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
 
-        debug_prefix = "[Waifu2xLinuxVulkan.generate_run_command]"
+        debug_prefix = "[Waifu2xVulkan.generate_run_command]"
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
         self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "8:8:8"]
+
+        # Windows needs the model dirs
+        if self.context.os == "windows":
+            self.command = self.command + ["-m", os.path.dirname(self.binary) + os.path.sep + self.context.waifu2x_model]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
     # Call the command and upscale a file or directory
     def upscale(self, input_path, output_path):
 
-        debug_prefix = "[Waifu2xLinuxVulkan.upscale]"
+        debug_prefix = "[Waifu2xVulkan.upscale]"
 
         # Remove the last / or \
         input_path = input_path[:-1]
@@ -281,7 +291,7 @@ class Waifu2xLinuxVulkan():
     # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):
 
-        debug_prefix = "[Waifu2xLinuxVulkan.keep_upscaling]"
+        debug_prefix = "[Waifu2xVulkan.keep_upscaling]"
 
         self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
 
@@ -308,21 +318,21 @@ class Waifu2xLinuxVulkan():
         return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
 
 
-# Waifu2x Linux CPP (converter-cpp) wrapper
-class Waifu2xLinuxCPP():
+# Waifu2x CPP (converter-cpp) wrapper
+class Waifu2xCPP():
 
     def init(self, context, utils, controller):
         self.context = context
         self.utils = utils
         self.controller = controller
 
-        debug_prefix = "[Waifu2xLinuxCPP.__init__]"
+        debug_prefix = "[Waifu2xCPP.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
     def verify(self):
 
-        debug_prefix = "[Waifu2xLinuxCPP.verify]"
+        debug_prefix = "[Waifu2xCPP.verify]"
 
         self.utils.log(color, debug_prefix, "Verifying and getting binary")
         self.binary = self.utils.get_binary("waifu2x-converter-cpp")
@@ -331,18 +341,22 @@ class Waifu2xLinuxCPP():
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
 
-        debug_prefix = "[Waifu2xLinuxCPP.generate_run_command]"
+        debug_prefix = "[Waifu2xCPP.generate_run_command]"
 
         self.utils.log(color, debug_prefix, "Generating run command")
 
         self.command = [self.binary, "--noise-level", str(self.context.denoise_level), "--block-size", str(self.context.tile_size), "-a", "0", "-j", "16", "-f", "jpg", "-q", "101", "-v", "1"]
+
+        # On the release of CPP looks like only models_rgb was packed
+        if self.context.os == "windows":
+            self.command = self.command + ["--model-dir", os.path.dirname(self.binary) + os.path.sep + "models_rgb"]
 
         self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
     # Call the command and upscale a file or directory
     def upscale(self, input_path, output_path):
 
-        debug_prefix = "[Waifu2xLinuxCPP.upscale]"
+        debug_prefix = "[Waifu2xCPP.upscale]"
 
         # Get a clone of basic usage and extend it based on the I/O
         command = self.command + ["-i", input_path[:-1], "-o", output_path[:-1]]
@@ -365,7 +379,7 @@ class Waifu2xLinuxCPP():
     # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):
 
-        debug_prefix = "[Waifu2xLinuxCPP.keep_upscaling]"
+        debug_prefix = "[Waifu2xCPP.keep_upscaling]"
 
         self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
 
@@ -394,33 +408,7 @@ class Waifu2xLinuxCPP():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Windows
 
-
-# Waifu2x Windows Vulkan (ncnn) wrapper
-class Waifu2xWindowsVulkan():
-    def init(self, context, utils, controller):
-
-        debug_prefix = "[Waifu2xWindowsVulkan.__init__]"
-
-        self.context = context
-        self.utils = utils
-        self.controller = controller
-
-        self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
-
-
-# Waifu2x Windows CPP (converter-cpp) wrapper
-class Waifu2xWindowsCPP():
-    def init(self, context, utils, controller):
-        self.context = context
-        self.utils = utils
-        self.controller = controller
-
-        debug_prefix = "[Waifu2xWindowsCPP.__init__]"
-
-        self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
-
-
-# Waifu2x Windows Caffe wrapper
+# Waifu2x Windows Caffe wrapper [TODO]
 class Waifu2xWindowsCaffe():
     def init(self, context, utils, controller):
         self.context = context

@@ -176,7 +176,7 @@ class Processing():
                     )
 
                     # See the blocks being completed, useful for debug
-                    # merged.save("merged/merged_frame_%s_vector_%s.png" % (frame_number, vector_id))
+                    # self.merged.save("merged/merged_frame_%s_vector_%s.png" % (frame_number, vector_id))
 
 
                 self.utils.log(color, debug_prefix, "Merged image is from upscaled residual")
@@ -194,8 +194,8 @@ class Processing():
 
             self.utils.log(color, debug_prefix, "Writing merged image into pipe n=[%s]" % frame_number)
 
-            #merged.save("merged/merged_frame_%s.png" % frame_number)
-            #self.merged.save("merged/merged.png")
+            # self.merged.save("merged/merged_frame_%s.png" % frame_number)
+            # self.merged.save("merged/merged.png")
 
             self.video.ffmpeg.write_to_pipe(self.merged.frame)
 

@@ -19,11 +19,11 @@
 
 
 session_name: auto
-waifu2x_type: vulkan # fake, cpp, vulkan
+waifu2x_type: cpp # fake, cpp, vulkan
 mindisk: true
 
 basic:
-  input_file: yn_moving_480.mkv
+  input_file: samples\yn_moving_480.mkv
   output_file: auto
 
 waifu2x:
@@ -31,7 +31,7 @@ waifu2x:
   tile_size: 200
   linux_enable_mesa_aco_waifu2x_vulkan: false  # Only for AMD GPUs
 
-  waifu2x_vulkan_model:
+  waifu2x_model: models-upconv_7_anime_style_art_rgb # Only Vulkan utilizes this now
 
 danger_zone:
   force: false  # Forces resume=False

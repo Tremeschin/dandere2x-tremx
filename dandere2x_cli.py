@@ -80,7 +80,7 @@ if __name__ == "__main__":
         user_modified.append("tile_size=\"%s\"" % args["tile_size"])
         config["waifu2x"]["tile_size"] = args["tile_size"]
 
-    if not args["debug_video"] == None:
+    if not args["debug_video"] == False:
         user_modified.append("debug_video=\"%s\"" % args["debug_video"])
         config["debug"]["write_only_debug_video"] = args["debug_video"]
 

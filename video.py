@@ -262,12 +262,15 @@ class FFmpegWrapper():
                 '-crf', '17',
                 '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
+                '-vf', 'format=yuv420p',
                 '-b:v', '5000k',
-                '-r', self.context.frame_rate,
+                '-framerate', self.context.frame_rate,
                 output
         ]
 
         self.utils.log(color, debug_prefix, "Creating FFmpeg one time pipe, output [%s]" % output)
+
+        self.utils.log(color, debug_prefix, "Full command is: [%s]" % command)
 
         self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
