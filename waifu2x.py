@@ -206,7 +206,7 @@ class NotFakeWaifu2x():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Both OS working Waifu2x wrappers
 
-# # For verifying waifu2x binary is in path:
+# # For verifying Waifu2x binary is in path:
 
 #   Linux:
 # bash: type: waifu2x-ncnn-vulkan is /usr/bin/waifu2x-ncnn-vulkan
@@ -276,6 +276,9 @@ class Waifu2xVulkan():
         subprocess.from_list(command)
 
         if self.context.os == "windows":
+            # Just in case it fails..?
+            os.chdir(os.path.dirname(self.binary))
+
             subprocess.run(working_directory=os.path.dirname(self.binary))
 
         elif self.context.os == "linux":
@@ -374,6 +377,9 @@ class Waifu2xCPP():
         subprocess.from_list(command)
 
         if self.context.os == "windows":
+            # Just in case it fails..?
+            os.chdir(os.path.dirname(self.binary))
+
             subprocess.run(working_directory=os.path.dirname(self.binary))
 
         elif self.context.os == "linux":
