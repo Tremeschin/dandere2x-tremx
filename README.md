@@ -1,8 +1,25 @@
 # Dandere2x Tremx (me) Version
 
 ## What is Dandere2x
-WIP
+Dandere2x is a Linux / Windows video "compressor" that detects redundancies when upscaling a video and make it more efficient for computation expensive upscalers (Waifu2x) to upscale a video as they'll upscale a "only-needed" parts of the video rather than the whole frame.
+
+You can get more info on the original Dandere2x wiki https://github.com/aka-katto/dandere2x/wiki/How-Dandere2x-Works
+
+Check out aka-katto's repo as well :)
+
+"What is Dandere2x" video is work in progress
+
+## Tremx version what does that mean?
+
+I've seen some people having trouble writing my username "Tremeschin" so generally they'll call me "Tremx" or "Tremex" for simplifying it, hence why this repo name / "Dandere2x version".
+
+In the past I contributed to the original Dandere2x either with code and ideas, however one day I felt like trying to write my own version of it with the structure and technology I'd use as well as simplifying a lot of code.
+
 ## Instructions
+
+Dandere2x should work in both Linux and Windows, though I haven't done much testing on the Windows os, it's a bit unstable at the moment.
+
+You can help me testing it, reporting bugs or finding fixes
 
 ### Linux
 I currently _officially_ support distros with the pacman package manager as it's a bit tricky in my opinion to get a working Waifu2x on other distros, but it should work if you got one.
@@ -46,10 +63,24 @@ You'll definelty want to download "Dandere2x C++", "FFmpeg + FFprobe" and one Wa
 
 Now edit the file `settings.yaml` to your needs and run Dandere2x with `python dandere2x_cli.py`
 
+#### Running from a release
+NOT DONE YET, NO RELEASES
+
+## Issues
+1. Waifu2x is acting weird on Windows, investigating this now as it's the _(last)_ thing to be usable.
+
 ## Pro Tips
 
 You can pass the argument `-f` to Dandere2x CLI to force not resume a session, ie. delete its folder and start up again if anything go wrong: `python dandere2x_cli.exe -f`
 
-#### Running from a release
-NOT DONE YET, NO RELEASES
+## Thanks to
 
+Dandere2x utilizes some community driven such as:
+
+nihui's Waifu2x https://github.com/nihui/waifu2x-ncnn-vulkan
+DeadSix27's Waifu2x https://github.com/DeadSix27/waifu2x-converter-cpp
+opencv https://github.com/opencv/opencv
+
+See requirements.txt for the used packages on the Python programming language
+
+And of course, the original Dandere2x idea, https://github.com/aka-katto
