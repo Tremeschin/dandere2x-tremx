@@ -78,7 +78,9 @@ You can pass the argument `-f` to Dandere2x CLI to force not resume a session, i
 Dandere2x utilizes some community driven such as:
 
 nihui's Waifu2x https://github.com/nihui/waifu2x-ncnn-vulkan
+
 DeadSix27's Waifu2x https://github.com/DeadSix27/waifu2x-converter-cpp
+
 opencv https://github.com/opencv/opencv
 
 See requirements.txt for the used packages on the Python programming language
