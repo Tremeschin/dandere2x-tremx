@@ -240,6 +240,12 @@ class Waifu2xVulkan():
 
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
 
+        # Windows has to operate in the waifu2x folder where the required binaries are
+        # or that path in in PATH variable (not ideal)
+        if self.context.os == "windows":
+            self.waifu2x_folder = os.path.dirname(self.binary)
+            self.utils.log(color, debug_prefix, "[WINDOWS] Waifu2x_subprocess CWD is [%s]" % self.waifu2x_folder)
+
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
 
@@ -271,29 +277,30 @@ class Waifu2xVulkan():
             self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
             self.utils.log(color, debug_prefix, "Command is %s" % command)
 
-        subprocess = SubprocessUtils("waifu2x-ncnn-vulkan", self.utils)
+        waifu2x_subprocess = SubprocessUtils("waifu2x-ncnn-vulkan", self.utils)
 
-        subprocess.from_list(command)
+        waifu2x_subprocess.from_list(command)
 
         if self.context.os == "windows":
-            # Just in case it fails..?
-            os.chdir(os.path.dirname(self.binary))
-
-            subprocess.run(working_directory=os.path.dirname(self.binary))
+            self.utils.log(color, debug_prefix, "[WINDOWS] Running Waifu2x_subprocess with working_directory [%s]" % self.waifu2x_folder)
+            waifu2x_subprocess.run(working_directory=self.waifu2x_folder)
 
         elif self.context.os == "linux":
             if not self.context.linux_enable_mesa_aco_waifu2x_vulkan:
-                subprocess.run()
+                self.utils.log(color, debug_prefix, "[LINUX] Plain subprocess run")
+                waifu2x_subprocess.run()
             else:
                 self.utils.log(color, debug_prefix, "Running with RADV_PERFTEST=aco")
                 env = os.environ.copy()
                 env["RADV_PERFTEST"] = "aco"
-                subprocess.run(env=env)
+                self.utils.log(color, debug_prefix, "[LINUX] Running subprocess with end RADV_PERFTEST=aco")
+                waifu2x_subprocess.run(env=env)
 
-        while subprocess.is_alive():
-            time.sleep(0.5)
+        # Wait until its process finishes or controller says to stop
+        while waifu2x_subprocess.is_alive():
+            time.sleep(0.1)
             if self.controller.stop == True:
-                subprocess.terminate()
+                waifu2x_subprocess.terminate()
 
     # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):
@@ -337,13 +344,26 @@ class Waifu2xCPP():
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
 
+    # Get the binary; and folder if on Windows
     def verify(self):
 
         debug_prefix = "[Waifu2xCPP.verify]"
 
         self.utils.log(color, debug_prefix, "Verifying and getting binary")
-        self.binary = self.utils.get_binary("waifu2x-converter-cpp")
+        
+        self.binary = self.utils.get_binary("waifu2x-converter")
+
+        if self.binary == None:
+            self.utils.log(color, debug_prefix, "Searching for [waifu2x-converter-cpp] as didn't found [waifu2x-converter]")
+            self.binary = self.utils.get_binary("waifu2x-converter-cpp")
+        
         self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
+
+        # Windows has to operate in the waifu2x folder where the required binaries are
+        # or that path in in PATH variable (not ideal)
+        if self.context.os == "windows":
+            self.waifu2x_folder = os.path.dirname(self.binary)
+            self.utils.log(color, debug_prefix, "[WINDOWS] Waifu2x_subprocess CWD is [%s]" % self.waifu2x_folder)
 
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
@@ -372,23 +392,20 @@ class Waifu2xCPP():
             self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
             self.utils.log(color, debug_prefix, "Command is %s" % command)
 
-        subprocess = SubprocessUtils("waifu2x-converter-cpp", self.utils)
+        waifu2x_subprocess = SubprocessUtils("waifu2x-converter-cpp", self.utils)
 
-        subprocess.from_list(command)
+        waifu2x_subprocess.from_list(command)
 
         if self.context.os == "windows":
-            # Just in case it fails..?
-            os.chdir(os.path.dirname(self.binary))
-
-            subprocess.run(working_directory=os.path.dirname(self.binary))
+            waifu2x_subprocess.run(working_directory=self.waifu2x_folder)
 
         elif self.context.os == "linux":
-            subprocess.run()
+            waifu2x_subprocess.run()
 
-        while subprocess.is_alive():
+        while waifu2x_subprocess.is_alive():
             time.sleep(0.5)
             if self.controller.stop == True:
-                subprocess.terminate()
+                waifu2x_subprocess.terminate()
 
     # Persistent upscaling
     def keep_upscaling(self, input_path, output_path):

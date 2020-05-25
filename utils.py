@@ -624,7 +624,7 @@ class Utils():
                 # Nothing was found, exit
                 if full_path_wanted == None:
                     self.log(color, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, wanted))
-                    self.exit()
+                    return None
 
 
                 # This will yield false on Linux if forcing windows mode for debugging

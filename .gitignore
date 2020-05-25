@@ -19,6 +19,8 @@ externals/ff*
 externals/dandere2x_cpp
 externals/waifu2x*
 
+externals-static
+
 tremxsamples
 
 d2x_introduction_video/

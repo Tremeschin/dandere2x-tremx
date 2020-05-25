@@ -6,3 +6,5 @@ playsound
 gitpython
 opencv-python
 pyyaml
+requests
+wget
