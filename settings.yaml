@@ -17,21 +17,26 @@
 #
 # ===============================================================================
 
+# The options are written as:
+#
+# [option]: [value]  # Info or possible values
+
 
 session_name: auto
-waifu2x_type: vulkan # fake, cpp, vulkan
+waifu2x_type: vulkan  # fake, cpp, vulkan
+block_size: 20
 mindisk: true
 
 basic:
-  input_file: samples\yn_moving_480.mkv
-  output_file: auto
+  input_file: samples/yn_moving_480.mkv
+  output_file: auto  # "auto" adds a "2x_" prefix to the filename in the same directory
 
 waifu2x:
   denoise_level: 3
   tile_size: 200
   linux_enable_mesa_aco_waifu2x_vulkan: false  # Only for AMD GPUs
 
-  waifu2x_model: models-upconv_7_anime_style_art_rgb # Only Vulkan utilizes this now
+  waifu2x_model: models-cunet  # Only Vulkan utilizes this now
 
 danger_zone:
   force: false  # Forces resume=False
@@ -48,7 +53,6 @@ ffmpeg:
 
 processing:
   extracted_images_extension: .jpg
-  block_size: 20
   bleed: 1
 
 vapoursynth:
@@ -63,8 +67,8 @@ developer:
   wait_time_exists: 0.05
   waifu2x_wait_for_residuals: 0.1  # time waifu2x sleeps after upscaling everything or nothing from residuals
 
-specific:  # just ideas at the moment
-  colors_output: true  # doesn't work yet
+specific:  # Just ideas at the moment
+  colors_output: true  # Doesn't work yet
 
 debug:
   write_only_debug_video: false

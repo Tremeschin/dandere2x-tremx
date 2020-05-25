@@ -356,7 +356,8 @@ int process_video(const std::string video_path,
 
     // Create all the cv::Mat in the world!!
     cv::Mat last_matched(height, width, CV_8UC3, cv::Scalar(0, 0, 0));
-    cv::Mat bleed_croppable_frame(height + (2*bleed), width + (2*bleed), CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::Mat bleeded_borders_frame(height + (2*bleed), width + (2*bleed), CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::Mat bleed_croppable_frame(height + bleed + block_size, width + bleed + block_size, CV_8UC3, cv::Scalar(0, 0, 0));
     cv::Mat noised_frame;
     cv::Mat debug_frame;
     cv::Mat block;
@@ -421,7 +422,11 @@ int process_video(const std::string video_path,
 
         // Instead of adding black border we set a background of the original frame resized to the
         // bleeded resolution and just overlay the original image
-        cv::resize(frame, bleed_croppable_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
+        cv::resize(frame, bleeded_borders_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
+        cv::resize(frame, bleed_croppable_frame, cv::Size(width + bleed + block_size, height + bleed + block_size));
+
+        bleeded_borders_frame.copyTo(bleed_croppable_frame(cv::Rect(0, 0, bleeded_borders_frame.cols, bleeded_borders_frame.rows)));
+
         frame.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame.cols, frame.rows)));
 
         if (write_only_debug_video) {
@@ -431,7 +436,7 @@ int process_video(const std::string video_path,
         // <++> EXPERIMENTAL NOISE
         // WITHOUT Writing debug frame: [238/238], (Need / Don't need) upscaling: [51474/195174], Total blocks: [246649], Recylcled percentage: 79.1303
         // WITH Writing debug frame: [238/238], (Need / Don't need) upscaling: [54365/192283], Total blocks: [246649], Recylcled percentage: 77.9582
-        GaussianBlur( frame, frame, cv::Size( 3, 3 ), 0, 0 );
+        // GaussianBlur( frame, frame, cv::Size( 3, 3 ), 0, 0 );
 
         // Denoising is too slow :(
         // cv::fastNlMeansDenoising(frame, frame, 10, 7, 21);
@@ -466,8 +471,11 @@ int process_video(const std::string video_path,
                 bleeded_start_x = (x * block_size);
                 bleeded_start_y = (y * block_size);
 
-                bleeded_end_x = std::min(width + (2*bleed),  bleeded_start_x + (2*bleed) + block_size);
-                bleeded_end_y = std::min(height + (2*bleed), bleeded_start_y + (2*bleed) + block_size);
+                //bleeded_end_x = std::min(width + (2*bleed),  bleeded_start_x + (2*bleed) + block_size);
+                //bleeded_end_y = std::min(height + (2*bleed), bleeded_start_y + (2*bleed) + block_size);
+
+                bleeded_end_x = bleeded_start_x + (2*bleed) + block_size;
+                bleeded_end_y = bleeded_start_y + (2*bleed) + block_size;
 
                 // Generate the bleeded crop
                 cv::Rect bleeded_crop = cv::Rect(

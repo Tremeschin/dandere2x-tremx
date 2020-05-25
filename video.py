@@ -276,9 +276,11 @@ class FFmpegWrapper():
 
         self.utils.log(color, debug_prefix, "Created FFmpeg one time pipe")
 
+
     # Write images into pipe
     def write_to_pipe(self, image):
         self.pipe_subprocess.stdin.write(image)
+
 
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):
@@ -487,3 +489,7 @@ class Video():
     # Applies noise to a video
     def apply_noise(self, input_video, output_noisey, noise):
         self.ffmpeg.apply_noise(input_video, output_noisey, noise)
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

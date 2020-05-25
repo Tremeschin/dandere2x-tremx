@@ -117,7 +117,7 @@ class Waifu2x():
                     self.utils.delete_file(residual_path)
                     self.utils.delete_file(upscaled_path)
 
-
+            # Deal with the upscaled residual images
             for upscaled in os.scandir(self.context.upscaled):
 
                 upscaled_path = upscaled.path
@@ -449,3 +449,7 @@ class Waifu2xWindowsCaffe():
         debug_prefix = "[Waifu2xWindowsCaffe.__init__]"
 
         self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

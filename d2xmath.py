@@ -25,7 +25,7 @@ from color import color_by_name
 color = color_by_name("li_blue")
 
 
-class D2XMath():
+class Dandere2xMath():
     def __init__(self, context, utils):
         self.context = context
         self.utils = utils
@@ -45,7 +45,7 @@ class D2XMath():
         of "balancing" by getting a dynamic block_size which is set as a %.
         """
 
-        debug_prefix = "[D2XMath.set_block_size]"
+        debug_prefix = "[Dandere2xMath.set_block_size]"
 
         # As percentages annoying to set manually
         # This one looks like a good number
@@ -90,7 +90,7 @@ class D2XMath():
     # Function that sets the video resolution to the nearest multiple of the block_size
     def get_a_valid_input_resolution(self):
 
-        debug_prefix = "[D2XMath.get_a_valid_input_resolution]"
+        debug_prefix = "[Dandere2xMath.get_a_valid_input_resolution]"
 
         resolution = self.context.resolution
         width = resolution[0]
@@ -114,3 +114,7 @@ class D2XMath():
         self.utils.log(color, self.context.indentation, "New valid resolution: (%sx%s) (WxH)" % (closest_width, closest_height))
 
         self.context.valid_resolution = [closest_width, closest_height]
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

@@ -231,3 +231,7 @@ class Core():
             #if self.context.loglevel >= 12:
             #    self.utils.log(debug_color(), debug_prefix, "[DEBUG]", newstuff.replace("\n", ""))
             #    self.utils.log(debug_color(), debug_prefix, "[DEBUG]", self.controller.block_match_data)
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

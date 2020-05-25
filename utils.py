@@ -754,3 +754,7 @@ class SubprocessUtils():
         else:
             self.utils.log(color, debug_prefix, " SubprocessUtils with name [%s] is not alive" % self.name)
             return False
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

@@ -30,7 +30,7 @@ from d2xcpp import Dandere2xCPPWraper
 #from vp import VapourSynthWrapper
 from controller import Controller
 from processing import Processing
-from d2xmath import D2XMath
+from d2xmath import Dandere2xMath
 from context import Context
 from waifu2x import Waifu2x
 from frame import Frame
@@ -51,9 +51,8 @@ class Dandere2x():
     def __init__(self, config):
         self.config = config
 
-        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # NOTE DEBUG/DEVELOPMENT PURPOSES ONLY
-        os.system("sh dandere2x_cpp_tremx/linux_compile_full.sh")
-        os.system("sh dandere2x_cpp_tremx/linux_cross_compile_windows.sh")
+        #os.system("sh dandere2x_cpp_tremx/linux_compile.sh")
+        #os.system("sh dandere2x_cpp_tremx/linux_cross_compile_windows.sh")
         #exit()
 
     # This function loads up the "core" variables and objects
@@ -96,8 +95,8 @@ class Dandere2x():
         self.waifu2x = Waifu2x(self.context, self.utils, self.controller, self.frame)
 
         # Math utils, specific cases for Dandere2x
-        self.utils.log(color, debug_prefix, "Creating D2XMath()")
-        self.math = D2XMath(self.context, self.utils)
+        self.utils.log(color, debug_prefix, "Creating Dandere2xMath()")
+        self.math = Dandere2xMath(self.context, self.utils)
 
         # Dandere2x C++ wrapper
         self.utils.log(color, debug_prefix, "Creating Dandere2xCPPWraper()")
@@ -357,3 +356,9 @@ class Dandere2x():
         else:
             # Save progress for later resuming
             self.context.save_vars()
+
+
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

@@ -81,6 +81,8 @@ class Context():
         self.input_file = self.config["basic"]["input_file"]
         self.output_file = self.config["basic"]["output_file"]
 
+        self.block_size = self.config["block_size"]
+
         self.input_filename = self.utils.get_basename(self.input_file)
 
         # If the user did not sent us a absolute path
@@ -108,7 +110,6 @@ class Context():
 
         # Load processing variables
         self.extracted_images_extension = self.config["processing"]["extracted_images_extension"]
-        self.block_size = self.config["processing"]["block_size"]
         self.bleed = self.config["processing"]["bleed"]
 
         # "Global" or non-indented options as they're "major"
@@ -374,3 +375,7 @@ class Context():
             # Log and set self var "self.item" as value
             self.utils.log(color, self.indentation, debug_prefix, "self.%s = \"%s\"" % (item, value))
             setattr(self, item, value)
+
+
+if __name__ == "__main__":
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
