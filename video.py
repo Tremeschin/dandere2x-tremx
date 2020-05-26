@@ -259,11 +259,12 @@ class FFmpegWrapper():
                 '-framerate', self.context.frame_rate,
                 '-i', '-',
                 '-an',
-                '-crf', '17',
+                '-crf', str(self.context.x264_crf),
+                '-preset', self.context.x264_preset,
+                '-tune', self.context.x264_tune,
                 '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
                 '-vf', 'format=yuv420p',
-                '-b:v', '5000k',
                 '-framerate', self.context.frame_rate,
                 output
         ]

@@ -59,6 +59,12 @@ ffmpeg:
   deblock_filter: "pp=hb/vb/dr/fq|32, deband=range=22:blur=false"
   encode_codec: libx264
 
+  x264:
+    # See https://trac.ffmpeg.org/wiki/Encode/H.264 for a guide
+    preset: slow
+    tune: animation
+    crf: 18
+
 processing:
   extracted_images_extension: .jpg
   bleed: 1
@@ -70,6 +76,7 @@ vapoursynth:
   pos: transpose  # name of filter within ./vpys/$NAME$, applied after everything
 
 developer:
+  write_log: True
   loglevel: 4
   safety_ruthless_residual_eliminator_range: 3
   wait_time_exists: 0.05

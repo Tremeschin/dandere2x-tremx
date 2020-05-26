@@ -344,9 +344,14 @@ class Utils():
 
         print (color + processed_message + fg.rs)
 
-        with open(self.logfile, "a") as f:
-            f.write(processed_message + "\n")
-
+        # We give Utils, Context later on so we'll have to wait to see if write_log is T or F
+        try:
+            if self.context.write_log:
+                with open(self.logfile, "a") as f:
+                    f.write(processed_message + "\n")
+        except Exception:
+            with open(self.logfile, "a") as f:
+                f.write(processed_message + "\n")
 
 
     # Safely load yaml file, just for cleaness of code
@@ -405,7 +410,7 @@ class Utils():
 
                 if self.controller.stop:
                     break
-                
+
                 ufile = open(filename, "r")
                 ufile.seek(0, 2)
 

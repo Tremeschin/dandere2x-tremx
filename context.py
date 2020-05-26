@@ -154,12 +154,19 @@ class Context():
         self.deblock_filter = self.config["ffmpeg"]["deblock_filter"]
         self.encode_codec = self.config["ffmpeg"]["encode_codec"]
 
+        # # x264 encoding
+        self.x264_preset = self.config["ffmpeg"]["x264"]["preset"]
+        self.x264_tune = self.config["ffmpeg"]["x264"]["tune"]
+        self.x264_crf = self.config["ffmpeg"]["x264"]["crf"]
+
         # # Static developer vars across files
 
         # How much time in seconds to wait for waiting operations like until_exist()
         self.wait_time = self.config["developer"]["wait_time_exists"]
         self.waifu2x_wait_for_residuals = self.config["developer"]["waifu2x_wait_for_residuals"]
         self.safety_ruthless_residual_eliminator_range = self.config["developer"]["safety_ruthless_residual_eliminator_range"]
+
+        self.write_log = self.config["developer"]["write_log"]
 
         # # # Literal constants
 
@@ -326,7 +333,8 @@ class Context():
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
             "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
             "safety_ruthless_residual_eliminator_range", "total_upscale_time",
-            "dark_threshold", "bright_threshold", "sessions_folder", "logfile_last_session"
+            "dark_threshold", "bright_threshold", "sessions_folder", "logfile_last_session",
+            "x264_preset", "x264_tune", "x264_crf", "write_log"
         ]
 
         data = {}

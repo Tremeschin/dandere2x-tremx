@@ -560,7 +560,7 @@ int process_video(const std::string video_path,
             char c=(char)cv::waitKey(25);
             if(c==27)
                 break;
-            cv::imshow( "Frame", debug_frame );
+            //cv::imshow( "Frame", debug_frame );
 
             // <++>
             if (true) {

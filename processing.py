@@ -43,7 +43,7 @@ class Processing():
         self.video = video
         self.waifu2x = waifu2x
 
-    # A generator which gives us the vectors for iterating over
+    # A generator which gives us the vectors for iterating over the upscaled residual
     def residual_vector_iterator_generator(self, columns, rows, width, height, bleed, block_size):
 
         bleed *= 2
@@ -54,15 +54,13 @@ class Processing():
         for y in range(rows):
 
             start_y = bleed + (bleeded_block_size * y)
-            # end_y = min(height, start_y + block_size)
 
             for x in range(columns):
 
                 start_x = bleed + (bleeded_block_size * x)
-                # end_x = min(width, start_x + block_size)
 
-                # yield (start_y, start_x, end_y, end_x)
                 yield (start_y, start_x)
+
 
     def run(self):
 
@@ -126,7 +124,6 @@ class Processing():
                 # Each Waifu2x outputs the images in a different naming sadly
                 residual_upscaled_file_path = self.waifu2x.get_residual_upscaled_file_path_output_frame_number(frame_number)
 
-                residual_file_path = self.context.residual + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
                 residual_upscaled.load_from_path_wait(residual_upscaled_file_path)
 
                 if self.controller.stop:
