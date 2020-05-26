@@ -13,11 +13,7 @@ sessions/*
 frames/*
 deviation/*
 
-externals/mediainfo
-externals/thedlls
-externals/ff*
-externals/dandere2x_cpp
-externals/waifu2x*
+externals/*
 
 externals-static
 
@@ -37,6 +33,7 @@ dandere2x_cpp_tremx/CMakeFiles
 
 test.py
 prototype.py
+last_session_log.log
 dandere2x_cpp_tremx/CMakeCache.txt
 dandere2x_cpp_tremx/dandere2x_cpp
 dandere2x_cpp_tremx/Makefile

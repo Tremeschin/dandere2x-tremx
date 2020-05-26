@@ -197,9 +197,9 @@ class Utils():
 
 
     # Deletes an directory, fail safe? Quits if
-    def reset_dir(self, directory):
+    def rmdir(self, directory):
 
-        debug_prefix = "[Utils.reset_dir]"
+        debug_prefix = "[Utils.rmdir]"
 
         if os.path.isdir(directory):
 
@@ -402,6 +402,10 @@ class Utils():
             # [NOTE] This doesn't work on Windows, here we don't read every line but only the new ones which is optimal
             
             while True:
+
+                if self.controller.stop:
+                    break
+                
                 ufile = open(filename, "r")
                 ufile.seek(0, 2)
 
@@ -417,6 +421,7 @@ class Utils():
                         continue
 
                     yield line
+
 
 
 

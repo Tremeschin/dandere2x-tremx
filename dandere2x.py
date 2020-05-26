@@ -122,6 +122,9 @@ class Dandere2x():
 
         debug_prefix = "[Dandere2x.setup]"
 
+        self.utils.log(color, debug_prefix, "Creating sessions directory if it doesn't exist [%s]" % self.context.sessions_folder)
+        self.utils.mkdir_dne(self.context.sessions_folder)
+
         # Set and verify Waifu2x
         self.utils.log(color, debug_prefix, "Setting corresponding Waifu2x")
         self.waifu2x.set_corresponding()
@@ -153,7 +156,7 @@ class Dandere2x():
 
             # Log and reset session directory
             self.utils.log(color_by_name("li_red"), debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
-            self.utils.reset_dir(self.context.session)
+            self.utils.rmdir(self.context.session)
 
             # Check dirs
             self.utils.log(color, debug_prefix, "Checking directories")
@@ -226,8 +229,8 @@ class Dandere2x():
 
             self.utils.log(color, debug_prefix, "[FAILSAFE] DELETING RESIDUAL, UPSCALE DIR AND PLUGINS INPUT FILE")
 
-            self.utils.reset_dir(self.context.residual)
-            self.utils.reset_dir(self.context.upscaled)
+            self.utils.rmdir(self.context.residual)
+            self.utils.rmdir(self.context.upscaled)
 
             self.utils.reset_file(self.context.d2x_cpp_plugins_out)
 
@@ -312,7 +315,7 @@ class Dandere2x():
                 self.video.ffmpeg.concat_video_folder_reencode(self.context.partial, self.context.upscaled_video)
 
                 # Delete the partial dir
-                self.utils.reset_dir(self.context.partial)
+                self.utils.rmdir(self.context.partial)
 
             else:
                 self.utils.log(color, debug_prefix, "No partials were found in [%s]" % self.context.partial)
@@ -346,6 +349,12 @@ class Dandere2x():
             self.utils.rename(self.context.joined_audio, self.context.output_file)
 
             self.utils.log(color, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
+            
+            self.utils.log(color, debug_prefix, "Moving session log to root Dandere2x folder and Removing session folder [%s]" % self.context.session)
+            self.utils.rename(self.context.logfile, self.context.logfile_last_session)
+
+            self.utils.logfile = self.context.logfile_last_session
+            self.utils.rmdir(self.context.session)
 
             self.controller.exit()
 

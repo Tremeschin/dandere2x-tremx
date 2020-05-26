@@ -42,7 +42,7 @@ basic:
 waifu2x:
   denoise_level: 3
   tile_size: 200
-  linux_enable_mesa_aco_waifu2x_vulkan: false  # Only for AMD GPUs
+  linux_enable_mesa_aco_waifu2x_vulkan: true  # Only for AMD GPUs
 
   waifu2x_model: models-cunet  # Only Vulkan utilizes this now
 

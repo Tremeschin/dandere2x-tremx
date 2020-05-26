@@ -189,7 +189,8 @@ class Context():
             "partial": "//ROOT//|sessions|//SESSION//|partial|",
             "merged": "//ROOT//|sessions|//SESSION//|merged|",
             "processing": "//ROOT//|sessions|//SESSION//|processing",
-            "session": "//ROOT//|sessions|//SESSION//"
+            "session": "//ROOT//|sessions|//SESSION//",
+            "sessions_folder": "//ROOT//|sessions"
         }
 
         # "Static" files location
@@ -206,7 +207,8 @@ class Context():
             "noisy_video": "//ROOT//|sessions|//SESSION//|processing|noisy_//INPUTVIDEOFILENAME//",
             "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
             "joined_audio": "//ROOT//|sessions|//SESSION//|processing|joined_audio_//INPUTVIDEOFILENAME//",
-            "logfile": "//ROOT//|sessions|//SESSION//|log.log"
+            "logfile": "//ROOT//|sessions|//SESSION//|log.log",
+            "logfile_last_session": "//ROOT//|last_session_log.log",
         }
 
         # # # We declare these as none just for annoying errors on this
@@ -217,6 +219,7 @@ class Context():
         self.partial = None
         self.merged = None
         self.session = None
+        self.sessions_folder = None
 
         self.d2x_cpp_vectors_out = None
         self.d2x_cpp_plugins_out = None
@@ -229,6 +232,7 @@ class Context():
         self.vapoursynth_processing = None
         self.joined_audio = None
         self.logfile = None
+        self.logfile_last_session = None
 
         # # #
 
@@ -322,7 +326,7 @@ class Context():
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
             "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
             "safety_ruthless_residual_eliminator_range", "total_upscale_time",
-            "dark_threshold", "bright_threshold"
+            "dark_threshold", "bright_threshold", "sessions_folder", "logfile_last_session"
         ]
 
         data = {}
