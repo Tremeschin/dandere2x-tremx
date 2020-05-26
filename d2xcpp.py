@@ -77,11 +77,13 @@ class Dandere2xCPPWraper():
             str(int(self.context.mindisk)),
             str(self.context.zero_padding),
             str(int(self.context.write_only_debug_video)),
-            self.context.debug_video
+            self.context.debug_video,
+            str(self.context.dark_threshold),
+            str(self.context.bright_threshold)
         ]
 
         self.utils.log(color, debug_prefix, "Run command is: %s" % self.command)
-        self.utils.log(color, debug_prefix, "[DEBUG] Plain command is: %s" % ' '.join(self.command))
+        self.utils.log(color, debug_prefix, "[DEBUG] Plain command is: %s" % ' '.join(map(str, self.command)))
 
     # Run with SubprocessUtils the d2xcpp binary
     def run(self):

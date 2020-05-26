@@ -27,6 +27,14 @@ waifu2x_type: vulkan  # fake, cpp, vulkan
 block_size: 20
 mindisk: true
 
+# These are how agressive the block matching is, lower values will catch more blocks;
+# dark and bright are determined by the mean pixel value of every channel on a frame
+# and then apply a linear function to get the final threshold, 0=dark, 255=bright
+# This seems to make block matching better as darker frames not a lot of colors are moving
+dark_threshold: 0.004
+bright_threshold: 0.005
+
+
 basic:
   input_file: samples/yn_moving_480.mkv
   output_file: auto  # "auto" adds a "2x_" prefix to the filename in the same directory

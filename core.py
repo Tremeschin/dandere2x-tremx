@@ -119,44 +119,6 @@ class Core():
 
         return line
 
-    # Decides if that line is necessary based on
-    def is_necessary_line(self, line):
-
-        debug_prefix = "[Core.is_necessary_line]"
-
-        if self.context.loglevel >= 13:
-            self.utils.log(color, debug_prefix, "[DEBUG] Checking if line [\"%s\"] is necessary: " % line)
-
-        line = self.parse_cpp_out_newline(line)
-
-        # If it isn't resume we gotta have everything
-        if not self.context.resume:
-            return True
-        else:
-            # TODO: CHECK IF NECESSARY IF NOT RESUME
-            return True
-
-    # For resume sessions, parse the entire cpp_out file
-    def parse_whole_cpp_out(self):
-
-        debug_prefix = "[Core.parse_whole_cpp_out]"
-
-
-        self.utils.log(color, debug_prefix, "Parsing whole cpp_out file")
-
-        # Warn the user we'll be getting everything as it is not a resume session
-        if not self.context.resume:
-            self.utils.log(color, debug_prefix, "GETTING EVERYTHING AS IS NOT RESUME SESSION")
-
-        with open(self.context.d2x_cpp_plugins_out, "r") as cppout:
-            for line in cppout:
-                if not line == "END":
-                    if self.is_necessary_line(line):
-                        self.parse_cpp_out_newline(line)
-
-        if self.context.loglevel >= 10:
-            self.utils.log(color, debug_prefix, "[DEBUG 5] Contents of controller.block_match_data:")
-            self.utils.log(color, debug_prefix, self.controller.block_match_data)
 
     def get_d2xcpp_vectors(self):
 

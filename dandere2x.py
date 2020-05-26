@@ -270,8 +270,6 @@ class Dandere2x():
 
         self.utils.log(phasescolor, "# # [Run phase] # #")
 
-        self.core.parse_whole_cpp_out()
-
         self.core.start()
 
         self.core.get_d2xcpp_vectors()

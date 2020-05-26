@@ -335,7 +335,7 @@ class Utils():
         # "merge" it, ' '.join(everything)
         for index, item in enumerate(message):
             if isinstance(item, list) or isinstance(item, tuple):
-                processed_message += " ".join(message[index]) + " "
+                processed_message += " ".join(map(str, message[index])) + " "
             else:
                 processed_message += str(item) + " "
 

@@ -98,7 +98,7 @@ namespace residual_functions {
 
     namespace make_residual {
 
-        cv::Mat from_block_vectors(std::vector<cv::Mat> matlist, const int block_size, const int bleed) {
+        cv::Mat from_block_vectors(std::vector<cv::Mat> matlist, const int block_size, const int bleed, cv::Scalar mean_color) {
 
             // Get the block number and the bleeded size
             int n_blocks = matlist.size();
@@ -123,7 +123,7 @@ namespace residual_functions {
             int residual_height = bleeded_block_size * dimensions[1];
 
             // Create a blank frame for the residual
-            cv::Mat residual(residual_height, residual_width, CV_8UC3, cv::Scalar(0, 0, 0));
+            cv::Mat residual(residual_height, residual_width, CV_8UC3, mean_color);
 
             // Crop related vars
             cv::Rect black_borders_crop;
@@ -271,7 +271,9 @@ int process_video(const std::string video_path,
                   const bool mindisk,
                   const int zero_padding,
                   const bool write_only_debug_video,
-                  const std::string debug_video_output)
+                  const std::string debug_video_output,
+                  const double dark_mse_threshhold,
+                  const double bright_mse_threshhold)
 {
 
     std::string debug_prefix = "[main.cpp/process_video] ";
@@ -367,6 +369,8 @@ int process_video(const std::string video_path,
     cv::Mat black_block;
 
     cv::Size resolution;
+    
+    cv::Scalar mean_color;
 
     // The matched blocks for generating the input residual
     std::vector<cv::Mat> matched_blocks;
@@ -389,7 +393,9 @@ int process_video(const std::string video_path,
     long int need_upscaling = 0;
 
     double raw_block_mse = 0;
-    double mse_threshhold = 0.01;
+
+    double mean_pixels_value = 0;
+    double mse_threshhold = 0;
 
     std::string next_output_newline;
 
@@ -411,17 +417,20 @@ int process_video(const std::string video_path,
         next_output_newline = "pframe;" + std::to_string(count_frame) + "-";
 
         video >> frame;
-
+        
         if (frame.empty()) {
             std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
             output_file << "end;" + std::to_string(count_frame) + "-";
             output_file.flush();
             output_file.close();
             return 0;
-        }
+        }  
+
+        //std::cout << "mse_threshhold: " << mse_threshhold << " mean_pixels: " << mean_pixels_value << std::endl;
 
         // Instead of adding black border we set a background of the original frame resized to the
-        // bleeded resolution and just overlay the original image
+        // bleeded resolution plus block size and just overlay the original image so we avoid
+        // black borders on right/bottom edge rectangular blocks
         cv::resize(frame, bleeded_borders_frame, cv::Size(width + (2*bleed), height + (2*bleed)));
         cv::resize(frame, bleed_croppable_frame, cv::Size(width + bleed + block_size, height + bleed + block_size));
 
@@ -495,6 +504,18 @@ int process_video(const std::string video_path,
                 raw_block_mse = calculate_mse(block, last_matched_block);
                 raw_block_mse /= block.total();
 
+
+                // The mean color of this frame will be the residual "blank" canvas to reduce black bleed
+                // While the mean pixel values will determine the mse threshold based on dark/bright levels
+                mean_color = cv::mean(last_matched_block);
+                mean_pixels_value = (mean_color.val[0] + mean_color.val[1] + mean_color.val[2]) / 3;
+
+                // f(x) = ax + b
+                // x = 0, dark
+                // x = 255, bright
+                mse_threshhold = ((bright_mse_threshhold - dark_mse_threshhold)/255)*mean_pixels_value + dark_mse_threshhold;
+
+                
                 total_blocks++;
 
                 // Validate
@@ -542,7 +563,7 @@ int process_video(const std::string video_path,
             cv::imshow( "Frame", debug_frame );
 
             // <++>
-            if (false) {
+            if (true) {
                 debug_video.write(debug_frame);
             }
 
@@ -562,7 +583,7 @@ int process_video(const std::string video_path,
         // // Make the input residual image
         if ( (matched_blocks.size() > 0) && (!write_only_debug_video)) {
 
-            cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed);
+            cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed, mean_color);
 
             int max_frames_ahead = 40;
             int max_frames_ahead_wait = count_frame - max_frames_ahead;
@@ -598,7 +619,7 @@ int main(int argc, char** argv) {
     std::string debug_prefix = "[main.cpp/main] ";
 
     // Failsafe number of arguments
-    const int expected_args = 14;
+    const int expected_args = 16;
 
     std::cout << debug_prefix << "You have entered the following arguments:" << "\n\n";
 
@@ -626,6 +647,8 @@ int main(int argc, char** argv) {
      * - zero padding (residuals files)
      * - write_only_debug_video
      * - debug_video_output
+     * - dark mse threshold
+     * - bright mse threshold
      */
 
     std::string video_path = argv[1];
@@ -648,6 +671,9 @@ int main(int argc, char** argv) {
     int write_only_debug_video_argv = atoi(argv[12]);
 
     std::string debug_video_output = argv[13];
+
+    double dark_mse_threshhold = atof(argv[14]);
+    double bright_mse_threshhold = atof(argv[15]);
 
     bool write_only_debug_video;
     bool mindisk;
@@ -720,7 +746,9 @@ int main(int argc, char** argv) {
         mindisk,
         zero_padding,
         write_only_debug_video,
-        debug_video_output
+        debug_video_output,
+        dark_mse_threshhold,
+        bright_mse_threshhold
     );
 
     return 0;

@@ -83,6 +83,9 @@ class Context():
 
         self.block_size = self.config["block_size"]
 
+        self.dark_threshold = self.config["dark_threshold"]
+        self.bright_threshold = self.config["bright_threshold"]
+
         self.input_filename = self.utils.get_basename(self.input_file)
 
         # If the user did not sent us a absolute path
@@ -318,7 +321,8 @@ class Context():
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
             "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
             "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
-            "safety_ruthless_residual_eliminator_range", "total_upscale_time"
+            "safety_ruthless_residual_eliminator_range", "total_upscale_time",
+            "dark_threshold", "bright_threshold"
         ]
 
         data = {}
