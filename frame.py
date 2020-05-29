@@ -21,17 +21,15 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from color import rgb, color_by_name
+from color import colors
 from PIL import Image
-
 import numpy as np
-
 import imageio
 import numpy
 import os
 
 
-color = rgb(196, 255, 33)
+color = colors["frame"]
 
 
 class Frame():
@@ -42,14 +40,10 @@ class Frame():
 
     frame = Frame()
     frame.load_from_path(self.context.ROOT + os.path.sep + "yn.jpg")
-
     frame2 = Frame()
     frame2.new(1920, 1080)
-
     frame2.duplicate(frame)
-
     frame2.save("yn_copy.jpg")
-
     """
 
     def __init__(self, context, utils, controller):
@@ -63,7 +57,6 @@ class Frame():
         self.height = None
         self.name = None
 
-    # fuck this function, lmao. Credits to
     # https://stackoverflow.com/questions/52702809/copy-array-into-part-of-another-array-in-numpy
     def copy_from(self, A, B, A_start, B_start, B_end):
         """
@@ -81,39 +74,10 @@ class Frame():
             A_slices = tuple(map(slice, A_start, A_start + shape + 1))
             B[B_slices] = A[A_slices]
 
-            if self.context.loglevel >= 30:
-                self.utils.log(color, debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
+            self.utils.log(color, 10, debug_prefix, "Copied from, args = {%s, %s, %s}" % (A_start, B_start, B_end))
 
         except ValueError as e:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block: ", e)
-            self.controller.exit()
-
-    # we need to parse the new input into a non uint8 format so it doesnt overflow,
-    # then parse it back to an integer using np.clip to make it fit within [0,255]
-    # If we don't do this,  numpy will overflow it for us and give us bad results.
-    def copy_from_fade(self, A, B, A_start, B_start, B_end, scalar):
-        """
-        A_start is the index with respect to A of the upper left corner of the overlap
-        B_start is the index with respect to B of the upper left corner of the overlap
-        B_end is the index of with respect to B of the lower right corner of the overlap
-        """
-
-        debug_prefix = "[Frame.copy_from]"
-
-        try:
-            A_start, B_start, B_end = map(np.asarray, [A_start, B_start, B_end])
-            shape = B_end - B_start
-            B_slices = tuple(map(slice, B_start, B_end + 1))
-            A_slices = tuple(map(slice, A_start, A_start + shape + 1))
-
-            int_copy = numpy.copy(A[A_slices]).astype(int)  # use 'int_copy' instead of raw array to prevent overflow
-            B[B_slices] = numpy.clip(int_copy + scalar, 0, 255).astype(np.uint8)
-
-            if self.context.loglevel >= 3:
-                self.utils.log(color, debug_prefix, "Copied from fade, args = {%s, %s, %s, %s}" % (A_start,B_start,B_end,scalar))
-
-        except ValueError as e:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "Fatal error copying block from fade: [%s]" % e)
+            self.utils.log(colors["error"], 0, debug_prefix, "Fatal error copying block: ", e)
             self.controller.exit()
 
     # Create and set new frame
@@ -126,9 +90,8 @@ class Frame():
         self.height = height
         self.resolution = (width, height)
         self.name = ''
-
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (width, height))
+        
+        self.utils.log(color, 6, debug_prefix, "Resolution: [%sx%s]" % (width, height))
 
     # See if can open image, if it's good
     def is_valid_image(self, path):
@@ -139,10 +102,10 @@ class Frame():
             imageio.imread(path)
             return True
         except SyntaxError:
-            self.utils.log(color, debug_prefix, "[DEBUG] NOT GOOD IMAGE SyntaxError [%s]" % path)
+            self.utils.log(color, 6, debug_prefix, "[DEBUG] NOT GOOD IMAGE SyntaxError [%s]" % path)
             return False
         except ValueError:
-            self.utils.log(color, debug_prefix, "[DEBUG] NOT GOOD IMAGE ValueError [%s]" % path)
+            self.utils.log(color, 6, debug_prefix, "[DEBUG] NOT GOOD IMAGE ValueError [%s]" % path)
             return False
 
     # Load file based on the filename
@@ -150,16 +113,15 @@ class Frame():
 
         debug_prefix = "[Frame.load_from_path]"
 
-        if self.context.loglevel >= 9:
-            self.utils.log(color, debug_prefix, "Name: [%s]" % filename)
+        
+        self.utils.log(color, 7, debug_prefix, "Name: [%s]" % filename)
 
         while True:
             try:
                 self.frame = imageio.imread(filename).astype(np.uint8)
                 break
-
-            except Exception as e:
-                self.utils.log(color, debug_prefix, "Couldn't load image [%s], retrying" % filename)
+            except Exception:
+                self.utils.log(color, 6, debug_prefix, "Couldn't load image [%s], retrying" % filename)
 
             if self.controller.stop:
                 return 0
@@ -169,23 +131,22 @@ class Frame():
         self.resolution = (self.width, self.height)
         self.name = filename
 
-        if self.context.loglevel >= 9:
-            self.utils.log(color, debug_prefix, "Resolution: [%sx%s]" % (self.width, self.height))
+        self.utils.log(color, 7, debug_prefix, "Resolution: [%sx%s]" % (self.width, self.height))
 
     # Wait on a file if it does not exist yet. Wait can be cancelled via a cancellation token
     def load_from_path_wait(self, filename):
 
         debug_prefix = "[Frame.load_from_path_wait]"
 
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Waiting for: [%s]" % filename)
+        
+        self.utils.log(color, 7, debug_prefix, "Waiting for: [%s]" % filename)
 
         self.utils.until_exist(filename)
 
         if not self.controller.stop:
             self.load_from_path(filename)
         else:
-            self.utils.log(color, debug_prefix, "Will not load waited file [%s] as controller stopped" % filename)
+            self.utils.log(color, 1, debug_prefix, "Will not load waited file [%s] as controller stopped" % filename)
 
     # Save an image with specific instructions depending on it's extension type.
     def save(self, directory):
@@ -194,8 +155,7 @@ class Frame():
 
         extension = os.path.splitext(os.path.basename(directory))[1]
 
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Saving to file: [%s], extension is: [%s]" % (directory, extension))
+        self.utils.log(color, 7, debug_prefix, "Saving to file: [%s], extension is: [%s]" % (directory, extension))
 
         if 'jpg' in extension:
             jpegsave = self.image_array()
@@ -213,24 +173,6 @@ class Frame():
     def image_array(self):
         return Image.fromarray(self.frame.astype(np.uint8))
 
-    # Explained inside
-    def save_image_temp(self, directory, temp_location):
-        """
-        Save an image in the "temp_location" folder to prevent another program from accessing the file
-        until it's done writing.
-
-        This is done to prevent other parts from using an image until it's entirely done writing.
-        """
-
-        debug_prefix = "[Frame.save_image_temp]"
-
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Saving to dir [%s] with temp dir [%s]" % (directory, temp_location))
-
-        self.save_image(temp_location)
-        self.utils.until_exist(temp_location)
-        self.utils.rename(temp_location, directory)
-
     # Gets the (other_frame), (self.frame), and set to this (self.frame) the other's (self.frame)
     def duplicate(self, other_frame):
         """
@@ -243,110 +185,25 @@ class Frame():
 
         debug_prefix = "[Frame.duplicate]"
 
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Duplicating from other_frame")
+        
+        self.utils.log(color, 6, debug_prefix, "Duplicating from other_frame")
 
         height_matches = self.height == other_frame.height
         width_matches = self.width == other_frame.width
 
         # Checks if both height and width matches and if not log the info on what went wrong, exit Dandere2x
         if not height_matches or not width_matches:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "Copy images are not equal")
+            self.utils.log(colors["error"], 0, debug_prefix, "Copy images are not equal")
 
             errormessage = "Width matches: [%s], Height matches: [%s]" % (width_matches, height_matches)
             errormessage += " | This res: [%sx%s], Other res: [%sx%s]" % (self.width, self.height, other_frame.width, other_frame.height)
 
-            self.utils.log(color_by_name("li_red"), debug_prefix, errormessage)
+            self.utils.log(colors["error"], 0, debug_prefix, errormessage)
 
             self.controller.exit()
 
         self.copy_from(other_frame.frame, self.frame, (0, 0), (0, 0),
                   (other_frame.frame.shape[0], other_frame.frame.shape[1]))
-
-    # Copy block from (other frame) to (this frame)
-    def copy_block(self, other_frame, block_size, other_x, other_y, this_x, this_y):
-        """
-        Check that we can validly copy a block before calling the numpy self.copy_from method. This way, detailed
-        errors are given, rather than numpy just throwing an un-informative error.
-        """
-
-        debug_prefix = "[Frame.copy_block]"
-
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Copy block, from [%s] to [%s], checking valid" % (self.name, other_frame.name))
-
-        # Check if inputs are valid before calling numpy self.copy_from
-        self.check_valid(other_frame, block_size, other_x, other_y, this_x, this_y)
-
-        self.copy_from(other_frame.frame, self.frame,
-                       (other_y, other_x), (this_y, this_x),
-                       (this_y + block_size - 1, this_x + block_size - 1)
-                       )
-
-    def fade_block(self, this_x, this_y, block_size, scalar):
-        """
-        Apply a scalar value to the RGB values for a given block. The values are then clipped to ensure
-        they don't overflow.
-        """
-
-        debug_prefix = "[Frame.fade_block]"
-
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Copy from fade: [%s]" % self.name)
-
-        self.copy_from_fade(self.frame, self.frame,
-                            (this_y, this_x), (this_y, this_x),
-                            (this_y + block_size - 1, this_x + block_size - 1), scalar)
-
-    def check_valid(self, other_frame, block_size, other_x, other_y, this_x, this_y):
-        """
-        Provide detailed reasons why a copy_block will not work before it's called. This method should access
-        every edge case that could prevent copy_block from successfully working.
-        """
-
-        debug_prefix = "[Frame.check_valid]"
-
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Checking valid, this frame: [%s], other frame: [%s]" % (self.name, other_frame.name))
-
-        if this_x + block_size - 1 > self.width or this_y + block_size - 1 > self.height:
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'Input Dimensions Invalid for Copy Block Function, printing variables. Send Tyler this!')
-
-            # Print Out Degenerate Values
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'this_x + block_size - 1 > self.width')
-            self.utils.log(color_by_name("li_red"), debug_prefix, str(this_x + block_size - 1) + '?>' + str(self.width))
-
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'this_y + block_size - 1 > self.height')
-            self.utils.log(color_by_name("li_red"), debug_prefix, str(this_y + block_size - 1) + '?>' + str(self.height))
-
-            self.controller.exit()
-
-        if other_x + block_size - 1 > other_frame.width or other_y + block_size - 1 > other_frame.height:
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'Input Dimensions Invalid for Copy Block Function, printing variables. Send Tyler this!')
-
-            # Print Out Degenerate Values
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'other_x + block_size - 1 > other_frame.width')
-            self.utils.log(color_by_name("li_red"), debug_prefix, str(other_x + block_size - 1) + '?>' + str(other_frame.width))
-
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'other_y + block_size - 1 > other_frame.height')
-            self.utils.log(color_by_name("li_red"), debug_prefix, str(other_y + block_size - 1) + '?>' + str(other_frame.height))
-
-            self.controller.exit()
-
-        if this_x < 0 or this_y < 0:
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'Negative Input for \"this\" image')
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'x' + this_x)
-            self.utils.log(color_by_name("li_red"), debug_prefix, 'y' + this_y)
-
-            self.controller.exit()
-
-        if other_x < 0 or other_y < 0:
-            self.controller.exit()
-
-    def mean(self, other):
-        return numpy.mean((self.frame - other.frame) ** 2)
-
-
 
 
 if __name__ == "__main__":

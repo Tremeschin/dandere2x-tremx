@@ -21,14 +21,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-
-from git import Repo
-from color import rgb, debug_color, color_by_name
-
+from color import colors
 import os
 
 
-color = rgb(120, 230, 200)
+color = colors["vp"]
 
 
 class VapourSynthWrapper():
@@ -44,26 +41,10 @@ class VapourSynthWrapper():
 
         # Windows users install packages with vsrepo
         if self.context.os == "windows" and False: # <++>
-
-            # This is a repo name which is cloned in the externals folder
-            vsrepo_path = self.context.ROOT + os.path.sep + "externals" + os.path.sep + "vsrepo"
-
-            if not os.path.exists(vsrepo_path):
-
-                self.utils.log(color, debug_prefix, "vsrepo not found in [\"%s\"], cloning it" % vsrepo_path)
-
-                Repo.clone_from("https://github.com/vapoursynth/vsrepo", vsrepo_path)
-
-                if os.path.exists(vsrepo_path):
-                    self.utils.log(color, debug_prefix, "Cloned sucessfully!!")
-                else:
-                    self.utils.log(color, debug_prefix, "Error cloning git repo")
-                    exit(-1)
-            else:
-                self.utils.log(color, debug_prefix, "Cloned vsrepo repo exists")
+            # https://github.com/vapoursynth/vsrepo to download extensions?
+            self.utils.log(colors["debug"], debug_prefix, "Windows + Vapoursynth not tested at the moment")
         else:
-            self.utils.log(debug_color(), debug_prefix, "YOU'RE USING LINUX, SADLY WE CURRENTLY RELY YOU HAVE INSTALLED ALL THE VAPOURSYNTH PLUGINS YOU'RE GONNA USE")
-
+            self.utils.log(colors["debug"], debug_prefix, "YOU'RE USING LINUX, SADLY WE CURRENTLY RELY YOU HAVE INSTALLED ALL THE VAPOURSYNTH PLUGINS YOU'RE GONNA USE")
 
         self.get_vspipe_bin()
         self.get_x264_bin()
@@ -77,7 +58,7 @@ class VapourSynthWrapper():
             self.utils.log(color, debug_prefix, "YOU'RE USING LINUX, MAKE SURE VSPIPE IS ACESSIBLE FROM A RAW SHELL (IN PATH)")
             self.vspipe_bin = "vspipe"
         else:
-            self.utils.log(debug_color(), debug_prefix, "[ERROR] VAPOURSYNTH WINDOWS DOES NOT WORK YET")
+            self.utils.log(colors["debug"], debug_prefix, "[ERROR] VAPOURSYNTH WINDOWS DOES NOT WORK YET")
 
 
     def get_x264_bin(self):
@@ -88,7 +69,7 @@ class VapourSynthWrapper():
             self.utils.log(color, debug_prefix, "YOU'RE USING LINUX, MAKE SURE x264 IS ACESSIBLE FROM A RAW SHELL (IN PATH)")
             self.x264_bin = "x264"
         else:
-            self.utils.log(debug_color(), debug_prefix, "[ERROR] VAPOURSYNTH WINDOWS DOES NOT WORK YET")
+            self.utils.log(colors["debug"], debug_prefix, "[ERROR] VAPOURSYNTH WINDOWS DOES NOT WORK YET")
 
 
     def apply_filter(self, filter_name, input_video, output_video):
@@ -110,7 +91,7 @@ class VapourSynthWrapper():
             if self.context.loglevel >= 3:
                 self.utils.log(color, debug_prefix, "Command for vapoursynth filter processing is: [%s]" % command)
 
-            self.utils.log(color_by_name("li_red"), debug_prefix, "[WARNING] MAY TAKE A WHILE DEPENDING ON CPU / VIDEO LENGHT / VIDEO RESOLUTION / VAPOURSYNTH STUFF USED")
+            self.utils.log(colors["warning"], debug_prefix, "[WARNING] MAY TAKE A WHILE DEPENDING ON CPU / VIDEO LENGHT / VIDEO RESOLUTION / VAPOURSYNTH STUFF USED")
 
 
             os.system(command)

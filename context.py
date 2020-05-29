@@ -26,12 +26,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from color import color_by_name, fg
-
+from color import colors
 import os
 
 
-color = color_by_name("li_yellow")
+color = colors["context"]
 
 
 class Context():
@@ -49,30 +48,24 @@ class Context():
 
         # Set the (static) rootfolder substitution for changing paths session folders
         self.rootfolder_substitution = "//ROOTFOLDER//"
-        self.utils.log(color, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
+        self.utils.log(color, 3, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
 
         # For absolute-reffering
         self.ROOT = self.utils.ROOT
         self.os = self.utils.get_os()
 
-        self.utils.log(fg.li_red, debug_prefix, "Got operating system: " + self.os)
+        self.utils.log(colors["warning"], 1, debug_prefix, "Got operating system: " + self.os)
 
         # Load up the yaml file
-        self.utils.log(color, debug_prefix, "Loading settings YAML file")
+        self.utils.log(color, 2, debug_prefix, "Loading settings YAML file")
 
         # Loglevel
         self.loglevel = self.config["developer"]["loglevel"]
 
-        self.utils.log(fg.li_red, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
-
-        # Create context dict
-        self.utils.log(color, debug_prefix, "Creating Context dictionary")
-
-        self.context = {}
-        self.context["ROOT"] = self.utils.ROOT
+        self.utils.log(colors["warning"], 1, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
         # # # Static Variables # # #
-        self.utils.log(color, debug_prefix, "Setting up static variables")
+        self.utils.log(color, 2, debug_prefix, "Setting up static variables")
 
         # Load basic variables
 
@@ -80,11 +73,15 @@ class Context():
 
         self.input_file = self.config["basic"]["input_file"]
         self.output_file = self.config["basic"]["output_file"]
+        self.session_name = self.config["basic"]["session_name"]
 
-        self.block_size = self.config["block_size"]
+        # Block matching related
 
-        self.dark_threshold = self.config["dark_threshold"]
-        self.bright_threshold = self.config["bright_threshold"]
+        self.block_size = self.config["block_matching"]["block_size"]
+
+        self.bleed = self.config["block_matching"]["bleed"]
+        self.dark_threshold = self.config["block_matching"]["dark_threshold"]
+        self.bright_threshold = self.config["block_matching"]["bright_threshold"]
 
         self.input_filename = self.utils.get_basename(self.input_file)
 
@@ -93,7 +90,7 @@ class Context():
             self.input_file = self.ROOT + os.path.sep + self.input_file
 
         if not os.path.isfile(self.input_file):
-            self.utils.log(color, debug_prefix, "[ERROR] INPUT FILE IS NOT A FILE")
+            self.utils.log(color, 0, debug_prefix, "[ERROR] INPUT FILE IS NOT A FILE")
             exit()
 
         # Output file can be auto, that is, append 2x_ at the start of the filename
@@ -102,23 +99,15 @@ class Context():
                 self.output_file = self.ROOT + self.output_file
         else:
             self.output_file = self.input_file.replace(self.input_filename, "2x_" + self.input_filename)
-            self.utils.log(color, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
+            self.utils.log(color, 1, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
 
         self.output_filename = self.utils.get_basename(self.output_file)
 
-        print(self.input_file)
-        print(self.output_file)
-
         # #
 
-        # Load processing variables
-        self.extracted_images_extension = self.config["processing"]["extracted_images_extension"]
-        self.bleed = self.config["processing"]["bleed"]
-
         # "Global" or non-indented options as they're "major"
-        self.session_name = self.config["session_name"]
-        self.waifu2x_type = self.config["waifu2x_type"]
-        self.mindisk = self.config["mindisk"]
+        self.waifu2x_type = self.config["waifu2x"]["waifu2x_type"]
+        self.mindisk = self.config["danger_zone"]["mindisk"]
 
         # Vapoursynth settings
         self.use_vapoursynth = self.config["vapoursynth"]["enabled"]
@@ -130,11 +119,14 @@ class Context():
         if self.session_name == "auto":
             self.session_name = self.utils.get_auto_session_name(self.input_file)
 
+        # Stats settings
+        self.average_last_N_frames = self.config["stats"]["average_last_N_frames"]
+        self.show_stats = self.config["stats"]["show_stats"]
+
         # Waifu2x settings
         self.denoise_level = self.config["waifu2x"]["denoise_level"]
         self.tile_size = self.config["waifu2x"]["tile_size"]
         self.waifu2x_model = self.config["waifu2x"]["waifu2x_model"]
-        print(self.config["waifu2x"])
         self.linux_enable_mesa_aco_waifu2x_vulkan = self.config["waifu2x"]["linux_enable_mesa_aco_waifu2x_vulkan"]
 
         # Create default variables
@@ -187,7 +179,7 @@ class Context():
         self.enable_waifu2x = self.config["debug"]["enable_waifu2x"]
         self.write_only_debug_video = self.config["debug"]["write_only_debug_video"]
 
-        self.utils.log(color, debug_prefix, "Configuring context.* directories and static files")
+        self.utils.log(color, 4, debug_prefix, "Configuring context.* directories and static files")
 
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
@@ -202,15 +194,12 @@ class Context():
 
         # "Static" files location
         files = {
-            "d2x_cpp_plugins_out": "//ROOT//|sessions|//SESSION//|plugins_input.d2x",
-            "d2x_cpp_vectors_out": "//ROOT//|sessions|//SESSION//|vectors.d2x",
             "upscaled_video": "//ROOT//|sessions|//SESSION//|upscaled_//INPUTVIDEOFILENAME//",
             "partial_video": "//ROOT//|sessions|//SESSION//|partial|//NUM//.mkv",  # We make an exception on this in Utils.reset_files
             "resume_video_frame": "//ROOT//|sessions|//SESSION//|processing|resume_video_frame.jpg",  # We make an exception on this in Utils.reset_files
             "debug_video": "//ROOT//|sessions|//SESSION//|debug_video.mkv",
             "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
             "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
-            "original_audio_file": "//ROOT//|sessions|//SESSION//|processing|original_audio.aac", # Deprecated?
             "noisy_video": "//ROOT//|sessions|//SESSION//|processing|noisy_//INPUTVIDEOFILENAME//",
             "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
             "joined_audio": "//ROOT//|sessions|//SESSION//|processing|joined_audio_//INPUTVIDEOFILENAME//",
@@ -307,7 +296,7 @@ class Context():
                 # Set the value based on the "category" -> self.residual, self.upscaled, self.merged
                 setattr(self, category, subname)
 
-                self.utils.log(color, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, subname))
+                self.utils.log(color, 4, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, subname))
 
     # We save some selected vars for dandere2x_cpp to read them and work
     # properly based on where stuff actually is
@@ -315,7 +304,7 @@ class Context():
 
         debug_prefix = "[Context.save_vars]"
 
-        self.utils.log(color, debug_prefix, "Generating data dictionary")
+        self.utils.log(color, 3, debug_prefix, "Generating data dictionary")
 
         # # Build up the ata dictionary
 
@@ -326,15 +315,15 @@ class Context():
             "upscaled", "merged", "d2x_cpp_plugins_out", "context_vars", "plain_dirs",
             "plain_files", "denoise_level", "tile_size", "last_processing_frame",
             "get_frame_count_method", "get_frame_rate_method", "zero_padding",
-            "loglevel", "input_filename", "output_filename", "extracted_images_extension",
+            "loglevel", "input_filename", "output_filename",
             "mindisk", "use_vapoursynth", "vapoursynth_pre", "vapoursynth_pos", "frame_count",
             "get_video_info_method", "get_resolution_method", "wait_time",
             "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
-            "logfile", "temp_vpy_script", "original_audio_file", "upscaled_video",
+            "logfile", "temp_vpy_script", "upscaled_video",
             "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
             "safety_ruthless_residual_eliminator_range", "total_upscale_time",
             "dark_threshold", "bright_threshold", "sessions_folder", "logfile_last_session",
-            "x264_preset", "x264_tune", "x264_crf", "write_log"
+            "x264_preset", "x264_tune", "x264_crf", "write_log", "show_stats", "average_last_N_frames"
         ]
 
         data = {}
@@ -355,16 +344,17 @@ class Context():
                     elif isinstance(value[0], str):
                         value = [x.replace(self.ROOT, self.rootfolder_substitution) for x in value]
                 except Exception as e:
-                    self.utils.log(color_by_name("li_red"), debug_prefix, "Exception ocurred on line [%s]: [%s]" % (self.utils.get_linenumber(), e))
+                    self.utils.log(color_by_name("li_red"), 0, debug_prefix, "Exception ocurred on line [%s]: [%s]" % (self.utils.get_linenumber(), e))
 
             # Atribute
             data[item] = value
 
-        self.utils.log(color, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
+        
+        self.utils.log(color, 5, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
 
         self.utils.save_yaml(data, self.context_vars)
-
-        self.utils.log(color, debug_prefix, "Saved")
+        
+        self.utils.log(color, 5, debug_prefix, "Saved")
 
     # For resuming, loads into self.* variables the context_vars file
     def load_vars_from_file(self, context_vars_file):
@@ -373,7 +363,7 @@ class Context():
 
         context_data = self.utils.load_yaml(context_vars_file)
 
-        self.utils.log(color, debug_prefix, "Loaded context_vars yaml file, here's the self vars and loaded values:")
+        self.utils.log(color, 4, debug_prefix, "Loaded context_vars yaml file, here's the self vars and loaded values:")
 
         for item in context_data:
             value = context_data[item]
@@ -389,7 +379,7 @@ class Context():
                     value = [x.replace(self.rootfolder_substitution, self.ROOT) for x in value]
 
             # Log and set self var "self.item" as value
-            self.utils.log(color, self.indentation, debug_prefix, "self.%s = \"%s\"" % (item, value))
+            self.utils.log(color, 4, self.indentation + debug_prefix, "self.%s = \"%s\"" % (item, value))
             setattr(self, item, value)
 
 

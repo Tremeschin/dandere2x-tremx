@@ -23,14 +23,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from utils import SubprocessUtils
-from color import rgb, fg
-
+from color import colors
 import time
 import cv2
 import os
 
 
-color = rgb(255, 200, 10)
+color = colors["waifu2x"]
 
 
 class Waifu2x():
@@ -48,12 +47,12 @@ class Waifu2x():
 
         debug_prefix = "[Waifu2x.set_corresponding]"
 
-        c = fg.li_magenta  # Print this color only in this class
+        c = colors["li_magenta"]  # Print this color only in this class
 
-        self.utils.log(c, debug_prefix, "According to the following, ...")
+        self.utils.log(c, 3, debug_prefix, "According to the following, ...")
 
-        self.utils.log(c, self.context.indentation, "OS: " + self.context.os)
-        self.utils.log(c, self.context.indentation, "Waifu2x: " + self.context.waifu2x_type)
+        self.utils.log(c, 3, self.context.indentation, "OS: " + self.context.os)
+        self.utils.log(c, 3, self.context.indentation, "Waifu2x: " + self.context.waifu2x_type)
 
         # Build a string that specifies our os and w2x type
         option = "%s-%s" % (self.context.os, self.context.waifu2x_type)
@@ -76,7 +75,8 @@ class Waifu2x():
         }.get(option, "not_found")
 
         if self.waifu2x == "not_found":
-            self.utils.log(c, debug_prefix, "Chosen waifu2x and or OS not found: [%s]" % option)
+            self.utils.log(c, 0, debug_prefix, "Chosen waifu2x and or OS not found: [%s]" % option)
+            self.controller.exit()
 
         self.waifu2x.init(self.context, self.utils, self.controller)
 
@@ -109,10 +109,8 @@ class Waifu2x():
                 upscaled_path = self.get_residual_upscaled_file_path_output_frame_number(residual_number)
 
                 if ( (self.context.last_processing_frame - residual_number) > self.context.safety_ruthless_residual_eliminator_range ):
-                    self.utils.log(color, debug_prefix, "Residual number [%s] exists in residual dir and is out of bound, deleting" % residual_number)
-
-                    #print(residual_path)
-                    #print(upscaled_path)
+                    
+                    self.utils.log(color, 6, debug_prefix, "Residual number [%s] exists in residual dir and is out of bound, deleting" % residual_number)
 
                     self.utils.delete_file(residual_path)
                     self.utils.delete_file(upscaled_path)
@@ -129,21 +127,16 @@ class Waifu2x():
                 equivalent_residual_number = self.utils.get_first_number_of_string(equivalent_residual)
 
                 if os.path.isfile(equivalent_residual):
-
                     if self.frame.is_valid_image(upscaled_path):
-
                         if ( (self.context.last_processing_frame - equivalent_residual_number) > self.context.safety_ruthless_residual_eliminator_range ):
-                            self.utils.log(color, debug_prefix, "Deleting equivalent residual as upscale already exists: [%s]" % equivalent_residual)
+                            self.utils.log(color, 6, debug_prefix, "Deleting equivalent residual as upscale already exists: [%s]" % equivalent_residual)
                             self.utils.delete_file(equivalent_residual)
                     else:
-                        self.utils.log(color, debug_prefix, "[FAILSAFE] Partial saved or corrupted (?) upscaled image: [%s]" % upscaled_path)
-
+                        self.utils.log(color, 6, debug_prefix, "[FAILSAFE] Partial saved or corrupted (?) upscaled image: [%s]" % upscaled_path)
 
                 if ( (self.context.last_processing_frame - upscaled_number) > self.context.safety_ruthless_residual_eliminator_range ):
-
                     if os.path.isfile(upscaled_path):
-
-                        self.utils.log(color, debug_prefix, "Deleting upscaled as passed safety limit [%s]" % upscaled_path)
+                        self.utils.log(color, 6, debug_prefix, "Deleting upscaled as passed safety limit [%s]" % upscaled_path)
                         self.utils.delete_file(upscaled_path)
 
             time.sleep(0.05)
@@ -159,7 +152,7 @@ class NotFakeWaifu2x():
 
         debug_prefix = "[NotFakeWaifu2x.__init__]"
 
-        self.utils.log(color, debug_prefix, "Will use this \"Waifu2x\" wrapper")
+        self.utils.log(color, 1, debug_prefix, "Will use this \"Waifu2x\" wrapper")
 
     def verify(self):
         pass
@@ -227,31 +220,31 @@ class Waifu2xVulkan():
 
         debug_prefix = "[Waifu2xVulkan.__init__]"
 
-        self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
+        self.utils.log(color, 1, debug_prefix, "Will use this Waifu2x wrapper")
 
     # Get the binary if it exist
     def verify(self):
 
         debug_prefix = "[Waifu2xVulkan.verify]"
 
-        self.utils.log(color, debug_prefix, "Verifying and getting binary")
+        self.utils.log(color, 3, debug_prefix, "Verifying and getting binary")
 
         self.binary = self.utils.get_binary("waifu2x-ncnn-vulkan")
 
-        self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
+        self.utils.log(color, 1, debug_prefix, "Got binary: [%s]" % self.binary)
 
         # Windows has to operate in the waifu2x folder where the required binaries are
         # or that path in in PATH variable (not ideal)
         if self.context.os == "windows":
             self.waifu2x_folder = os.path.dirname(self.binary)
-            self.utils.log(color, debug_prefix, "[WINDOWS] Waifu2x_subprocess CWD is [%s]" % self.waifu2x_folder)
+            self.utils.log(color, 2, debug_prefix, "[WINDOWS] Waifu2x_subprocess CWD is [%s]" % self.waifu2x_folder)
 
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
 
         debug_prefix = "[Waifu2xVulkan.generate_run_command]"
 
-        self.utils.log(color, debug_prefix, "Generating run command")
+        self.utils.log(color, 4, debug_prefix, "Generating run command")
 
         self.command = [self.binary, "-n", str(self.context.denoise_level), "-t", str(self.context.tile_size), "-j", "4:4:4"]
 
@@ -259,7 +252,7 @@ class Waifu2xVulkan():
         if self.context.os == "windows":
             self.command = self.command + ["-m", os.path.dirname(self.binary) + os.path.sep + self.context.waifu2x_model]
 
-        self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
+        self.utils.log(color, 5, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
     # Call the command and upscale a file or directory
     def upscale(self, input_path, output_path):
@@ -273,27 +266,25 @@ class Waifu2xVulkan():
         # Get a clone of basic usage and extend it based on the I/O
         command = self.command + ["-i", input_path, "-o", output_path]
 
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
-            self.utils.log(color, debug_prefix, "Command is %s" % command)
+        self.utils.log(color, 4, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+        self.utils.log(color, 5, debug_prefix, "Command is %s" % command)
 
-        waifu2x_subprocess = SubprocessUtils("waifu2x-ncnn-vulkan", self.utils)
+        waifu2x_subprocess = SubprocessUtils("waifu2x-ncnn-vulkan", self.utils, self.context)
 
         waifu2x_subprocess.from_list(command)
 
         if self.context.os == "windows":
-            self.utils.log(color, debug_prefix, "[WINDOWS] Running Waifu2x_subprocess with working_directory [%s]" % self.waifu2x_folder)
+            self.utils.log(color, 4, debug_prefix, "[WINDOWS] Running Waifu2x_subprocess with working_directory [%s]" % self.waifu2x_folder)
             waifu2x_subprocess.run(working_directory=self.waifu2x_folder)
 
         elif self.context.os == "linux":
             if not self.context.linux_enable_mesa_aco_waifu2x_vulkan:
-                self.utils.log(color, debug_prefix, "[LINUX] Plain subprocess run")
+                self.utils.log(color, 5, debug_prefix, "[LINUX] Plain subprocess run")
                 waifu2x_subprocess.run()
             else:
-                self.utils.log(color, debug_prefix, "Running with RADV_PERFTEST=aco")
                 env = os.environ.copy()
                 env["RADV_PERFTEST"] = "aco"
-                self.utils.log(color, debug_prefix, "[LINUX] Running subprocess with end RADV_PERFTEST=aco")
+                self.utils.log(color, 5, debug_prefix, "[LINUX] Running subprocess with end RADV_PERFTEST=aco")
                 waifu2x_subprocess.run(env=env)
 
         # Wait until its process finishes or controller says to stop
@@ -307,7 +298,7 @@ class Waifu2xVulkan():
 
         debug_prefix = "[Waifu2xVulkan.keep_upscaling]"
 
-        self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+        self.utils.log(color, 1, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
 
         # If we get a message to stop (ie. finished or panic)
         while not self.controller.stop:
@@ -315,17 +306,14 @@ class Waifu2xVulkan():
             # See if there is any file to upscale
             if len(os.listdir(input_path)) > 0:
                 self.upscale(input_path, output_path)
-
-                if self.context.loglevel >= 3:
-                    self.utils.log(color, debug_prefix, "Upscaled everything, looping again..")
+                self.utils.log(color, 5, debug_prefix, "Upscaled everything, looping again..")
             else:
-                if self.context.loglevel >= 3:
-                    self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
+                self.utils.log(color, 2, debug_prefix, "Input [\"%s\"] is empty" % input_path)
 
             # Do not call it
             time.sleep(self.context.waifu2x_wait_for_residuals)
 
-        self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
+        self.utils.log(color, 1, debug_prefix, "Exiting waifu2x keep upscaling")
 
     # Each Waifu2x outputs the images in a different naming sadly
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
@@ -342,14 +330,14 @@ class Waifu2xCPP():
 
         debug_prefix = "[Waifu2xCPP.__init__]"
 
-        self.utils.log(color, debug_prefix, "Will use this Waifu2x wrapper")
+        self.utils.log(color, 1, debug_prefix, "Will use this Waifu2x wrapper")
 
     # Get the binary; and folder if on Windows
     def verify(self):
 
         debug_prefix = "[Waifu2xCPP.verify]"
 
-        self.utils.log(color, debug_prefix, "Verifying and getting binary")
+        self.utils.log(color, 3, debug_prefix, "Verifying and getting binary")
         
         self.binary = self.utils.get_binary("waifu2x-converter")
 
@@ -357,20 +345,20 @@ class Waifu2xCPP():
             self.utils.log(color, debug_prefix, "Searching for [waifu2x-converter-cpp] as didn't found [waifu2x-converter]")
             self.binary = self.utils.get_binary("waifu2x-converter-cpp")
         
-        self.utils.log(color, debug_prefix, "Got binary: [%s]" % self.binary)
+        self.utils.log(color, 1, debug_prefix, "Got binary: [%s]" % self.binary)
 
         # Windows has to operate in the waifu2x folder where the required binaries are
         # or that path in in PATH variable (not ideal)
         if self.context.os == "windows":
             self.waifu2x_folder = os.path.dirname(self.binary)
-            self.utils.log(color, debug_prefix, "[WINDOWS] Waifu2x_subprocess CWD is [%s]" % self.waifu2x_folder)
+            self.utils.log(color, 2, debug_prefix, "[WINDOWS] Waifu2x_subprocess CWD is [%s]" % self.waifu2x_folder)
 
     # Creates the raw command for upscaling a file / directory
     def generate_run_command(self):
 
         debug_prefix = "[Waifu2xCPP.generate_run_command]"
 
-        self.utils.log(color, debug_prefix, "Generating run command")
+        self.utils.log(color, 4, debug_prefix, "Generating run command")
 
         self.command = [self.binary, "--noise-level", str(self.context.denoise_level), "--block-size", str(self.context.tile_size), "-a", "0", "-j", "16", "-f", "jpg", "-q", "101", "-v", "1"]
 
@@ -378,7 +366,7 @@ class Waifu2xCPP():
         if self.context.os == "windows":
             self.command = self.command + ["--model-dir", os.path.dirname(self.binary) + os.path.sep + "models_rgb"]
 
-        self.utils.log(color, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
+        self.utils.log(color, 5, debug_prefix, "Basic run command is: [\"%s\"]" % self.command)
 
     # Call the command and upscale a file or directory
     def upscale(self, input_path, output_path):
@@ -388,18 +376,19 @@ class Waifu2xCPP():
         # Get a clone of basic usage and extend it based on the I/O
         command = self.command + ["-i", input_path[:-1], "-o", output_path[:-1]]
 
-        if self.context.loglevel >= 3:
-            self.utils.log(color, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
-            self.utils.log(color, debug_prefix, "Command is %s" % command)
+        self.utils.log(color, 4, debug_prefix, "Upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+        self.utils.log(color, 5, debug_prefix, "Command is %s" % command)
 
-        waifu2x_subprocess = SubprocessUtils("waifu2x-converter-cpp", self.utils)
+        waifu2x_subprocess = SubprocessUtils("waifu2x-converter-cpp", self.utils, self.context)
 
         waifu2x_subprocess.from_list(command)
 
         if self.context.os == "windows":
+            self.utils.log(color, 4, debug_prefix, "[WINDOWS] Running Waifu2x_subprocess with working_directory [%s]" % self.waifu2x_folder)
             waifu2x_subprocess.run(working_directory=self.waifu2x_folder)
 
         elif self.context.os == "linux":
+            self.utils.log(color, 5, debug_prefix, "[LINUX] Plain subprocess run")
             waifu2x_subprocess.run()
 
         while waifu2x_subprocess.is_alive():
@@ -412,7 +401,7 @@ class Waifu2xCPP():
 
         debug_prefix = "[Waifu2xCPP.keep_upscaling]"
 
-        self.utils.log(color, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
+        self.utils.log(color, 1, debug_prefix, "Keep upscaling: [\"%s\"] --> [\"%s\"]" % (input_path, output_path))
 
         # If we get a message to stop (ie. finished or panic)
         while not self.controller.stop:
@@ -420,17 +409,14 @@ class Waifu2xCPP():
             # See if there is any file to upscale
             if len(os.listdir(input_path)) > 0:
                 self.upscale(input_path, output_path)
-
-                if self.context.loglevel >= 3:
-                    self.utils.log(color, debug_prefix, "Upscaled everything, looping again..")
+                self.utils.log(color, 5, debug_prefix, "Upscaled everything, looping again..")
             else:
-                if self.context.loglevel >= 3:
-                    self.utils.log(color, debug_prefix, "Input [\"%s\"] is empty" % input_path)
+                self.utils.log(color, 2, debug_prefix, "Input [\"%s\"] is empty" % input_path)
 
             # Do not call it
             time.sleep(self.context.waifu2x_wait_for_residuals)
 
-        self.utils.log(color, debug_prefix, "Exiting waifu2x keep upscaling")
+        self.utils.log(color, 1, debug_prefix, "Exiting waifu2x keep upscaling")
 
     # Each Waifu2x outputs the images in a different naming sadly
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):

@@ -24,26 +24,24 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from color import rgb, color_by_name
-
 from d2xcpp import Dandere2xCPPWraper
-#from vp import VapourSynthWrapper
+from vp import VapourSynthWrapper
 from controller import Controller
 from processing import Processing
 from d2xmath import Dandere2xMath
+from stats import Dandere2xStats
 from context import Context
 from waifu2x import Waifu2x
+from color import colors
 from frame import Frame
 from video import Video
 from utils import Utils
 from core import Core
-
 import time
 import os
 
 
-color = rgb(200, 255, 80)
-phasescolor = rgb(84, 255, 87)
+color = colors["dandere2x"]
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -63,91 +61,95 @@ class Dandere2x():
         self.utils = Utils()
         self.utils.clean_set_log()
 
-        self.utils.log(phasescolor, "# # [Load phase] # #")
-        self.utils.log(color, debug_prefix, "Created Utils()")
+        self.utils.log(colors["phases"], 3, debug_prefix, "# # [Load phase] # #")
+        self.utils.log(color, 3, debug_prefix, "Created Utils()")
 
         # Communication between files, static
-        self.utils.log(color, debug_prefix, "Creating Context()")
+        self.utils.log(color, 3, debug_prefix, "Creating Context()")
         self.context = Context(self.utils, self.config)
 
         # Communication between files, depends on runtime
-        self.utils.log(color, debug_prefix, "Creating Controller()")
+        self.utils.log(color, 3, debug_prefix, "Creating Controller()")
         self.controller = Controller(self.utils, self.context)
 
         # Let Utils access Controller
-        self.utils.log(color, debug_prefix, "Giving Utils, Controller")
+        self.utils.log(color, 3, debug_prefix, "Giving Utils, Controller")
         self.utils.set_controller(self.controller)
 
         # Let Utils access Context
-        self.utils.log(color, debug_prefix, "Giving Utils, Context")
+        self.utils.log(color, 3, debug_prefix, "Giving Utils, Context")
         self.utils.set_context(self.context)
 
+        # Stats
+        self.utils.log(color, 3, debug_prefix, "Creating Dandere2xStats()")
+        self.stats = Dandere2xStats(self.context, self.utils, self.controller)
+
         # Deals with Video related stuff
-        self.utils.log(color, debug_prefix, "Creating Video()")
+        self.utils.log(color, 3, debug_prefix, "Creating Video()")
         self.video = Video(self.context, self.utils, self.controller)
 
         # Deals with images, mostly numpy wrapper and special functions like block substitution
-        self.utils.log(color, debug_prefix, "Creating Frame()")
+        self.utils.log(color, 3, debug_prefix, "Creating Frame()")
         self.frame = Frame
 
         # Our upscale wrapper, on which the default is Waifu2x
-        self.utils.log(color, debug_prefix, "Creating Waifu2x()")
+        self.utils.log(color, 3, debug_prefix, "Creating Waifu2x()")
         self.waifu2x = Waifu2x(self.context, self.utils, self.controller, self.frame)
 
         # Math utils, specific cases for Dandere2x
-        self.utils.log(color, debug_prefix, "Creating Dandere2xMath()")
+        self.utils.log(color, 3, debug_prefix, "Creating Dandere2xMath()")
         self.math = Dandere2xMath(self.context, self.utils)
 
         # Dandere2x C++ wrapper
-        self.utils.log(color, debug_prefix, "Creating Dandere2xCPPWraper()")
+        self.utils.log(color, 3, debug_prefix, "Creating Dandere2xCPPWraper()")
         self.d2xcpp = Dandere2xCPPWraper(self.context, self.utils, self.controller, self.video)
 
         # "Layers" of processing before the actual upscale from Waifu2x
-        self.utils.log(color, debug_prefix, "Creating Processing()")
+        self.utils.log(color, 3, debug_prefix, "Creating Processing()")
         self.processing = Processing(self.context, self.utils, self.controller, self.frame, self.video, self.waifu2x)
 
         # On where everything is controlled and starts
-        self.utils.log(color, debug_prefix, "Creating Core()")
-        self.core = Core(self.context, self.utils, self.controller, self.waifu2x, self.d2xcpp, self.processing)
+        self.utils.log(color, 3, debug_prefix, "Creating Core()")
+        self.core = Core(self.context, self.utils, self.controller, self.waifu2x, self.d2xcpp, self.processing, self.stats)
 
         # Vapoursynth wrapper
-        #self.utils.log(color, debug_prefix, "Creating VapourSynthWrapper()")
-        #self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
+        self.utils.log(color, 3, debug_prefix, "Creating VapourSynthWrapper()")
+        self.vapoursynth_wrapper = VapourSynthWrapper(self.context, self.utils, self.controller)
 
     # This function mainly configures things before upscaling and verifies stuff,
     # sees if it's a resume session, etc
     def setup(self):
-
-        self.utils.log(phasescolor, "# # [Setup phase] # #")
-
+        
         debug_prefix = "[Dandere2x.setup]"
 
-        self.utils.log(color, debug_prefix, "Creating sessions directory if it doesn't exist [%s]" % self.context.sessions_folder)
+        self.utils.log(colors["phases"], 3, debug_prefix, "# # [Setup phase] # #")
+
+        self.utils.log(color, 3, debug_prefix, "Creating sessions directory if it doesn't exist [%s]" % self.context.sessions_folder)
         self.utils.mkdir_dne(self.context.sessions_folder)
 
         # Set and verify Waifu2x
-        self.utils.log(color, debug_prefix, "Setting corresponding Waifu2x")
+        self.utils.log(color, 3, debug_prefix, "Setting corresponding Waifu2x")
         self.waifu2x.set_corresponding()
 
-        self.utils.log(color, debug_prefix, "Verifying Waifu2x")
+        self.utils.log(color, 3, debug_prefix, "Verifying Waifu2x")
         self.waifu2x.verify()
 
-        self.utils.log(color, debug_prefix, "Generating run command from Waifu2x")
+        self.utils.log(color, 3, debug_prefix, "Generating run command from Waifu2x")
         self.waifu2x.generate_run_command()
 
         # Warn the user and log mindisk mode
         if self.context.mindisk:
-            self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [ON]")
+            self.utils.log(color, 2, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [ON]")
         else:
-            self.utils.log(color, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [OFF]")
+            self.utils.log(color, 2, debug_prefix, "[MINDISK] [WARNING] MINDISK MODE [OFF]")
 
         # Check if context_vars file exist and is set to be resume
         # If force argument is set, force not resume session
         if self.context.force:
-            self.utils.log(rgb(255,100,0), debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
+            self.utils.log(colors["hard_warning"], 0, debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
             self.context.resume = False
         else:
-            self.utils.log(color, debug_prefix, "Checking if is Resume session")
+            self.utils.log(color, 1, debug_prefix, "Checking if is Resume session")
             self.context.resume = self.utils.check_resume()
 
 
@@ -155,26 +157,26 @@ class Dandere2x():
         if not self.context.resume:
 
             # Log and reset session directory
-            self.utils.log(color_by_name("li_red"), debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
+            self.utils.log(colors["li_red"], 0, debug_prefix, "NOT RESUME SESSION, deleting session [%s]" % self.context.session_name)
             self.utils.rmdir(self.context.session)
 
             # Check dirs
-            self.utils.log(color, debug_prefix, "Checking directories")
+            self.utils.log(color, 3, debug_prefix, "Checking directories")
             self.utils.check_dirs()
 
             # Reset files
-            self.utils.log(color, debug_prefix, "Reseting files")
+            self.utils.log(color, 3, debug_prefix, "Reseting files")
             self.utils.reset_files()
 
             # Debugging, show static files
-            self.utils.log(color, debug_prefix, "Showing static files")
+            self.utils.log(color, 3, debug_prefix, "Showing static files")
             self.utils.show_static_files()
 
             # Get video info
-            self.utils.log(color, debug_prefix, "Getting video info")
+            self.utils.log(color, 3, debug_prefix, "Getting video info")
             self.video.get_video_info()
 
-            self.utils.log(color, debug_prefix, "Showing video info")
+            self.utils.log(color, 3, debug_prefix, "Showing video info")
             self.video.show_info()
 
             # DEPRECATED
@@ -187,7 +189,7 @@ class Dandere2x():
             # self.math.get_a_valid_input_resolution()
 
             # Save vars of context so d2x_cpp can use them and we can resume it later
-            self.utils.log(color, debug_prefix, "Saving Context vars to file")
+            self.utils.log(color, 3, debug_prefix, "Saving Context vars to file")
             self.context.save_vars()
 
             # Apply pre vapoursynth filter
@@ -206,38 +208,28 @@ class Dandere2x():
                 # # As something like a transpose can modify the video resolution we get the new info
 
                 # Get video info
-                self.utils.log(color, debug_prefix, "Getting new video info [Vapoursynth can modify resolution]")
+                self.utils.log(color, 3, debug_prefix, "Getting new video info [Vapoursynth can modify resolution]")
                 self.video.get_video_info()
 
-                self.utils.log(color, debug_prefix, "Showing new video info")
+                self.utils.log(color, 3, debug_prefix, "Showing new video info")
                 self.video.show_info()
-
-                # If we have already applied pre noise with ffmpeg, delete the old noisy file
-                if self.context.apply_pre_noise:
-                    if self.context.mindisk:
-                        self.utils.log(color, debug_prefix, "[MINDISK] Deleting noisy video [%s]" % self.context.noisy_video)
-                        self.utils.delete_file(self.context.noisy_video)
-                    else:
-                        self.utils.log(color, debug_prefix, "Mindisk mode OFF, DO NOT delete noisy video [%s]" % self.context.noisy_video)
 
             # Welp we don't need to add previous upscaled video if we're just starting
             self.video.ffmpeg.pipe_one_time(self.utils.get_partial_video_path())
 
         # IS RESUME SESSION, basically load instructions from the context saved vars
         else:
-            self.utils.log(color_by_name("li_red"), debug_prefix, "IS RESUME SESSION")
+            self.utils.log(color_by_name("li_red"), debug_prefix, 0, "IS RESUME SESSION")
 
-            self.utils.log(color, debug_prefix, "[FAILSAFE] DELETING RESIDUAL, UPSCALE DIR AND PLUGINS INPUT FILE")
+            self.utils.log(color, 1, debug_prefix, "[FAILSAFE] DELETING RESIDUAL, UPSCALE DIR AND PLUGINS INPUT FILE")
 
             self.utils.rmdir(self.context.residual)
             self.utils.rmdir(self.context.upscaled)
 
-            self.utils.reset_file(self.context.d2x_cpp_plugins_out)
-
-            self.utils.log(color, debug_prefix, "[FAILSAFE] REGENERATING DIRS")
+            self.utils.log(color, 1, debug_prefix, "[FAILSAFE] REGENERATING DIRS")
             self.utils.check_dirs()
 
-            self.utils.log(color, debug_prefix, "Loading Context vars from context_vars file")
+            self.utils.log(color, 1, debug_prefix, "Loading Context vars from context_vars file")
             self.context.load_vars_from_file(self.context.context_vars)
 
             self.video.save_last_frame_of_video_ffmpeg(self.utils.get_last_partial_video_path(), self.context.resume_video_frame)
@@ -255,7 +247,7 @@ class Dandere2x():
         if self.context.write_only_debug_video:
             self.context.mindisk = False
             self.d2xcpp.generate_run_command()
-            self.utils.log(color, debug_prefix, "WRITE ONLY DEBUG VIDEO SET TO TRUE, CALLING CPP AND QUITTING")
+            self.utils.log(color, 0, debug_prefix, "WRITE ONLY DEBUG VIDEO SET TO TRUE, CALLING CPP AND QUITTING")
             self.context.last_processing_frame = 0
             self.d2xcpp.run()
             self.controller.exit()
@@ -271,32 +263,22 @@ class Dandere2x():
         # DEPRECATED self.video.frame_extractor.setup_video_input(self.context.input_file)
         # DEPRECATED self.video.frame_extractor.set_current_frame(self.context.last_processing_frame)
 
-        self.utils.log(phasescolor, "# # [Run phase] # #")
+        self.utils.log(colors["phases"], 3, debug_prefix, "# # [Run phase] # #")
 
         self.core.start()
-
-        self.core.get_d2xcpp_vectors()
 
         self.context.resume = True
 
         # Show the user we're still alive
-
-        since_started = self.context.total_upscale_time
-
         while True:
             if self.controller.stop:
                 break
 
             if self.controller.upscale_finished:
                 break
-
-            self.utils.log(color, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
-
-            if since_started == 50000:
-                self.context.resume = True
-                self.context.save_vars()
-                self.controller.exit()
-                return 0
+            
+            if not self.context.show_stats:
+                self.utils.log(color, 1, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
 
             self.context.total_upscale_time += 1
             time.sleep(1)
@@ -308,7 +290,7 @@ class Dandere2x():
             partials = len(os.listdir(self.context.partial))
 
             if partials == 1:
-                self.utils.move(self.context.partial + "0.mkv", self.context.upscaled_video)
+                self.utils.rename(self.context.partial + "0.mkv", self.context.upscaled_video)
 
             elif partials > 1:
                 # If we have two or more partials video
@@ -318,13 +300,13 @@ class Dandere2x():
                 self.utils.rmdir(self.context.partial)
 
             else:
-                self.utils.log(color, debug_prefix, "No partials were found in [%s]" % self.context.partial)
+                self.utils.log(color, 0, debug_prefix, "[ERROR] No partials were found in [%s]" % self.context.partial)
                 return -1
 
             # Apply post vapoursynth filter as the upscale finished
             if self.context.use_vapoursynth:
 
-                self.utils.log(color, debug_prefix, "APPLYING POST VAPOURSYNTH FILTER")
+                self.utils.log(color, 1, debug_prefix, "APPLYING POST VAPOURSYNTH FILTER")
 
                 if self.context.use_vapoursynth:
                     self.vapoursynth_wrapper.apply_filter(
@@ -348,23 +330,21 @@ class Dandere2x():
             self.utils.delete_file(self.context.upscaled_video)
             self.utils.rename(self.context.joined_audio, self.context.output_file)
 
-            self.utils.log(color, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
+            self.utils.log(color, 1, debug_prefix, "Total upscale time: %s" % self.context.total_upscale_time)
             
-            self.utils.log(color, debug_prefix, "Moving session log to root Dandere2x folder and Removing session folder [%s]" % self.context.session)
+            self.utils.log(color, 1, debug_prefix, "Moving session log to root Dandere2x folder and Removing session folder [%s]" % self.context.session)
             self.utils.rename(self.context.logfile, self.context.logfile_last_session)
 
             self.utils.logfile = self.context.logfile_last_session
             self.utils.rmdir(self.context.session)
 
-            self.controller.exit()
-
+            #self.controller.exit()
+            
             # Happy upscaled video :)
 
         else:
             # Save progress for later resuming
             self.context.save_vars()
-
-
 
 
 if __name__ == "__main__":

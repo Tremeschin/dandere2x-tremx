@@ -9,10 +9,8 @@ if __name__ == "__main__":
 
     utils = Utils()
 
-    print("NOTE: Not a single argument is required, will load the settings.yaml configurations and overwrite them with the user provided ones")
-
     # Create ArgumentParser
-    args = argparse.ArgumentParser(description='Arguments for Dandere2x CLI')
+    args = argparse.ArgumentParser(description='Arguments for Dandere2x CLI, NOTE: Not a single argument is required, will load the settings.yaml configurations and overwrite them with the user provided ones')
 
     # # Arguments
 
@@ -66,11 +64,11 @@ if __name__ == "__main__":
 
     if not args["waifu2x"] == None:
         user_modified.append("waifu2x=\"%s\"" % args["waifu2x"])
-        config["waifu2x_type"] = args["waifu2x"]
+        config["waifu2x"]["waifu2x_type"] = args["waifu2x"]
 
     if not args["block_size"] == None:
         user_modified.append("block_size=\"%s\"" % args["block_size"])
-        config["processing"]["block_size"] = args["block_size"]
+        config["block_matching"]["block_size"] = args["block_size"]
 
     if not args["denoise_level"] == None:
         user_modified.append("denoise_level=\"%s\"" % args["denoise_level"])

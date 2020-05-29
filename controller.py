@@ -22,10 +22,11 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from color import rgb
+from color import colors
+import sys
 
 
-color = rgb(240, 100, 64)
+color = colors["controller"]
 
 
 class Controller():
@@ -44,16 +45,18 @@ class Controller():
 
         debug_prefix = "[Controller.exit]"
 
-        self.utils.log(color, debug_prefix, "Controller exit called")
+        self.utils.log(color, 1, debug_prefix, "Controller exit called")
 
         if not self.upscale_finished:
             if not self.context.resume:
-                self.utils.log(color, debug_prefix, "Setting resume=True as we're closing")
+                self.utils.log(color, 0, debug_prefix, "Setting resume=True as we're closing")
                 self.context.resume = True
         else:
-            self.utils.log(color, debug_prefix, "Exiting as upscale finished, Goodbye Dandere!!")
+            self.utils.log(color, 0, debug_prefix, "Exiting as upscale finished, Goodbye Dandere!!")
 
         self.stop = True
+
+        sys.exit(0)
 
 if __name__ == "__main__":
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

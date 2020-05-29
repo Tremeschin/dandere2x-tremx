@@ -19,10 +19,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
-from color import color_by_name
+from color import colors
 
 
-color = color_by_name("li_blue")
+color = colors["blue"]
 
 
 class Dandere2xMath():

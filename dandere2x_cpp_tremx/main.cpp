@@ -136,7 +136,7 @@ namespace residual_functions {
                 for(int x=0; x < dimensions[0]; x++) {
 
                     // If out of bounds, exit this loop
-                    if (count >= n_blocks) {
+                    if (count == n_blocks) {
                         goto exit_iteration;
                     }
 
@@ -263,8 +263,6 @@ int process_video(const std::string video_path,
                   const int block_size,
                   const int width,
                   const int height,
-                  const std::string output_d2x_file,
-                  const std::string output_vectors_path,
                   const int start_frame,
                   const int bleed,
                   const std::string residuals_output,
@@ -277,15 +275,6 @@ int process_video(const std::string video_path,
 {
 
     std::string debug_prefix = "[main.cpp/process_video] ";
-
-    // // Set up output file.d2x
-    std::ofstream output_file;
-
-    // Open file in append mode
-    output_file.open(output_d2x_file, std::ios_base::app);
-
-    // Open file in overwrite mode
-    // output_file.open(output_d2x_file);
 
     // // Get iteration info on how much to break the video into blocks
     int width_iterations = std::ceil(static_cast<double>(width) / block_size);
@@ -306,38 +295,31 @@ int process_video(const std::string video_path,
 
     // Generate and write block vectors to file
     {
-        // The output vectors file
-        std::ofstream output_vectors_file;
-
-        output_vectors_file.open(output_vectors_path);
-
         int vector_id = 0;
 
         for (int y=0; y < height_iterations; y++) {
 
-            start_y = (y * block_size)*2;
-            end_y = start_y + (block_size*2);
+            start_y = (y * block_size);
 
             // If y it surpasses the height
-            end_y = std::min((height*2), end_y);
+            end_y = std::min(height, start_y + block_size);
+
+            start_y *= 2;
+            end_y *= 2;
 
             // Begin slice image into blocks
             for (int x=0; x < width_iterations; x++) {
 
-                start_x = (x * block_size)*2;
-                end_x = start_x + (block_size*2);
+                start_x = (x * block_size);
+                end_x = std::min(width, start_x + block_size);
 
-                // If x it surpasses the width
-                end_x = std::min((width*2), end_x);
+                start_x *= 2;
+                end_x *= 2;
 
-                output_vectors_file << vector_id << ";(" << start_y << "," << start_x << "," << end_y-1 << "," << end_x-1 << ")\n";
+                std::cout << "|vector;" << vector_id << ";" << start_y << "," << start_x << "," << end_y << "," << end_x << std::endl;
                 vector_id++;
             }
         }
-        // Signal Python we ended
-        output_vectors_file << "END";
-        output_vectors_file.flush();
-        output_vectors_file.close();
     };
 
     // // Set up video
@@ -414,15 +396,13 @@ int process_video(const std::string video_path,
     while (true) {
 
         // The string we're going to write the position of the block vectors we matched
-        next_output_newline = "pframe;" + std::to_string(count_frame) + "-";
+        next_output_newline = "|blocks;" + std::to_string(count_frame) + ";";
 
         video >> frame;
         
         if (frame.empty()) {
             std::cout << debug_prefix << "Some frame is empty, exiting.." << std::endl;
-            output_file << "end;" + std::to_string(count_frame) + "-";
-            output_file.flush();
-            output_file.close();
+            std::cout << "|end;" + std::to_string(count_frame) + ";" << std::endl;
             return 0;
         }  
 
@@ -441,14 +421,6 @@ int process_video(const std::string video_path,
         if (write_only_debug_video) {
             debug_frame = frame.clone();
         }
-
-        // <++> EXPERIMENTAL NOISE
-        // WITHOUT Writing debug frame: [238/238], (Need / Don't need) upscaling: [51474/195174], Total blocks: [246649], Recylcled percentage: 79.1303
-        // WITH Writing debug frame: [238/238], (Need / Don't need) upscaling: [54365/192283], Total blocks: [246649], Recylcled percentage: 77.9582
-        // GaussianBlur( frame, frame, cv::Size( 3, 3 ), 0, 0 );
-
-        // Denoising is too slow :(
-        // cv::fastNlMeansDenoising(frame, frame, 10, 7, 21);
 
         remaining_frames = total_frame_count - count_frame;
 
@@ -480,18 +452,12 @@ int process_video(const std::string video_path,
                 bleeded_start_x = (x * block_size);
                 bleeded_start_y = (y * block_size);
 
-                //bleeded_end_x = std::min(width + (2*bleed),  bleeded_start_x + (2*bleed) + block_size);
-                //bleeded_end_y = std::min(height + (2*bleed), bleeded_start_y + (2*bleed) + block_size);
-
-                bleeded_end_x = bleeded_start_x + (2*bleed) + block_size;
-                bleeded_end_y = bleeded_start_y + (2*bleed) + block_size;
-
                 // Generate the bleeded crop
                 cv::Rect bleeded_crop = cv::Rect(
                     bleeded_start_x,
                     bleeded_start_y,
-                    (bleeded_end_x - bleeded_start_x),
-                    (bleeded_end_y - bleeded_start_y)
+                    block_size + (2*bleed),
+                    block_size + (2*bleed)
                 );
 
                 //std::cout << "bleeded_start_x: " << bleeded_start_x << ", bleeded_stary_y: " << bleeded_start_y
@@ -503,7 +469,6 @@ int process_video(const std::string video_path,
                 // Raw MSE between two blocks
                 raw_block_mse = calculate_mse(block, last_matched_block);
                 raw_block_mse /= block.total();
-
 
                 // The mean color of this frame will be the residual "blank" canvas to reduce black bleed
                 // While the mean pixel values will determine the mse threshold based on dark/bright levels
@@ -530,7 +495,7 @@ int process_video(const std::string video_path,
                         )
                     );
 
-                    next_output_newline += ";" + std::to_string(block_id);
+                    next_output_newline += "," + std::to_string(block_id);
 
                     // Create bleeded block and add it to the upscaling list
                     bleeded_block = cv::Mat(bleed_croppable_frame, bleeded_crop);
@@ -539,9 +504,6 @@ int process_video(const std::string video_path,
                     //std::cout << raw_block_mse << " > " << compressed_mse << " - " << matched_blocks.size() << std::endl;
 
                     if (write_only_debug_video) {
-
-                        //black_block.copyTo(debug_frame(cv::Rect(start_x, start_y, black_block.cols, black_block.rows)));
-
                         black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(0, 0, 0, 120));
                         overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
                     }
@@ -572,12 +534,9 @@ int process_video(const std::string video_path,
                       << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << static_cast<double>(100)*dont_need_upscaling / total_blocks << std::endl;
         }
 
-        next_output_newline += '\n';
-
         // <++>
         if (!write_only_debug_video) {
-            output_file << next_output_newline;
-            output_file.flush();
+            std::cout << next_output_newline << std::endl;
         }
 
         // // Make the input residual image
@@ -596,6 +555,7 @@ int process_video(const std::string video_path,
             while (mindisk && utils::file_exists(residual_name_mindisk)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
+
             cv::imwrite(residual_name, residual);
         }
 
@@ -609,8 +569,6 @@ int process_video(const std::string video_path,
 
         count_frame++;
     }
-
-    output_file.close();
 }
 
 
@@ -619,7 +577,7 @@ int main(int argc, char** argv) {
     std::string debug_prefix = "[main.cpp/main] ";
 
     // Failsafe number of arguments
-    const int expected_args = 16;
+    const int expected_args = 14;
 
     std::cout << debug_prefix << "You have entered the following arguments:" << "\n\n";
 
@@ -638,8 +596,6 @@ int main(int argc, char** argv) {
      * - block_size
      * - width
      * - height
-     * - output file.d2x
-     * - output block_id and vectors
      * - start_frame
      * - bleed
      * - residuals_output
@@ -657,23 +613,20 @@ int main(int argc, char** argv) {
     int width = atoi(argv[3]);
     int height = atoi(argv[4]);
 
-    std::string output_d2x_file = argv[5];
-    std::string output_vectors_path = argv[6];
+    int start_frame = atoi(argv[5]);
+    int bleed = atoi(argv[6]);
 
-    int start_frame = atoi(argv[7]);
-    int bleed = atoi(argv[8]);
+    std::string residuals_output = argv[7];
 
-    std::string residuals_output = argv[9];
+    int mindisk_argv = atoi(argv[8]);
 
-    int mindisk_argv = atoi(argv[10]);
+    int zero_padding = atoi(argv[9]);
+    int write_only_debug_video_argv = atoi(argv[10]);
 
-    int zero_padding = atoi(argv[11]);
-    int write_only_debug_video_argv = atoi(argv[12]);
+    std::string debug_video_output = argv[11];
 
-    std::string debug_video_output = argv[13];
-
-    double dark_mse_threshhold = atof(argv[14]);
-    double bright_mse_threshhold = atof(argv[15]);
+    double dark_mse_threshhold = atof(argv[12]);
+    double bright_mse_threshhold = atof(argv[13]);
 
     bool write_only_debug_video;
     bool mindisk;
@@ -685,7 +638,6 @@ int main(int argc, char** argv) {
         std::cout << debug_prefix << "block_size: " << block_size << '\n';
         std::cout << debug_prefix << "width: " << width << '\n';
         std::cout << debug_prefix << "height: " << height << '\n';
-        std::cout << debug_prefix << "output_vectors_path: \"" << output_vectors_path << "\"\n";
         std::cout << debug_prefix << "start_frame: " << start_frame << '\n';
         std::cout << debug_prefix << "bleed: " << bleed << '\n';
         std::cout << debug_prefix << "residuals_output: " << residuals_output << '\n';
@@ -738,8 +690,6 @@ int main(int argc, char** argv) {
         block_size,
         width,
         height,
-        output_d2x_file,
-        output_vectors_path,
         start_frame,
         bleed,
         residuals_output,
