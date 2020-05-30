@@ -219,7 +219,7 @@ class Dandere2x():
 
         # IS RESUME SESSION, basically load instructions from the context saved vars
         else:
-            self.utils.log(color_by_name("li_red"), debug_prefix, 0, "IS RESUME SESSION")
+            self.utils.log(colors["li_red"], debug_prefix, 0, "IS RESUME SESSION")
 
             self.utils.log(color, 1, debug_prefix, "[FAILSAFE] DELETING RESIDUAL, UPSCALE DIR AND PLUGINS INPUT FILE")
 

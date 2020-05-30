@@ -43,7 +43,7 @@ class Dandere2xStats():
 
         self.frame_times = [0 for _ in range(self.context.average_last_N_frames)]
 
-        self.precision = 3
+        self.precision = 4
 
     def start(self):
 
@@ -108,13 +108,17 @@ class Dandere2xStats():
         # Self explanatory I guess?
         average_all = time_took_until_now / currentframe
 
-        average_last_10 = round(average_last_10, self.precision)
-        self.context.average_last_N_frames = round(self.context.average_last_N_frames, self.precision)
-        average_last_n = round(average_last_n, self.precision)
-        average_all = round(average_all, self.precision)
+        if average_all == 0:
+            fps = "NaN"
+        else:
+            fps = f"%.{self.precision}f" % (1/average_all)
+
+        average_last_10 = "%.4f" % average_last_10
+        average_last_n = f"%.{self.precision}f" % average_last_n
+        average_all_round = f"%.{self.precision}f" % average_all
 
         # The text to set the widget to
-        average_text = f"Average last N frames:   [10 :  {average_last_10} sec/frame]    [{self.context.average_last_N_frames} : {average_last_n} sec/frame]    [ALL : {average_all} sec/frame]"
+        average_text = f"Average last N frames:  [10: {average_last_10} sec/frame]  [{self.context.average_last_N_frames}: {average_last_n} sec/frame]  [ALL: {average_all_round} sec/frame = {fps} fps]"
 
 
         #   ETA
@@ -129,7 +133,7 @@ class Dandere2xStats():
 
         now_plus_eta = str(datetime.datetime.now() + datetime.timedelta(seconds = eta_time_number))[:-7]
 
-        eta_text = f"Total Time: [{tt_time}]    EST: [{eta_time}]  -->  Date will be [{now_plus_eta}]"
+        eta_text = f"Total Time: [{tt_time}]  EST: [{eta_time}] --> Date will be [{now_plus_eta}]"
 
         return [progress_text, average_text, eta_text]
 

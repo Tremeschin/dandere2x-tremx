@@ -26,16 +26,17 @@
 
 
 
-############################################################################################
-#                                                                                          #
-# IF UNSURE DO NOT CHANGE THE DEFAULTS SETTINGS, SPECIALLY BLEED, TILE SIZE AND BLOCK SIZE #
-#                                                                                          #
-############################################################################################
+##############################################################################################
+##                                                                                          ##
+## IF UNSURE DO NOT CHANGE THE DEFAULTS SETTINGS, SPECIALLY BLEED, TILE SIZE AND BLOCK SIZE ##
+##                                                                                          ##
+##############################################################################################
 
 
 
 basic:
-  input_file: samples/yn_moving_480.mkv
+  # I highly recommend upscaling this "yn_moving_480.mkv" sample for testing if everything is working before a big session
+  input_file: samples/yn_moving480.mkv
 
   # "auto" adds a "2x_" prefix to the filename and sets the output to the same directory
   output_file: auto  # [auto]
@@ -65,8 +66,26 @@ block_matching:
   # dark and bright are determined by the mean pixel value of every channel on a frame
   # and then apply a linear function to get the final threshold, 0=dark, 255=bright
   # This seems to make block matching better as darker frames not a lot of colors are moving
-  dark_threshold: 0.0035  # [0.0035]
-  bright_threshold: 0.0045  # [0.0045]
+  #
+  # Suggested values:
+  #   
+  #   [High quality] Almost none bad blocks but quite a few wrong matched and upscaled ones:
+  #      Good for very subtle moving / gradient changes in the source file
+  #      - dark_threshold: 0.0035
+  #      - bright_threshold: 0.0045
+  #
+  #   [Medium quality] Minor bad blocks on either anime / IRL and few wrong matched and upscaled:
+  #      Good for a general standpoint, though with slow transitions the blocks may be a bit noticeable
+  #      - dark_threshold: 0.01
+  #      - bright_threshold: 0.015
+  #
+  #   [Low quality] Treshold pretty high, only a small "big" change in the blocks will be processed
+  #      Good for a slideshow / very static anime or potentially bad encoded videos?
+  #      - dark_threshold: 0.025
+  #      - bright_threshold: 0.027
+  #
+  dark_threshold: 0.01  # [0.01]
+  bright_threshold: 0.015  # [0.015]
 
   # A "over-crop" of the blocks in the original source to reduce blockiness as Waifu2x bleeds a bit on the residuals
   #  A quick guide on the values:

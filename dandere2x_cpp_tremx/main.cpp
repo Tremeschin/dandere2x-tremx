@@ -504,7 +504,7 @@ int process_video(const std::string video_path,
                     //std::cout << raw_block_mse << " > " << compressed_mse << " - " << matched_blocks.size() << std::endl;
 
                     if (write_only_debug_video) {
-                        black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(0, 0, 0, 120));
+                        black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(255, 0, 0, 120));
                         overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
                     }
 
@@ -522,7 +522,7 @@ int process_video(const std::string video_path,
             char c=(char)cv::waitKey(25);
             if(c==27)
                 break;
-            //cv::imshow( "Frame", debug_frame );
+            cv::imshow( "Frame", debug_frame );
 
             // <++>
             if (true) {
