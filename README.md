@@ -48,79 +48,13 @@ No releases available right now, it's still very much in WIP and changing quite 
 
 #### Running from source
 
-You'll need to install Python 3.8, be sure to check the box to add Python to PATH while installing it: https://www.python.org/ 
-
-Now either download or clone the repository, there's a download button on the main repository page or you could install git and open a git shell into a folder and `git clone https://github.com/Tremeschin/dandere2x-tremx`
-
-Now open a shell into the `dandere2x-tremx` folder, run `pip install -r requirements.txt`
-
-You'll need to download the externals dependencies, luckily I've set up a repo with all the files required so just run `python get_externals.py` and you'll be prompted to download the dependencies.  
-
-You'll definitely want to download "Dandere2x C++", "FFmpeg + FFprobe" and one Waifu2x "flavour", I've only implemented DeadSix27's C++ and nihui's ncnn Vulkan versions; I personally only use the Vulkan one as it's the less troublesome and faster one.
-
-You can run it by a (not really tested) CLI script, see `python dandere2x_cli.py -h` for the available options.
-
-I think it's better to edit the file `settings.yaml` to your needs and run Dandere2x with only `python dandere2x_cli.py`
-
-This file is well documented, you should be able to guide yourself through it.
-
-Be sure to read some pro tips at the end of this README as well :)
+Check out the wiki on [running Dandere2x on Windows](https://github.com/Tremeschin/dandere2x-tremx/wiki/Windows) from the source code!!
 
 
 ### Linux
 
-I currently _officially_ support distros with the pacman package manager as it's a bit tricky in my opinion to get a working Waifu2x on other distros, but it should work if you got one.
+Dandere2x on Linux must be run directly from the source code, head over to our wiki on [running Dandere2x on Linux](https://github.com/Tremeschin/dandere2x-tremx/wiki/Linux)!!
 
-#### Requirements
-
-You'll want four things:
-
-1. Waifu2x
-
-2. Python 3
-
-3. A compiler (g++ preferred from the gcc package)
-
-4. OpenCV 4 package
-
-For pacman it's easily done with the following:
-
-- `sudo pacman -S base-devel opencv python python-pip waifu2x-ncnn-vulkan-git`
-
-You probably need to install the Vulkan loaders / headers as well if you're on a AMD GPU (not sure about NVIDIA, they might be already bundles in their proprietary driver?): 
-
- - `sudo pacman -S vulkan-headers vulkan-icd-loader lib32-vulkan-icd-loader vulkan-radeon lib32-vulkan-radeon`
-
-There's two packages on the AUR for Waifu2x that I use, `waifu2x-ncnn-vulkan` and `waifu2x-converter-cpp`, I'd personally use the Vulkan one only as it is on the above command. If you GPU doesn't support 
-  
-You should already have Python 3 installed, if not the instructions are based on your package manager. You'll also need pip for installing the dependencies.
-
-Same for the OpenCV 4 and Waifu2x, you should be able to find yourself on yours distribution I hope.
-
-The compiler should be bundled in the base system of yours, just type `g++` on a terminal and see if it outputs anything, if not you should install the gcc package.
-  
-#### Building
-
-Now download this repository or `git clone https://github.com/Tremeschin/dandere2x-tremx` into a folder, then change current working directory to it.
-
-We'll be installing Python modules dependencies and compiling the C++ part of Dandere2x now, there's a script to compile and move the binary to the right place, don't worry, just have the dependencies set up correctly.
-
-If you like you can install these dependencies on a virtual env with Python, though I don't really use them / know how to :v
-
-- `pip install -r requirements.txt --user`
-
-- `sh ./dandere2x_cpp_tremx/linux_compile.sh`
-
-And you should be ready to go
-
-#### Running
-
-You can run it by a (not really tested) CLI script, see `python dandere2x_cli.py -h` for the available options.
-
-I think it's better to edit the file `settings.yaml` to your needs and run Dandere2x with only `python dandere2x_cli.py`
-
-This file is well documented, you should be able to guide yourself through it.
-  
 
 ## What is being worked on? 
 
@@ -144,6 +78,12 @@ This file is well documented, you should be able to guide yourself through it.
 - You can pass the argument `-f` to Dandere2x CLI to force not resume a session, ie. delete its folder and start up again if anything go wrong: `python dandere2x_cli.exe -f`
 
 - Be sure to read carefully the comments on settings.yaml file as I don't have a proper wiki yet :)
+
+## Links
+
+Check out our [subreddit](https://www.reddit.com/r/Dandere2x/)
+
+We also have a [Telegram server](https://t.me/joinchat/KTRznBIPPNCbHkUqnwT8pA)
 
 ## Thanks to
 
