@@ -22,7 +22,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from color import colors
 
 
-color = colors["blue"]
+color = colors["white"]
 
 
 class Dandere2xMath():
@@ -43,6 +43,9 @@ class Dandere2xMath():
         This means that with this fixed 20 pixels, we actually "get" a lot
         more "area" in the 480p video compared to the 1080p. This is a way
         of "balancing" by getting a dynamic block_size which is set as a %.
+
+        Though with new variable block size on right and bottom corner,
+        it's not ideal for any (width or height) % block_size be a low value
         """
 
         debug_prefix = "[Dandere2xMath.set_block_size]"
@@ -50,70 +53,42 @@ class Dandere2xMath():
         # As percentages annoying to set manually
         # This one looks like a good number
         if self.context.block_size == "auto":
-            self.context.block_size = "1.85%"
 
-        # self.context.* too long, YOLO
-        block_size = self.context.block_size
-        resolution = self.context.resolution
-        width = resolution[0]
-        height = resolution[1]
+            # self.context.* too long
+            resolution = self.context.resolution
+            width = resolution[0]
+            height = resolution[1]
 
-        # If the block_size is percentage-based, we basically round,
-        # divide, multiply a few stuff to get a theoric block size
-        # and "fit" it to the nearest 4 multiple as common resolutions
-        # are really 4-multiple based
+            # If the block_size is percentage-based, we basically round,
+            # divide, multiply a few stuff to get a theoric block size
+            # and "fit" it to the nearest 4 multiple as common resolutions
+            # are really 4-multiple based
 
-        if "%" in str(self.context.block_size):
-            percentage = round(float(block_size.replace("%", "")) / 100, 6)
-            video_dimensions_min = min(height, width)
-            theoric_block_size = round(video_dimensions_min * percentage, 3)
-            rounded_theoric = round(theoric_block_size)
+            percentage = round(1.85 / 100, 6)
+            block_size = round( min(height, width) * percentage )
 
-            # Round $n$ to the nearest $base$ multiple ==> round = base * round(x/base)
-            base = 4
-            block_size = base * round(rounded_theoric / base)
-
-            self.utils.log(color, debug_prefix, "Block size set to percentage:", percentage)
-            self.utils.log(color, debug_prefix, "Video height:", height, " - Video width:", width)
-            self.utils.log(color, debug_prefix, "Minimum value of video dimensions is:", video_dimensions_min)
-            self.utils.log(color, debug_prefix, "Theoric block_size:", theoric_block_size)
-            self.utils.log(color, debug_prefix, "Rounded theoric block_size:", rounded_theoric)
-            self.utils.log(color, debug_prefix, "Fitted to nearest 4 multiple:", block_size)
+            self.utils.log(color, 4, debug_prefix, "Block size set to percentage:", percentage)
+            self.utils.log(color, 4, debug_prefix, "Video height:", height, " - Video width:", width)
 
             if block_size < 16:
-                self.utils.log(color, debug_prefix, "Block_size is lower than 16, not ideal, hard limitting to 16.")
+                self.utils.log(color, 4, debug_prefix, "Block_size is lower than 16, not ideal, hard limitting to 16.")
                 block_size = 16
 
-        self.utils.log(color, debug_prefix, "Setting final block_size to %s" % block_size)
-        self.context.block_size = block_size
+            self.utils.log(color, 1, debug_prefix, "Block size auto is [%s]" % block_size)
+            self.context.block_size = block_size
 
-    # Function that sets the video resolution to the nearest multiple of the block_size
-    def get_a_valid_input_resolution(self):
+        else:
+            # Do not change block_size
+            self.utils.log(color, 4, debug_prefix, "Do not change block_size")
+            pass
 
-        debug_prefix = "[Dandere2xMath.get_a_valid_input_resolution]"
+        # Checks stupid right / bottom edges blocks
 
-        resolution = self.context.resolution
-        width = resolution[0]
-        height = resolution[1]
+        # Best case scenario, perfect fit
+        if (width % block_size == 0) and (height % block_size == 0):
+            return
 
-        block_size = self.context.block_size
-
-        trueblock_size_multiples = [block_size*i for i in range(int(max(width, height)/block_size)*2)]
-
-        # https://www.geeksforgeeks.org/python-find-closest-number-to-k-in-given-list/
-        def closest_number_to(n, lst):
-            return lst[min(range(len(lst)), key = lambda i: abs(lst[i]-n))]
-
-        closest_width = closest_number_to(width, trueblock_size_multiples)
-        closest_height = closest_number_to(height, trueblock_size_multiples)
-
-        self.utils.log(color, debug_prefix, "Valid output resolution:")
-
-        self.utils.log(color, self.context.indentation, "Original resolution: (%sx%s) (WxH)" % (width, height))
-        self.utils.log(color, self.context.indentation, "Recieved block_size: %s" % block_size)
-        self.utils.log(color, self.context.indentation, "New valid resolution: (%sx%s) (WxH)" % (closest_width, closest_height))
-
-        self.context.valid_resolution = [closest_width, closest_height]
+        self.utils.log(color, 1, debug_prefix, "[ERROR] BLOCK_SIZE AUTO: THERE IS NO ALGORITHM TO FIX NOT PERFECT BLOCK_SIZE MATCH ACCORDING TO THE RESOLUTION: HERE'S THE REMAINDERS [Width: %s] [Height: %s], UPSCALE SHALL CONTINUE, BUT IF THOSE ARE LOW VALUES (EXCEPT ZERO) CONSIDER CHANGING BLOCK_SIZE" % (width % block_size, height % block_size)) 
 
 
 if __name__ == "__main__":

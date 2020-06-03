@@ -29,6 +29,8 @@ import sys
 color = colors["controller"]
 
 
+# This class is more used on the block_match_data, vectors and threads
+# and communicating non static things between scripts
 class Controller():
     def __init__(self, utils, context):
 
@@ -57,6 +59,7 @@ class Controller():
         self.stop = True
 
         sys.exit(0)
+
 
 if __name__ == "__main__":
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

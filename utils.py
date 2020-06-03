@@ -57,6 +57,7 @@ class Utils():
     def set_context(self, context):
         self.context = context
 
+    # Get Controller
     def set_controller(self, controller):
         self.controller = controller
 
@@ -105,6 +106,7 @@ class Utils():
 
         debug_prefix = "[Utils.delete_file]"
 
+        # If it even exists
         if os.path.isfile(filename):
             
             self.log(color, 7, debug_prefix, "File exists, deleting it: [%s]" % filename)
@@ -112,6 +114,7 @@ class Utils():
             try:
                 os.remove(filename)
             except (PermissionError, FileNotFoundError):
+                # TODO: handle this better? Windows PermissionErrors?
                 self.log(color, 7,  debug_prefix, "PermissionError, FileNotFoundError deleting [%s]" % filename)
 
         else:
@@ -124,7 +127,7 @@ class Utils():
 
         basename = os.path.basename(path)
 
-        self.log(color, 2, debug_prefix, "Getting basename of [%s] = [%s]" % (path, basename))
+        self.log(color, 6   , debug_prefix, "Getting basename of [%s] = [%s]" % (path, basename))
 
         return basename
 
@@ -136,6 +139,7 @@ class Utils():
     # Wrapper for self.reset_file, resets the plain files from context
     def reset_files(self):
         for item in self.context.plain_files:
+            # Not healthy to reset partials
             if not "//NUM//" in item:
                 self.reset_file(item)
 
@@ -148,19 +152,22 @@ class Utils():
 
             self.log(color, 3, debug_prefix, "Removing dir: [%s]" % directory)
 
+            # Try removing with ignoring errors first..?
             shutil.rmtree(directory, ignore_errors=True)
 
+            # Not deleted?
             if os.path.isdir(directory):
                 self.log(color, 3, debug_prefix, "Error removing directory with ignore_errors=True, trying again")
 
+                # Remove without ignoring errors?
                 shutil.rmtree(directory, ignore_errors=False)
 
+                # Still exists? oops, better quit
                 if os.path.isdir(directory):
                     self.log(colors["error"], 0, debug_prefix, "COULD NOT REMOVE DIRECTORY: [%s]" % directory)
-                    self.exit()
+                    sys.exit(-1)
 
             self.log(color, 4, debug_prefix, "Removed successfully")
-
         else:
             self.log(color, 3, debug_prefix, "Directory exists, skipping... [%s]" % directory)
 
@@ -221,6 +228,7 @@ class Utils():
         # The default position of the logfile, we move it in a bit when we create Context
         self.logfile = self.ROOT + os.path.sep + "logs.log"
 
+        # Delete log file as it exists
         if os.path.isfile(self.logfile):
             print(color + debug_prefix, "Log file exists, deleting it: [%s]" % self.logfile, fg.rs)
             os.remove(self.logfile)
@@ -245,7 +253,8 @@ class Utils():
 
         self.log(color, 2, debug_prefix, "Setted logfile to [%s]" % new_logfile)
 
-
+    # Is this overengineered? Joins message into a str
+    # TODO: Simplify this?
     def log(self, color, loglevel_required, *message):
 
         # We do this because generating datetime on every log call might be expensive
@@ -255,8 +264,9 @@ class Utils():
                 return
         except Exception:
             pass
-    
-        now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S,%f")
+        
+        # When was this logged
+        now = datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S,%f")[:-3]
 
         processed_message = "[%s] " % now
 
@@ -281,7 +291,6 @@ class Utils():
         except Exception:
             with open(self.logfile, "a") as f:
                 f.write(processed_message + "\n")
-    
 
     # Safely load yaml file, just for cleaness of code
     def load_yaml(self, filename, log=True):
@@ -291,8 +300,10 @@ class Utils():
         if log:
             self.log(color, 2, debug_prefix, "Loading YAML file: [%s]" % filename)
 
+        # Open and load the YAML
         with open(filename, "r") as f:
             data = yaml.safe_load(f)
+
         return data
 
     # Save data to filename in yaml syntax
@@ -302,6 +313,7 @@ class Utils():
 
         self.log(color, 4, debug_prefix, "Saving to YAML file: [%s]" % filename)
 
+        # Open and save to YAML
         with open(filename, "w") as f:
             yaml.dump(data, f)
 
@@ -312,20 +324,26 @@ class Utils():
 
         self.log(color, 1, debug_prefix, "Checking")
 
+        # Does the context.context_vars file exist?
         if os.path.isfile(self.context.context_vars):
 
+            # Load the data into it
             data = self.load_yaml(self.context.context_vars)
 
+            # Is the key resume present?
             if "resume" in data:
 
                 text = "True" if data["resume"] else "False"
                 self.log(color, 1, debug_prefix, "Resume key in session vars: [%s]" % text)
 
+                # Return its real data, is or isn't resume?
                 return data["resume"]
 
+            # Does not contain resume keyword, probably blank file?
             self.log(color, 1, debug_prefix, "Resume key not in session vars: [False]")
             return False
         else:
+            # No file exist, assuming no previous session
             self.log(color, 1, debug_prefix, "Session vars file does not exist")
             return False
 
@@ -337,16 +355,18 @@ class Utils():
         self.log(color, 6, debug_prefix, "Waiting for file or diretory: [%s]" % path)
 
         while True:
-            if os.path.exists(path) or self.controller.stop:
-                if self.controller.stop:
-                    self.log(color, 4, debug_prefix, "Quitting waiting: [%s]" % path)
-                else:
-                    self.log(color, 6, debug_prefix, "Waited done: [%s]" % path)
+            # Path exist or controller says stop: break
+            if self.controller.stop:
+                self.log(color, 4, debug_prefix, "Quitting waiting: [%s]" % path)
+                break
+            if os.path.exists(path):
+                self.log(color, 6, debug_prefix, "Waited done: [%s]" % path)
                 break
             
+            # Wait or we'll hang this Python GIL thread
             time.sleep(self.context.wait_time)
 
-    # Rename file or directory
+    # Rename file or directory, basically move it with shutil will be less troublesome
     def rename(self, old, new):
 
         debug_prefix = "[Utils.rename]"
@@ -359,30 +379,20 @@ class Utils():
     def replace_by_dictionary(self, dictionary, replaced):
 
         # Debug info, show the original string to be replaced and the dictionary
-        if self.context.loglevel >= 3:
-            debug_prefix = "[Utils.replace_by_dictionary]"
+        debug_prefix = "[Utils.replace_by_dictionary]"
 
-            self.log(color, 5, debug_prefix, "Replacing string [\"%s\"] with dictionary:" % replaced)
+        self.log(color, 8, debug_prefix, "Replacing string [\"%s\"] with dictionary:" % replaced)
 
-            for key in list(dictionary.keys()):
-                self.log(color, 6, "··· |" + debug_prefix, "[\"%s\"] = [\"%s\"]" % (key, dictionary[key]))
-
+        for key in list(dictionary.keys()):
+            self.log(color, 8, self.context.indentation + debug_prefix, "[\"%s\"] = [\"%s\"]" % (key, dictionary[key]))
 
         # Actually replace the string we want
         for key in list( dictionary.keys() ):
             replaced = replaced.replace(key, dictionary[key])
 
-        self.log(color, 6, debug_prefix, "Replaced string: [\"%s\"]" % replaced)
+        self.log(color, 8, debug_prefix, "Replaced string: [\"%s\"]" % replaced)
 
         return replaced
-
-    # Get the md5 hash of a string or a pseudo-random number, just for unique identifying things in the future?
-    def md5(self, string):
-        if use_hashlib:
-            return hashlib.md5(string.encode()).hexdigest()
-        else:
-            a = 10e20
-            return random.randint(a, 9*a)
 
     # Get the next partial video path to pipe images
     def get_partial_video_path(self):
@@ -407,18 +417,19 @@ class Utils():
         # Sort the files numerically
         files = [int(x.replace(".mkv", "")) for x in files]
         files.sort()
-        file = [str(x) + ".mkv" for x in files][-1]
+        last_partial_file = [str(x) + ".mkv" for x in files][-1]
 
-        self.log(color, 1, debug_prefix, "Last partial is: [%s]" % file)
+        self.log(color, 1, debug_prefix, "Last partial is: [%s]" % last_partial_file)
 
-        last_partial_path = self.context.partial + file
+        last_partial_path = self.context.partial + last_partial_file
 
         return last_partial_path
 
-    # f("abc def ggf", 3) -> "ggf"
+    # get_nth_word("abc def ggf 23894d", 3) -> "ggf"
     def get_nth_word(self, string, N):
         return string.split(' ')[N-1]
 
+    # "asd23asd345" -> 23
     def get_first_number_of_string(self, string):
         return int(re.search(r'\d+', string).group())
 
@@ -446,18 +457,16 @@ class Utils():
                 # Get the first binary pointed by whereis TODO: is this right?
                 out = self.get_nth_word(out, 2)
 
-                # This is the binary from where we're going to execute waifu2x
+                # This is the binary from where we're going to execute upscaler
                 return out
 
             # Else search in externals as we do with Windows
             else:
 
                 self.log(colors["error"], 2, debug_prefix, "Couldn't find %s binary in PATH, searching in externals, is this right?" % wanted)
-
                 self.log(color, 2, debug_prefix, "Searching [%s] in ./externals/*" % wanted)
 
                 full_path_wanted = None
-
 
                 # Iterate into externals file tree
                 # for root, dirs, files (annoying warning messages and "_" is ignore as we don't use dirs)
@@ -473,7 +482,6 @@ class Utils():
                         # Hard debug
                         self.log(color, 5, debug_prefix, "[DEBUG] Scanning [%s] == [%s]" % (wanted, f))
 
-
                         # If wanted matches some file name we're looping
                         if wanted in f.lower():
 
@@ -485,19 +493,16 @@ class Utils():
                             # Exit "for every file in a folder" loop
                             break
 
-
                 # Nothing was found, exit
                 if full_path_wanted == None:
                     self.log(color, 0, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, wanted))
                     return None
-
 
                 # This will yield false on Linux if forcing windows mode for debugging
                 # because Windows is case insensitive and Linux case sensitive
                 if os.path.exists(full_path_wanted):
                     self.log(color, 2, debug_prefix, "Binary [%s] exists and is: [\"%s\"]" % (wanted, full_path_wanted))
                     return full_path_wanted
-
 
         # Search for "ROOT/externals/$wanted$.exe"
         elif self.context.os == "windows":
@@ -508,7 +513,6 @@ class Utils():
             self.log(color, 2, debug_prefix, "Searching [%s] in ./externals/*" % executable)
 
             full_path_executable = None
-
 
             # Iterate into externals file tree
             # for root, dirs, files (annoying warning messages and "_" is ignore as we don't use dirs)
@@ -534,7 +538,6 @@ class Utils():
 
                         # Exit "for every file in a folder" loop
                         break
-
 
             # Nothing was found, exit
             if full_path_executable == None:
@@ -576,24 +579,31 @@ class SubprocessUtils():
     def run(self, working_directory=None, env=None):
 
         debug_prefix = "[SubprocessUtils.run]"
-
         
         self.utils.log(color, 5, debug_prefix, "Popen SubprocessUtils with name [%s]" % self.name)
         
+        # Copy the environment if nothing was changed and passed as argument
         if env is None:
             env = os.environ.copy()
         
+        # Runs the subprocess based on if we set or not a working_directory
         if working_directory == None:
             self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE)
         else:
             self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE)
 
     # Get the newlines from the subprocess
+    # This is used for communicating Dandere2x C++ with Python, simplifies having dealing with files
     def realtime_output(self):
         while True:
+            # Read next line
             output = self.process.stdout.readline()
+
+            # If output is empty and process is not alive, quit
             if output == '' and self.process.poll() is not None:
                 break
+            
+            # Else yield the decoded output as subprocess send bytes
             if output:
                 yield output.strip().decode("utf-8")
 
@@ -620,8 +630,10 @@ class SubprocessUtils():
 
         debug_prefix = "[SubprocessUtils.is_alive]"
 
+        # Get the status of the subprocess
         status = self.process.poll()
 
+        # None? alive
         if status == None:
             return True
         else:

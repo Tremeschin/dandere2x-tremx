@@ -1,3 +1,24 @@
+"""
+===============================================================================
+
+Purpose: CLI interface for Dandere2x
+
+===============================================================================
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+
+===============================================================================
+"""
+
 from dandere2x import Dandere2x
 from utils import Utils
 
@@ -10,7 +31,7 @@ if __name__ == "__main__":
     utils = Utils()
 
     # Create ArgumentParser
-    args = argparse.ArgumentParser(description='Arguments for Dandere2x CLI, NOTE: Not a single argument is required, will load the settings.yaml configurations and overwrite them with the user provided ones')
+    args = argparse.ArgumentParser(description='Arguments for Dandere2x CLI, NOTE: Not a single argument is required, will load the settings.yaml configurations and overwrite them with the user provided ones. Not all arguments apply to every upscaler, see each one repo for more info.')
 
     # # Arguments
 
@@ -20,14 +41,15 @@ if __name__ == "__main__":
     args.add_argument("-i", "--input", required=False, help="(string) Input path of the video file to be upscaled")
     args.add_argument("-o", "--output", required=False, help="(string) Output path of the upscaled video | NOTE: Can be \"auto\", appends \"2x_\" at the filename of the input video")
 
-    args.add_argument("-w", "--waifu2x", required=False, help="(string) What Waifu2x vertion to use: [fake, vulkan, cpp, caffe]")
+    args.add_argument("-w", "--upscaler", required=False, help="(string) What upscaler vertion to use: [fake, vulkan, cpp, caffe]")
 
     args.add_argument("-b", "--block_size", required=False, help="(int) Block size Dandere2x will work with")
-    args.add_argument("-n", "--denoise_level", required=False, help="(int [0, 3]) How much denoise Waifu2x will apply")
-    args.add_argument("-t", "--tile_size", required=False, help="(int) Tile size Waifu2x will use")
+    args.add_argument("-n", "--denoise_level", required=False, help="(int [0, 3]) How much denoise upscaler will apply")
+    args.add_argument("-t", "--tile_size", required=False, help="(int) Tile size upscaler will use")
 
     args.add_argument("-d", "--debug_video", required=False, action="store_true", help="(solo) Only generate the debug video, WILL NOT UPSCALE")
 
+    args.add_argument("-c", "--config_file", required=False, help="(path) Use this config file, defaults to \"settings.yaml\" where this script is, can be absolute or relative path")
 
 
     # Parse args and make dictionary
@@ -37,18 +59,30 @@ if __name__ == "__main__":
         "force": args.force,
         "input": args.input,
         "output": args.output,
-        "waifu2x": args.waifu2x,
+        "upscaler": args.upscaler,
         "block_size": args.block_size,
         "denoise_level": args.denoise_level,
         "tile_size": args.tile_size,
-        "debug_video": args.debug_video
+        "debug_video": args.debug_video,
+        "config_file": args.config_file
     }
 
     user_modified = []
 
     # Build the config based on arguments
 
-    config = utils.load_yaml(utils.ROOT + os.path.sep + "settings.yaml", log=False)
+    config_file = args["config_file"]
+
+    if args["config_file"] == None:
+        config_file = utils.ROOT + os.path.sep + "settings.yaml"
+    else:
+        # If the user did not sent us a absolute path
+        if not os.path.isabs(config_file):
+            config_file = utils.ROOT + os.path.sep + config_file
+
+    print("Loading Dandere2x with config file: [%s]" % config_file)
+
+    config = utils.load_yaml(config_file, log=False)
 
     if args["force"]:
         user_modified.append("force=True")
@@ -62,9 +96,9 @@ if __name__ == "__main__":
         user_modified.append("output_file=\"%s\"" % args["output"])
         config["basic"]["output_file"] = args["output"]
 
-    if not args["waifu2x"] == None:
-        user_modified.append("waifu2x=\"%s\"" % args["waifu2x"])
-        config["waifu2x"]["waifu2x_type"] = args["waifu2x"]
+    if not args["upscaler"] == None:
+        user_modified.append("upscaler=\"%s\"" % args["upscaler"])
+        config["upscaler"]["upscaler_type"] = args["upscaler"]
 
     if not args["block_size"] == None:
         user_modified.append("block_size=\"%s\"" % args["block_size"])
@@ -72,17 +106,17 @@ if __name__ == "__main__":
 
     if not args["denoise_level"] == None:
         user_modified.append("denoise_level=\"%s\"" % args["denoise_level"])
-        config["waifu2x"]["denoise_level"] = args["denoise_level"]
+        config["upscaler"]["denoise_level"] = args["denoise_level"]
 
     if not args["tile_size"] == None:
         user_modified.append("tile_size=\"%s\"" % args["tile_size"])
-        config["waifu2x"]["tile_size"] = args["tile_size"]
+        config["upscaler"]["tile_size"] = args["tile_size"]
 
     if not args["debug_video"] == False:
         user_modified.append("debug_video=\"%s\"" % args["debug_video"])
-        config["debug"]["write_only_debug_video"] = args["debug_video"]
+        config["debug"]["write_debug_video"] = args["debug_video"]
 
-    print(args)
+    print("[DEBUG] ENTERED ARGS, PLEASE CHECK: ", args)
 
     # Run Dandere2x
     d2x = Dandere2x(config)

@@ -35,16 +35,22 @@ color = colors["context"]
 
 class Context():
 
-    def __init__(self, utils, config):
-        self.indentation = "··· |"
+    def __init__(self, utils, config, failsafe):
+
         debug_prefix = "[Context.__init__]"
 
+        # When logging isn't a simple line but something like a list or dictionary
+        self.indentation = "··· |"
+
+        # Context needs Utils for logging and works based on a config
         self.utils = utils
         self.config = config
 
+        # Failsafe module
+        self.failsafe = failsafe
+
         # Session
         self.force = self.config["danger_zone"]["force"]
-
 
         # Set the (static) rootfolder substitution for changing paths session folders
         self.rootfolder_substitution = "//ROOTFOLDER//"
@@ -52,67 +58,76 @@ class Context():
 
         # For absolute-reffering
         self.ROOT = self.utils.ROOT
+
+        # Get the operating system we're working with
         self.os = self.utils.get_os()
-
         self.utils.log(colors["warning"], 1, debug_prefix, "Got operating system: " + self.os)
-
-        # Load up the yaml file
-        self.utils.log(color, 2, debug_prefix, "Loading settings YAML file")
 
         # Loglevel
         self.loglevel = self.config["developer"]["loglevel"]
-
         self.utils.log(colors["warning"], 1, debug_prefix, "LOGLEVEL: [%s]" % self.loglevel)
 
-        # # # Static Variables # # #
-        self.utils.log(color, 2, debug_prefix, "Setting up static variables")
+        # # Load variables
 
-        # Load basic variables
+        # # # # See settings.yaml for a guide on the settings and what they are # # # #            
 
-        # # Video I/O
-
+        # Video I/O
         self.input_file = self.config["basic"]["input_file"]
         self.output_file = self.config["basic"]["output_file"]
+
+        # Session, "auto" is the input filename
         self.session_name = self.config["basic"]["session_name"]
+        self.input_filename = self.utils.get_basename(self.input_file)
+
+        # Windows uses ugly back slashes, failsafe
+        if self.os == "windows":
+            self.input_file = self.input_file.replace("/", "\\")
 
         # Block matching related
-
         self.block_size = self.config["block_matching"]["block_size"]
-
         self.bleed = self.config["block_matching"]["bleed"]
         self.dark_threshold = self.config["block_matching"]["dark_threshold"]
         self.bright_threshold = self.config["block_matching"]["bright_threshold"]
+        self.upscale_full_frame_threshold = self.config["block_matching"]["upscale_full_frame_threshold"]
 
-        self.input_filename = self.utils.get_basename(self.input_file)
+        # Upscaler settings
+        self.upscaler_type = self.config["upscaler"]["type"]
+        self.upscale_ratio = self.config["upscaler"]["upscale_ratio"]
+        self.denoise_level = self.config["upscaler"]["denoise_level"]
+        self.tile_size = self.config["upscaler"]["tile_size"]
+        self.upscaler_model = self.config["upscaler"]["model"]
+        self.load_proc_save = self.config["upscaler"]["load:proc:save"]
+        self.w2x_converter_cpp_jobs = self.config["upscaler"]["w2x_converter_cpp_jobs"]
+        self.linux_enable_mesa_aco_upscaler = self.config["upscaler"]["linux_enable_mesa_aco_upscaler"]
+
+        # realsr must have upscale_ratio=4 as it's the only option
+        if self.upscaler_type == "realsr":
+            self.utils.log(color, 0, debug_prefix, "[WARNING] USING REALSR UPSCALER, FORCING UPSCALE_RATIO=4 FOR CONVENIENCE")
+            self.upscale_ratio = 4
+
+        # See if selected upscaler type and ratio / denoise are compatible
+        self.failsafe.compatible_utype_uratio(self.upscaler_type, self.upscale_ratio)
+        self.failsafe.compatible_upscaler_denoise(self.upscaler_type, self.denoise_level)
 
         # If the user did not sent us a absolute path
         if not os.path.isabs(self.input_file):
             self.input_file = self.ROOT + os.path.sep + self.input_file
 
-        if not os.path.isfile(self.input_file):
-            self.utils.log(color, 0, debug_prefix, "[ERROR] INPUT FILE IS NOT A FILE")
-            exit()
-
-        # Output file can be auto, that is, append 2x_ at the start of the filename
-        if not self.output_file == "auto":
+        # Output file can be auto, that is, append $UPSCALE_RATIO$x_$UPSCALER_TYPE$ at the start of the filename
+        if self.output_file == "auto":
+            # This is already absolute path as we just set input_file to one
+            self.output_file = self.input_file.replace(self.input_filename, str(self.upscale_ratio) + "x_" + self.config["upscaler"]["type"] + "_" + self.input_filename)
+            self.utils.log(color, 1, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
+        else:
+            # Else if it was manually set, get the absolute path for it
             if not os.path.isabs(self.output_file):
                 self.output_file = self.ROOT + self.output_file
-        else:
-            self.output_file = self.input_file.replace(self.input_filename, "2x_" + self.input_filename)
-            self.utils.log(color, 1, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
-
+        
+        # Get the new output filename if it was set to auto
         self.output_filename = self.utils.get_basename(self.output_file)
 
-        # #
-
-        # "Global" or non-indented options as they're "major"
-        self.waifu2x_type = self.config["waifu2x"]["waifu2x_type"]
-        self.mindisk = self.config["danger_zone"]["mindisk"]
-
-        # Vapoursynth settings
-        self.use_vapoursynth = self.config["vapoursynth"]["enabled"]
-        self.vapoursynth_pre = self.config["vapoursynth"]["pre"]
-        self.vapoursynth_pos = self.config["vapoursynth"]["pos"]
+        # Check if input is file and output file directory exist, if not create it
+        self.failsafe.check_input_output(self.input_file, self.output_file)
 
         # # The special case where the session name is "auto",
         # so we set it according to the input file "a.mkv" -> "a"
@@ -123,18 +138,16 @@ class Context():
         self.average_last_N_frames = self.config["stats"]["average_last_N_frames"]
         self.show_stats = self.config["stats"]["show_stats"]
 
-        # Waifu2x settings
-        self.denoise_level = self.config["waifu2x"]["denoise_level"]
-        self.tile_size = self.config["waifu2x"]["tile_size"]
-        self.waifu2x_model = self.config["waifu2x"]["waifu2x_model"]
-        self.linux_enable_mesa_aco_waifu2x_vulkan = self.config["waifu2x"]["linux_enable_mesa_aco_waifu2x_vulkan"]
-
         # Create default variables
         self.resolution = []
         self.valid_resolution = []
         self.frame_rate = None
         self.frame_count = None
         self.frame_rate = None
+        self.resume = False
+        self.last_processing_frame = 0
+        self.zero_padding = 8  # We change this later on based on the frame_count
+        self.total_upscale_time = 0
 
         # Video related variables
         self.get_video_info_method = self.config["video"]["get_video_info_method"]
@@ -142,43 +155,44 @@ class Context():
         self.get_frame_rate_method = self.config["video"]["get_frame_rate_method"]
         self.get_resolution_method = self.config["video"]["get_resolution_method"]
 
-        # FFmpeg / FFprobe related
+        # # FFmpeg / FFprobe related
         self.deblock_filter = self.config["ffmpeg"]["deblock_filter"]
         self.encode_codec = self.config["ffmpeg"]["encode_codec"]
 
-        # # x264 encoding
+        # x264 encoding
         self.x264_preset = self.config["ffmpeg"]["x264"]["preset"]
         self.x264_tune = self.config["ffmpeg"]["x264"]["tune"]
         self.x264_crf = self.config["ffmpeg"]["x264"]["crf"]
 
-        # # Static developer vars across files
+        # Dandere2x C++ specific
+        self.mindisk = self.config["dandere2x_cpp"]["mindisk"]
+        self.write_debug_video = int(self.config["dandere2x_cpp"]["write_debug_video"])
+        self.show_debug_video_realtime = int(self.config["dandere2x_cpp"]["show_debug_video_realtime"])
+        self.show_block_matching_stats = int(self.config["dandere2x_cpp"]["show_block_matching_stats"])
+        self.only_run_dandere2x_cpp = int(self.config["dandere2x_cpp"]["only_run_dandere2x_cpp"])
+
+        # # Developer variables
 
         # How much time in seconds to wait for waiting operations like until_exist()
         self.wait_time = self.config["developer"]["wait_time_exists"]
-        self.waifu2x_wait_for_residuals = self.config["developer"]["waifu2x_wait_for_residuals"]
+        self.upscaler_wait_for_residuals = self.config["developer"]["upscaler_wait_for_residuals"]
+
+        # The range we'll delete the residuals
         self.safety_ruthless_residual_eliminator_range = self.config["developer"]["safety_ruthless_residual_eliminator_range"]
 
+        # Will we be writing logs?
         self.write_log = self.config["developer"]["write_log"]
 
-        # # # Literal constants
+        # Vapoursynth settings
+        self.use_vapoursynth = self.config["vapoursynth"]["enabled"]
+        self.vapoursynth_pre = self.config["vapoursynth"]["pre"]
+        self.vapoursynth_pos = self.config["vapoursynth"]["pos"]
 
-        # Default zero padding level for saving files,
-        # we change it based on the frame count as it fullfils our necessity
-        self.zero_padding = 8
-        self.total_upscale_time = 0
+        # This might sound dumb but it's good to debug as upscaler doesn't upscale and mindisk remove stuff
+        self.enable_upscaler = self.config["debug"]["enable_upscaler"]
 
-        # # # # # # # # # # # # # # # # # # # #
-
-        # Resume options
-        self.resume = False
-        self.last_processing_frame = 0
-
-        # # Debug stuff
-
-        # This might sound dumb but it's good to debug as waifu2x doens't upscale and mindisk remove stuff
-        self.enable_waifu2x = self.config["debug"]["enable_waifu2x"]
-        self.write_only_debug_video = self.config["debug"]["write_only_debug_video"]
-
+        # # # # Session directories / files # # # #
+                
         self.utils.log(color, 4, debug_prefix, "Configuring context.* directories and static files")
 
         # Here we name the coresponding context.* directory var and set its "plain form"
@@ -207,7 +221,7 @@ class Context():
             "logfile_last_session": "//ROOT//|last_session_log.log",
         }
 
-        # # # We declare these as none just for annoying errors on this
+        # We declare these as none just for annoying errors on this
         # dynamic variable setting workaround and for autocompleting
 
         self.residual = None
@@ -237,10 +251,12 @@ class Context():
 
         # This is a really neat* way of micromanaging lots of self vars, we basically
         # set the self.$name$ with setattr, not much else is happening here other than
-        # replacing SESSION with self.session_name and | with os.path.sep and
-        # enumarating both dictionaries to save double the lines of code for dirs and files
+        # replacing [//SESSION// with self.session_name], ["|" with os.path.sep] and
+        # [//ROOT// with the ROOT folder Dandere2x is on] while also enumarating both
+        # dictionaries to save double the lines of code for dirs and files
         # *and weird?
 
+        # List we're iterate
         dir_and_file = [("dirs", dirs), ("files", files)]
 
         for _, reference in enumerate(dir_and_file):
@@ -267,6 +283,7 @@ class Context():
                 # We use //NAME// because either on Windows or Linux dirs can't have this name
                 # so instead of using a nullbyte or something else for replacing the "dynamic stuff"
                 # se simply use this workaround, note the "|" = os.path.sep MUST BE THE LAST
+
                 replace = {
                     "//SESSION//": self.session_name,
                     "//INPUTVIDEOFILENAME//": self.input_filename,
@@ -306,24 +323,77 @@ class Context():
 
         self.utils.log(color, 3, debug_prefix, "Generating data dictionary")
 
-        # # Build up the ata dictionary
+        # # Build up the data dictionary
 
         wanted = [
-            "residual", "ROOT", "resume", "os", "input_file", "output_file",
-            "block_size", "bleed", "session_name", "waifu2x_type", "resolution",
-            "valid_resolution", "frame_rate", "frame_count", "session",
-            "upscaled", "merged", "d2x_cpp_plugins_out", "context_vars", "plain_dirs",
-            "plain_files", "denoise_level", "tile_size", "last_processing_frame",
-            "get_frame_count_method", "get_frame_rate_method", "zero_padding",
-            "loglevel", "input_filename", "output_filename",
-            "mindisk", "use_vapoursynth", "vapoursynth_pre", "vapoursynth_pos", "frame_count",
-            "get_video_info_method", "get_resolution_method", "wait_time",
-            "waifu2x_wait_for_residuals", "enable_waifu2x", "vapoursynth_processing",
-            "logfile", "temp_vpy_script", "upscaled_video",
-            "processing", "d2x_cpp_vectors_out", "deblock_filter", "encode_codec",
-            "safety_ruthless_residual_eliminator_range", "total_upscale_time",
-            "dark_threshold", "bright_threshold", "sessions_folder", "logfile_last_session",
-            "x264_preset", "x264_tune", "x264_crf", "write_log", "show_stats", "average_last_N_frames"
+            "residual",
+            "ROOT",
+            "resume",
+            "os",
+            "input_file",
+            "output_file",
+            "block_size",
+            "bleed",
+            "session_name",
+            "upscaler_type",
+            "resolution",
+            "valid_resolution",
+            "frame_rate",
+            "frame_count",
+            "session",
+            "upscaled",
+            "merged",
+            "d2x_cpp_plugins_out",
+            "context_vars",
+            "plain_dirs",
+            "plain_files",
+            "denoise_level",
+            "tile_size",
+            "last_processing_frame",
+            "get_frame_count_method",
+            "get_frame_rate_method",
+            "zero_padding",
+            "loglevel",
+            "input_filename",
+            "output_filename",
+            "load_proc_save",
+            "mindisk",
+            "use_vapoursynth",
+            "vapoursynth_pre",
+            "vapoursynth_pos",
+            "frame_count",
+            "get_video_info_method",
+            "get_resolution_method",
+            "wait_time",
+            "upscaler_wait_for_residuals",
+            "enable_upscaler",
+            "vapoursynth_processing",
+            "logfile",
+            "temp_vpy_script",
+            "upscaled_video",
+            "upscale_ratio",
+            "processing",
+            "d2x_cpp_vectors_out",
+            "deblock_filter",
+            "encode_codec",
+            "safety_ruthless_residual_eliminator_range",
+            "total_upscale_time",
+            "dark_threshold",
+            "bright_threshold",
+            "sessions_folder",
+            "logfile_last_session",
+            "x264_preset",
+            "x264_tune",
+            "x264_crf",
+            "write_log",
+            "show_stats",
+            "average_last_N_frames",
+            "show_debug_video_realtime",
+            "show_block_matching_stats",
+            "write_debug_video",
+            "only_run_dandere2x_cpp",
+            "upscale_full_frame_threshold",
+            "w2x_converter_cpp_jobs"
         ]
 
         data = {}
@@ -348,7 +418,6 @@ class Context():
 
             # Atribute
             data[item] = value
-
         
         self.utils.log(color, 5, debug_prefix, "Saving vars dictionary to YAML file: [%s]" % self.context_vars)
 

@@ -26,6 +26,7 @@ from PIL import Image
 import numpy as np
 import imageio
 import numpy
+import time
 import os
 
 
@@ -47,11 +48,11 @@ class Frame():
     """
 
     def __init__(self, context, utils, controller):
-
         self.context = context
         self.utils = utils
         self.controller = controller
 
+        # Basic variables
         self.frame = None
         self.width = None
         self.height = None
@@ -99,6 +100,7 @@ class Frame():
         debug_prefix = "[Frame.is_valid_image]"
 
         try:
+            # Can we read? True
             imageio.imread(path)
             return True
         except SyntaxError:
@@ -112,19 +114,22 @@ class Frame():
     def load_from_path(self, filename):
 
         debug_prefix = "[Frame.load_from_path]"
-
         
         self.utils.log(color, 7, debug_prefix, "Name: [%s]" % filename)
 
         while True:
             try:
                 self.frame = imageio.imread(filename).astype(np.uint8)
+                #self.frame = numpy.asarray(Image.open(filename))
                 break
             except Exception:
                 self.utils.log(color, 6, debug_prefix, "Couldn't load image [%s], retrying" % filename)
 
             if self.controller.stop:
                 return 0
+            
+            # Wait for not hanging this Python GIL
+            time.sleep(0.1)
 
         self.height = self.frame.shape[0]
         self.width = self.frame.shape[1]
@@ -138,25 +143,29 @@ class Frame():
 
         debug_prefix = "[Frame.load_from_path_wait]"
 
-        
         self.utils.log(color, 7, debug_prefix, "Waiting for: [%s]" % filename)
 
+        # Wait until the file exists (if ever lol)
         self.utils.until_exist(filename)
 
+        # We can have a false alarm that it exists, but controller.stop could became True
         if not self.controller.stop:
             self.load_from_path(filename)
         else:
             self.utils.log(color, 1, debug_prefix, "Will not load waited file [%s] as controller stopped" % filename)
 
     # Save an image with specific instructions depending on it's extension type.
+    # This saves the image into a .temp until they are fully saved and rename to the original name
     def save(self, directory):
 
         debug_prefix = "[Frame.save]"
 
+        # Get the file extension
         extension = os.path.splitext(os.path.basename(directory))[1]
 
         self.utils.log(color, 7, debug_prefix, "Saving to file: [%s], extension is: [%s]" % (directory, extension))
 
+        # Routine on saving to temp file and renaming back at max quality
         if 'jpg' in extension:
             jpegsave = self.image_array()
             jpegsave.save(directory + "temp" + extension, format='JPEG', subsampling=0, quality=100)
@@ -171,7 +180,7 @@ class Frame():
 
     # Get PIL image array from this object frame
     def image_array(self):
-        return Image.fromarray(self.frame.astype(np.uint8))
+        return Image.fromarray(self.frame.astype(np.uint8), "RGB")
 
     # Gets the (other_frame), (self.frame), and set to this (self.frame) the other's (self.frame)
     def duplicate(self, other_frame):
@@ -185,7 +194,6 @@ class Frame():
 
         debug_prefix = "[Frame.duplicate]"
 
-        
         self.utils.log(color, 6, debug_prefix, "Duplicating from other_frame")
 
         height_matches = self.height == other_frame.height
@@ -202,8 +210,7 @@ class Frame():
 
             self.controller.exit()
 
-        self.copy_from(other_frame.frame, self.frame, (0, 0), (0, 0),
-                  (other_frame.frame.shape[0], other_frame.frame.shape[1]))
+        self.copy_from(other_frame.frame, self.frame, (0, 0), (0, 0), (other_frame.frame.shape[0], other_frame.frame.shape[1]))
 
 
 if __name__ == "__main__":

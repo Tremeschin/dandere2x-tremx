@@ -45,6 +45,8 @@ class Dandere2xStats():
 
         self.precision = 4
 
+        self.recycled_percentage = 0
+
     def start(self):
 
         debug_prefix = "[Dandere2xStats.start]"
@@ -103,7 +105,14 @@ class Dandere2xStats():
         average_last_10 =  sum(average_10_list)/(10 - average_10_list.count(0))
 
         # Just sum it up and divide by n_frames_average
-        average_last_n = sum(self.frame_times) / (self.context.average_last_N_frames - self.frame_times.count(0))
+        average_last_n_empty_spaces = self.context.average_last_N_frames - self.frame_times.count(0)
+
+        if not average_last_n_empty_spaces == 0:
+            average_last_n = sum(self.frame_times) / (average_last_n_empty_spaces)
+            average_last_n = f"%.{self.precision}f" % average_last_n
+        else:
+            average_last_n = "NaN"
+
 
         # Self explanatory I guess?
         average_all = time_took_until_now / currentframe
@@ -114,11 +123,11 @@ class Dandere2xStats():
             fps = f"%.{self.precision}f" % (1/average_all)
 
         average_last_10 = "%.4f" % average_last_10
-        average_last_n = f"%.{self.precision}f" % average_last_n
+        
         average_all_round = f"%.{self.precision}f" % average_all
 
         # The text to set the widget to
-        average_text = f"Average last N frames:  [10: {average_last_10} sec/frame]  [{self.context.average_last_N_frames}: {average_last_n} sec/frame]  [ALL: {average_all_round} sec/frame = {fps} fps]"
+        average_text = f"Average last N frames:  [10: {average_last_10} sec/frame]  [{self.context.average_last_N_frames}: {average_last_n} sec/frame]  [ALL: {average_all_round} sec/frame = {fps} fps]  [Recycled blocks: {self.recycled_percentage}%]"
 
 
         #   ETA

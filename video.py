@@ -121,8 +121,7 @@ class FFmpegWrapper():
                 wanted["width"] = int(line.split("=")[1])
 
             if "height" in line:
-                if self.context.loglevel >= 3:
-                    self.utils.log(color, 5, debug_prefix, "Line with height: [%s]" % line)
+                self.utils.log(color, 5, debug_prefix, "Line with height: [%s]" % line)
 
                 wanted["height"] = int(line.split("=")[1])
 
@@ -164,7 +163,7 @@ class FFmpegWrapper():
         # # Get the frame count
 
         # Get the frame count
-        if self.context.get_frame_count_method == "null_copy" and not self.context.write_only_debug_video:
+        if self.context.get_frame_count_method == "null_copy" and not self.context.write_debug_video:
             self.utils.log(color,3,  debug_prefix, "[INFO] Getting video [frame_count] info with [NULL COPY] method")
             video_info["frame_count"] = self.get_frame_count_with_null_copy(video_file)
 
@@ -217,8 +216,9 @@ class FFmpegWrapper():
                 '-y',
                 '-f', 'rawvideo',
                 '-vcodec', 'rawvideo',
-                '-video_size', '%sx%s' % (self.context.resolution[0]*2, self.context.resolution[1]*2),
-                '-pixel_format', 'rgb24',
+                '-video_size', '%sx%s' % (self.context.resolution[0]*self.context.upscale_ratio, self.context.resolution[1]*self.context.upscale_ratio),
+                '-pix_fmt', 'rgb24',
+                '-color_range', '2',
                 '-framerate', self.context.frame_rate,
                 '-i', '-',
                 '-an',
@@ -227,7 +227,8 @@ class FFmpegWrapper():
                 '-tune', self.context.x264_tune,
                 '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
-                '-vf', 'format=yuv420p',
+                '-vf', 'format=yuvj444p',
+                '-color_range', 'jpeg',
                 '-framerate', self.context.frame_rate,
                 output
         ]
@@ -236,7 +237,7 @@ class FFmpegWrapper():
 
         self.utils.log(color, 5, debug_prefix, "Full command is: [%s]" % command)
 
-        self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8)
 
         self.utils.log(color, 3, debug_prefix, "Created FFmpeg one time pipe")
 

@@ -33,6 +33,16 @@ namespace utils {
         std::ifstream f(fname.c_str());
         return f.good();
     }
+
+    double proportion(double a, double b, double c) {
+        // A is to B
+        // C is to what
+        // what = B*C/A
+        if (a == 0) { // This shouldn't happen but welp
+            return 0;
+        }
+        return (b*c)/a;
+    }
 }
 
 // Where we make the residuals
@@ -266,12 +276,16 @@ int process_video(const std::string video_path,
                   const int start_frame,
                   const int bleed,
                   const std::string residuals_output,
-                  const bool mindisk,
+                  const int mindisk,
                   const int zero_padding,
-                  const bool write_only_debug_video,
+                  const int write_debug_video,
                   const std::string debug_video_output,
                   const double dark_mse_threshhold,
-                  const double bright_mse_threshhold)
+                  const double bright_mse_threshhold,
+                  const int show_debug_video_realtime,
+                  const int show_block_matching_stats,
+                  const int only_run_dandere2x_cpp,
+                  const double upscale_full_frame_threshold)
 {
 
     std::string debug_prefix = "[main.cpp/process_video] ";
@@ -293,6 +307,8 @@ int process_video(const std::string video_path,
     int bleeded_end_x = 0;
     int bleeded_end_y = 0;
 
+    int blocks_per_frame = 0;
+
     // Generate and write block vectors to file
     {
         int vector_id = 0;
@@ -304,22 +320,18 @@ int process_video(const std::string video_path,
             // If y it surpasses the height
             end_y = std::min(height, start_y + block_size);
 
-            start_y *= 2;
-            end_y *= 2;
-
             // Begin slice image into blocks
             for (int x=0; x < width_iterations; x++) {
 
                 start_x = (x * block_size);
                 end_x = std::min(width, start_x + block_size);
 
-                start_x *= 2;
-                end_x *= 2;
-
                 std::cout << "|vector;" << vector_id << ";" << start_y << "," << start_x << "," << end_y << "," << end_x << std::endl;
                 vector_id++;
             }
         }
+        // Get the total blocks per frame based on how much vectors there is
+        blocks_per_frame = vector_id;
     };
 
     // // Set up video
@@ -359,7 +371,7 @@ int process_video(const std::string video_path,
 
     cv::VideoWriter debug_video;
 
-    if (write_only_debug_video) {
+    if (write_debug_video) {
         std::string debug_video_filename = debug_video_output;
         debug_video = cv::VideoWriter(debug_video_filename, cv::VideoWriter::fourcc('M','J','P','G'), 24, cv::Size(width, height));
     }
@@ -373,6 +385,8 @@ int process_video(const std::string video_path,
     long int total_blocks = 1;
     long int dont_need_upscaling = 0;
     long int need_upscaling = 0;
+    double this_frame_upscale_percentage = 0;
+    double recycled_percentage = 0;
 
     double raw_block_mse = 0;
 
@@ -383,6 +397,8 @@ int process_video(const std::string video_path,
 
     // If start frame is > 0, start with the last frame we were processing
     // ie. seek to video[start_frame]
+    // And it's a good measure to start with a black last_matched
+    // because we don't carry these errors over when resuming
     if (start_frame > 0) {
         std::cout << "Seeking to " << start_frame - 1 << std::endl;
 
@@ -418,7 +434,7 @@ int process_video(const std::string video_path,
 
         frame.copyTo(bleed_croppable_frame(cv::Rect(bleed, bleed, frame.cols, frame.rows)));
 
-        if (write_only_debug_video) {
+        if (write_debug_video || show_debug_video_realtime) {
             debug_frame = frame.clone();
         }
 
@@ -503,7 +519,7 @@ int process_video(const std::string video_path,
 
                     //std::cout << raw_block_mse << " > " << compressed_mse << " - " << matched_blocks.size() << std::endl;
 
-                    if (write_only_debug_video) {
+                    if (write_debug_video || show_debug_video_realtime) {
                         black_block = cv::Mat(resolution, CV_8UC4, cv::Scalar(255, 0, 0, 120));
                         overlayImage(debug_frame, black_block, debug_frame, cv::Point(start_x, start_y));
                     }
@@ -516,47 +532,63 @@ int process_video(const std::string video_path,
             }
         }
 
-        if (write_only_debug_video) {
+        if (write_debug_video) {
+            debug_video.write(debug_frame);
+        }
 
+        if (show_debug_video_realtime) {
             // Press  ESC on keyboard to exit
             char c=(char)cv::waitKey(25);
             if(c==27)
                 break;
-            cv::imshow( "Frame", debug_frame );
+            cv::imshow("Frame", debug_frame);
+        }
 
-            // <++>
-            if (true) {
-                debug_video.write(debug_frame);
-            }
+        recycled_percentage = static_cast<double>(100)*dont_need_upscaling / total_blocks;
 
+        if (show_block_matching_stats) {
             std::cout << "Debug frame: [" << count_frame << "/" << total_frame_count << "]"
                       << ", (Need / Don't need) upscaling: [" << need_upscaling << "/" << dont_need_upscaling << "]"
-                      << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << static_cast<double>(100)*dont_need_upscaling / total_blocks << std::endl;
+                      << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << recycled_percentage << std::endl;
         }
 
-        // <++>
-        if (!write_only_debug_video) {
-            std::cout << next_output_newline << std::endl;
-        }
+        // Python get the status on recycled blocks
+        std::cout << "|recycled;" << recycled_percentage << std::endl;
 
         // // Make the input residual image
-        if ( (matched_blocks.size() > 0) && (!write_only_debug_video)) {
+        if ( !only_run_dandere2x_cpp ) {
 
-            cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed, mean_color);
+            // Empty frame, copy previous one
+            if (matched_blocks.size() == 0) {
+                std::cout << "|empty;" + std::to_string(count_frame) << std::endl;
 
-            int max_frames_ahead = 40;
-            int max_frames_ahead_wait = count_frame - max_frames_ahead;
+            } else {
 
-            std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
+                // Generate the paths we need
+                int max_frames_ahead = 40;
+                int max_frames_ahead_wait = count_frame - max_frames_ahead;
 
-            std::string residual_name_mindisk = residuals_output + "residual_" + std::string(zero_padding - std::to_string(max_frames_ahead_wait).length(), '0') + std::to_string(max_frames_ahead_wait) + ".jpg";
+                std::string residual_name = residuals_output + "residual_" + std::string(zero_padding - std::to_string(count_frame).length(), '0') + std::to_string(count_frame) + ".jpg";
+                std::string residual_name_mindisk = residuals_output + "residual_" + std::string(zero_padding - std::to_string(max_frames_ahead_wait).length(), '0') + std::to_string(max_frames_ahead_wait) + ".jpg";
 
-            // Mindisk utility, wait for the file - max_frames_ahead to be deleted
-            while (mindisk && utils::file_exists(residual_name_mindisk)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                // If the percentage of blocks needing upscale compared to the total blocks is less than threshold, make residual
+                // Otherwise the residual is the frame itself
+                this_frame_upscale_percentage = utils::proportion(total_blocks, 100, matched_blocks.size());
+
+                if ( this_frame_upscale_percentage < upscale_full_frame_threshold ) {
+                    cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed, mean_color);
+                    std::cout << next_output_newline << std::endl;
+                    cv::imwrite(residual_name, residual);
+                } else {
+                    cv::imwrite(residual_name, frame);
+                    std::cout << "|fullframe;" + std::to_string(count_frame) << std::endl;
+                }
+
+                // Mindisk utility, wait for the file - max_frames_ahead to be deleted
+                while (mindisk && utils::file_exists(residual_name_mindisk)) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                }
             }
-
-            cv::imwrite(residual_name, residual);
         }
 
         // Empty the vector
@@ -564,9 +596,9 @@ int process_video(const std::string video_path,
         {
             item.release();
         }
-
         matched_blocks.clear();
 
+        // Next iteration
         count_frame++;
     }
 }
@@ -577,7 +609,7 @@ int main(int argc, char** argv) {
     std::string debug_prefix = "[main.cpp/main] ";
 
     // Failsafe number of arguments
-    const int expected_args = 14;
+    const int expected_args = 18;
 
     std::cout << debug_prefix << "You have entered the following arguments:" << "\n\n";
 
@@ -601,10 +633,14 @@ int main(int argc, char** argv) {
      * - residuals_output
      * - mindisk mode on / off [1/0]
      * - zero padding (residuals files)
-     * - write_only_debug_video
+     * - write_debug_video
      * - debug_video_output
      * - dark mse threshold
      * - bright mse threshold
+     * - show_debug_video_realtime
+     * - show_block_matching_stats
+     * - only_run_dandere2x_cpp
+     * - upscale_full_frame_threshold
      */
 
     std::string video_path = argv[1];
@@ -618,18 +654,22 @@ int main(int argc, char** argv) {
 
     std::string residuals_output = argv[7];
 
-    int mindisk_argv = atoi(argv[8]);
+    int mindisk = atoi(argv[8]);
 
     int zero_padding = atoi(argv[9]);
-    int write_only_debug_video_argv = atoi(argv[10]);
+    int write_debug_video = atoi(argv[10]);
 
     std::string debug_video_output = argv[11];
 
     double dark_mse_threshhold = atof(argv[12]);
     double bright_mse_threshhold = atof(argv[13]);
 
-    bool write_only_debug_video;
-    bool mindisk;
+    int show_debug_video_realtime = atoi(argv[14]);
+    int show_block_matching_stats = atoi(argv[15]);
+
+    int only_run_dandere2x_cpp = atoi(argv[16]);
+    
+    double upscale_full_frame_threshold = atof(argv[17]); 
 
     // Show the info
     {
@@ -641,10 +681,14 @@ int main(int argc, char** argv) {
         std::cout << debug_prefix << "start_frame: " << start_frame << '\n';
         std::cout << debug_prefix << "bleed: " << bleed << '\n';
         std::cout << debug_prefix << "residuals_output: " << residuals_output << '\n';
-        std::cout << debug_prefix << "mindisk_argv: " << mindisk_argv << '\n';
+        std::cout << debug_prefix << "mindisk: " << mindisk << '\n';
         std::cout << debug_prefix << "zero_padding: " << zero_padding << '\n';
-        std::cout << debug_prefix << "write_only_debug_video: " << write_only_debug_video << '\n';
+        std::cout << debug_prefix << "write_debug_video: " << write_debug_video << '\n';
         std::cout << debug_prefix << "debug_video_output: \"" << debug_video_output << "\"\n";
+        std::cout << debug_prefix << "show_debug_video_realtime: \"" << show_debug_video_realtime << "\"\n";
+        std::cout << debug_prefix << "show_block_matching_stats: \"" << show_block_matching_stats << "\"\n";
+        std::cout << debug_prefix << "only_run_dandere2x_cpp: \"" << only_run_dandere2x_cpp << "\"\n";
+        std::cout << debug_prefix << "upscale_full_frame_threshold: \"" << upscale_full_frame_threshold << "\"\n";
         std::cout << '\n' << debug_prefix << "Any zero value on int is invalid, cheking.. ";
     };
 
@@ -667,24 +711,6 @@ int main(int argc, char** argv) {
     std::cout << "Pass\n";
 
 
-    if (mindisk_argv == 1) {
-        mindisk = true;
-    } else if (mindisk_argv == 0) {
-        mindisk = false;
-    } else {
-        std::cout << debug_prefix << "Mindisk mode not 0 or 1 recieved from argv" << std::endl;
-        std::exit(-1);
-    }
-
-    if (write_only_debug_video_argv == 1) {
-        write_only_debug_video = true;
-    } else if (write_only_debug_video_argv == 0) {
-        write_only_debug_video = false;
-    } else {
-        std::cout << debug_prefix << "Only debug video not 0 or 1 recieved from argv" << std::endl;
-        std::exit(-1);
-    }
-
     process_video(
         video_path,
         block_size,
@@ -695,10 +721,14 @@ int main(int argc, char** argv) {
         residuals_output,
         mindisk,
         zero_padding,
-        write_only_debug_video,
+        write_debug_video,
         debug_video_output,
         dark_mse_threshhold,
-        bright_mse_threshhold
+        bright_mse_threshhold,
+        show_debug_video_realtime,
+        show_block_matching_stats,
+        only_run_dandere2x_cpp,
+        upscale_full_frame_threshold
     );
 
     return 0;

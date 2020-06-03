@@ -20,7 +20,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from color import colors
-
 import threading
 import time
 
@@ -29,14 +28,12 @@ color = colors["core"]
 
 
 class Core():
-    def __init__(self, context, utils, controller, waifu2x, d2xcpp, processing, stats):
-
-        debug_prefix = "[Core.__init__]"
-
+    
+    def __init__(self, context, utils, controller, upscaler, d2xcpp, processing, stats):
         self.context = context
         self.utils = utils
         self.controller = controller
-        self.waifu2x = waifu2x
+        self.upscaler = upscaler
         self.d2xcpp = d2xcpp
         self.processing = processing
         self.stats = stats
@@ -48,39 +45,47 @@ class Core():
 
         debug_prefix = "[Core.start]"
 
+        # # Create the threads but don't start them yet
+        # # Daemon mode to make them exit when we exit rather than being stuck
+
+        # Create the Dandere2x C++ thread
         self.controller.threads["danderere2x_cpp_thread"] = threading.Thread(target=self.d2xcpp.run, daemon=True)
         self.utils.log(color, 3, debug_prefix, "Created thread Core.danderere2x_cpp_thread")
 
+        # Create Processing.run thread
         self.controller.threads["processing"] = threading.Thread(target=self.processing.run, daemon=True)
         self.utils.log(color, 3, debug_prefix, "Created thread Core.processing")
 
         # For debugging purposes
-        if self.context.enable_waifu2x:
+        if self.context.enable_upscaler:
 
-            # Create the waifu2x thread pointing the input into the residuals and out to the upscaled
-            self.controller.threads["waifu2x_keep_upscaling"] = threading.Thread(
-                target=self.waifu2x.keep_upscaling,
+            # Create the upscaler thread pointing the input into the residuals and out to the upscaled
+            self.controller.threads["upscaler_keep_upscaling"] = threading.Thread(
+                target=self.upscaler.keep_upscaling,
                 args=(self.context.residual, self.context.upscaled),
                 daemon=True
             )
 
-            self.utils.log(color, 3, debug_prefix, "Created thread Waifu2x.keep_upscaling")
-
+            self.utils.log(color, 3, debug_prefix, "Created thread upscaler.keep_upscaling")
         else:
-            self.utils.log(colors["debug"], 0, debug_prefix, "[DEBUG] WAIFU2X DISABLED IN DEBUG SETTINGS")
+            self.utils.log(colors["debug"], 0, debug_prefix, "[DEBUG] upscaler DISABLED IN DEBUG SETTINGS")
 
+        # If set to show stats, create stats thread
         if self.context.show_stats:
             self.controller.threads["stats"] = threading.Thread(
                 target=self.stats.start,
                 daemon=True
             )
 
-        self.controller.threads["ruthless_residual_eliminator"] = threading.Thread(target=self.waifu2x.ruthless_residual_eliminator)
-        self.utils.log(color, 3, debug_prefix, "Created thread Waifu2x.ruthless_residual_eliminator")
+        # Create the ruthless residual eliminator thread, see its code for more info
+        self.controller.threads["ruthless_residual_eliminator"] = threading.Thread(target=self.upscaler.ruthless_residual_eliminator)
+        self.utils.log(color, 3, debug_prefix, "Created thread upscaler.ruthless_residual_eliminator")
         
-        # Start the threads, warn the user that the output is no more linear
+        # # Start the threads, warn the user that the output is no more linear
+
         self.utils.log(colors["debug"], 1, debug_prefix, "[WARNING] FROM NOW ON NO OUTPUT IS LINEAR AS THREADING STARTS")
 
+        # For each thread, start them
         for thread in self.controller.threads:
             self.utils.log(color, 2, debug_prefix, "Starting thread: [\"%s\"]" % thread)
             self.controller.threads[thread].start()

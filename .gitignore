@@ -14,10 +14,16 @@ frames/*
 deviation/*
 
 externals/*
-
 externals-static
 
 tremxsamples
+
+samples
+!samples/yn_moving_480.mkv
+!samples/yn_moving.mkv
+!samples/legal
+
+tremxsettings.yaml
 
 d2x_introduction_video/
 

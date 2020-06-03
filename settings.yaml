@@ -36,9 +36,9 @@
 
 basic:
   # I highly recommend upscaling this "yn_moving_480.mkv" sample for testing if everything is working before a big session
-  input_file: samples/yn_moving480.mkv
+  input_file: samples/yn_moving_480.mkv
 
-  # "auto" adds a "2x_" prefix to the filename and sets the output to the same directory
+  # "auto" adds a "$UPSCALE_RATIO$x_$UPSCALER_TYPE$" prefix to the filename and sets the output to the same directory
   output_file: auto  # [auto]
 
   # auto sets the session name to the input video filename
@@ -50,19 +50,20 @@ block_matching:
   #
   #  (numbers for a 720p source video) 
   # Generally speaking, lower block sizes (< 12) yields longer upscale and might be less precise..
-  # Too big (> 40~) you'll be wasting too much Waifu2x upscales on not necessary parts
+  # Too big (> 40~) you'll be wasting too much Upscaler upscales on not necessary parts
   #
   # A number between 20 should be enough for every video and for lower res (480p), 15 might be doable
   # 
-  # [TODO] Make sure the remainder of both width and height divided by the block size aren't too small (1 - 5~)
-  # This is because for example the source is a 100x100 video and the block size is 33, there will be one 1x1 block
-  # three 33x1 and three 1x33 blocks on the bottom / right edges and corner of the video, need to decide how I'll handle this
-  # 1080p, 720p, 480p are fine with block size 20
-  block_size: 20
+  # There can be issues setting this manually, take a 100x100 video with block_size=33, there will be
+  # a pixel at the bottom right, three 33x1 blocks and three 1x33 blocks.
+  #
+  # Setting this to "auto" applies a algorithm to decide a good value based on the input resolution
+  #
+  # Auto does not prevent yet bad edge blocks, TODO
+  block_size: auto
 
-  block_size_auto_adapt: null # NOT IMPLEMENTED YET, FIXES STUPID CORNER / EDGE BLOCK SIZES
-
-  # These are how agressive the block matching is, lower values will catch more blocks;
+  # These are how agressive the block matching is, how "different" the blocks should be to get upscaled
+  # lower values will catch more blocks; higher values less blocks, see suggested values down below
   # dark and bright are determined by the mean pixel value of every channel on a frame
   # and then apply a linear function to get the final threshold, 0=dark, 255=bright
   # This seems to make block matching better as darker frames not a lot of colors are moving
@@ -87,7 +88,7 @@ block_matching:
   dark_threshold: 0.01  # [0.01]
   bright_threshold: 0.015  # [0.015]
 
-  # A "over-crop" of the blocks in the original source to reduce blockiness as Waifu2x bleeds a bit on the residuals
+  # A "over-crop" of the blocks in the original source to reduce blockiness as Upscaler bleeds a bit on the residuals
   #  A quick guide on the values:
   #
   #   0: Fastest, visible blocks everywhere
@@ -96,52 +97,83 @@ block_matching:
   #
   #   2: Best quality at cost of larger upscale times, almost no visible blockiness
   #
-  #   3: Not much difference from 2, only if the upscaler is bleeding A LOT, values should not be higher than this
+  #   3: Not much difference from 2, only if the upscaler is bleeding A LOT (Upscaler denoise_level=3), values should not be higher than this
+  #
+  # If using srmd upscaler, bleed=2 is highly recommended as it bleeds a lot
   bleed: 1  # [1]
 
+  # Let's say a frame has too many blocks to be upscaled, it is more worth upscaling the whole frame for quality rather than upscaling the blocks
+  # This number is given in a percentage level, 80 for example would upscale full frames that have X >= 80 % of blocks needing upscale
+  # Proper math with an "auto" mode WIP
+  upscale_full_frame_threshold: 80  # [80]
 
-waifu2x:
-  #   Waifu2x types: see linked repos on README.md or main project page for more info about them
+
+upscaler:
+  #   Upscaler type a bit hard to explain here, they'll determine the arguments you're gonna use
+  #   See each upscaler linked repository for the options they recommend / use
   #
   # fake:  WINDOWS + LINUX
   #     For testing the raw speed of Dandere2x Python implementation, standard upscaling
   # 
-  # vulkan:  WINDOWS + LINUX
+  # w2x-vulkan:  WINDOWS + LINUX
   #     Uses nihui's waifu2x-ncnn-vulkan implementation
   #     We prefer this as it's the less troublesome and faster one, though you gotta have a Vulkan capable GPU
+  #     https://github.com/nihui/waifu2x-ncnn-vulkan
   #
-  # cpp:  WINDOWS + LINUX
+  # w2x-cpp:  WINDOWS + LINUX
   #     Uses DeadSix27's waifu2x-converter-cpp implementation
   #     The most compatible one (probably)
+  #     https://github.com/DeadSix27/waifu2x-converter-cpp
   #
-  # caffe:  WINDOWS
+  # w2x-caffe:  WINDOWS
   #     Not implemented yet
   #
-  waifu2x_type: vulkan  # fake, cpp, vulkan - [vulkan]
+  # srmd: WINDOWS + LINUX
+  #     Uses nihui's srmd-ncnn-vulkan
+  #     https://github.com/nihui/srmd-ncnn-vulkan
+  #
+  # realsr: WINDOWS + LINUX
+  #     Uses nihui's realsr-ncnn-vulkan
+  #     https://github.com/nihui/realsr-ncnn-vulkan
+  #
+  type: w2x-vulkan  # fake, w2x-cpp, w2x-vulkan, srmd, realsr - [w2x-vulkan]
 
-  # How much denoise the Waifu2x model will apply, generally speaking lower is sharper but less smooth
+  # The upscale ratio is totally dependent on the upscaler you're using
+  #
+  # All Waifu2x but Caffe only works with 2x upscaling
+  # srmd ranges from 2-4
+  # realsr only utilizes 4 (utilizing it forces upscale_ratio to 4 as it's the only option)
+  upscale_ratio: 2
+
+  # How much denoise the Upscaler model will apply, generally speaking lower is sharper but less smooth
   # 
-  # 1 is good for IRL
-  # 2 isn't as agressive
-  # 3 yields very plastic images and distorts a bit the lines, good for anime
+  # It all depends on the upscaler you're using
+  # For Waifu2x, 2 is a good number
+  # For srmd, I personally like the 5~ range
   denoise_level: 2  # [2]
 
   # The tile size affects total GPU VRAM usage, smaller values increases upscale time.
   # The ideal spot is somewhere in the 200 - 400 range, 200 uses about 1 GB VRAM
-  tile_size: 200  # [200]
+  # Some upscalers uses 0 to choose a auto value, consider this an option, check the upscaler repo
+  tile_size: 200  # [0]
 
-  # Waifu2x Vulkan models:
-  #   - models-upconv_7_anime_style_art_rgb
-  #   - models-upconv_7_photo
-  #   - models-cunet
-  #
-  # Only Vulkan uses this for now
-  waifu2x_model: models-cunet  # [models-cunet]
+  # Upscaler model to use (tries to find in the folder where the upscale binary is?)
+  # See your upscaler models
+  # TODO: Set models to their absolute paths in the upscale folder?
+  model: null  # [null uses the default as no argument passed?]
 
-  # Linux only!!
-  # Use RADV_PERFTEST=aco when calling Waifu2x subprocess, I get 50% faster results
-  # Only for AMD GPUs running a compatible Mesa adapter, should not interfere if set to true on NVIDIA GPUs as they don't use Mesa
-  linux_enable_mesa_aco_waifu2x_vulkan: true  # [true]
+  # nihui's ncnn Vulkan implementations have this options, see the upscaler repo for more info
+  # load processes : processing processes ; saving processes, nihui recommends 4:4:4 for many small images
+  load:proc:save: "4:4:4"  # [4:4:4]
+
+  # For waifu2x-converter-cpp the above option is this, "number of threads launching at the same time"
+  # Setting to null doesn't uses it
+  w2x_converter_cpp_jobs: null  # [null]
+
+  # Linux + AMD GPU only!!
+  # Use RADV_PERFTEST=aco when calling Upscaler subprocess, I get ~2x faster upscaling with Vulkan based upscalers
+  # Should only work with a compatible Mesa driver, should not interfere if set to true on NVIDIA GPUs as they don't use Mesa
+  linux_enable_mesa_aco_upscaler: true  # [true]
 
 
 # Stats are a bit primitive as for now, though they work on a basic level
@@ -157,12 +189,6 @@ stats:
 danger_zone:
   # Forces resume=False if true (deletes session folder before upscaling)
   force: false  # [false]
-
-  # Without mindisk, C++ will do everything it needs to do ASAP:
-  # Generates all residuals, technically should be the fastest.
-  # Waifu2x upscales in random order so may take a while to get the first images going
-  # Mindisk on, C++ waits until a certain residual doesn't exist on the disk
-  mindisk: true  # [true]
 
 
 video:
@@ -190,7 +216,7 @@ ffmpeg:
   #     deband=range=8:blur=false, pp7=qp=2:mode=medium, unsharp
   #
   deblock_filter: deband=range=8:blur=false, pp7=qp=2:mode=medium  # [number 2.] 
-  encode_codec: libx264  # [libx264]
+  encode_codec: libx264  # [libx264] Haven't added support for other codecs, you probably can do this by hardcoding it
 
   # Settings for the x264 encoder on FFmpeg's libx264
   x264:
@@ -200,7 +226,22 @@ ffmpeg:
     crf: 18
 
 
-# AVOID FOR NOW
+dandere2x_cpp:
+  # Without mindisk, C++ will do everything it needs to do ASAP:
+  # Generates all residuals, technically should be the fastest.
+  # Upscaler upscales in random order so may take a while to get the first images going
+  # Mindisk on, C++ waits until a certain residual doesn't exist on the disk
+  mindisk: true  # [true]
+
+  # Most of these options should be set to the default unless you're developing / testing
+  # the raw block matching, preferably use all these options set to true?
+  only_run_dandere2x_cpp: false  # [false]
+  write_debug_video: false  # [false]
+  show_debug_video_realtime: false  # [false]
+  show_block_matching_stats: false  # [false], this is very verbose!!
+
+
+# AVOID VAPOURSYNTH FOR NOW
 # Apply vapoursynth scripts before / after the upscale
 # Not tested on Windows, Linux seems to be working if you have the required stuff
 # And you should be a power user if you're using this anyway, just have "vspipe" and "x264" in path and the script modules you're gonna use
@@ -213,13 +254,13 @@ vapoursynth:
 
 
 developer:
-
   # Write log to disk? 
   write_log: true  # [true]
 
   # Verbose of Dandere2x, ranges from 0 to 10
   #   Note: loglevel 0 doesn't mean no output, just not the essential ones and the setting up session logs
   #   10 is ULTRA SLOW and shows all the vectors we're substituting, avoid if only not for the fun or hard hard hard debugging
+  # Use 1 if show_stats is true preferably
   loglevel: 1  # [1]
 
   # How much Current - N frames behind to delete the residuals or upscaled residuals
@@ -228,8 +269,8 @@ developer:
   # Time Python waits for a file to exist
   wait_time_exists: 0.05  # [0.05]
 
-  # Time Waifu2x sleeps after upscaling everything or nothing from residuals input folder
-  waifu2x_wait_for_residuals: 0.1  # [0.1]
+  # Time Upscaler sleeps after upscaling everything or nothing from residuals input folder
+  upscaler_wait_for_residuals: 0.1  # [0.1]
 
 
 specific:
@@ -237,7 +278,4 @@ specific:
 
 
 debug:
-  # Only do the block matching and save the block matched frames into a debug video as well as show stats
-  # just for fun and some R&D with numbers :)
-  write_only_debug_video: false  # [false]
-  enable_waifu2x: true  # [true]
+  enable_upscaler: true  # [true]

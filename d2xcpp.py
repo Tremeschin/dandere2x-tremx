@@ -7,6 +7,7 @@ Syntax:
 
 binary input block_size width height out vectors start_frame bleed \
 residuals_output use_mindisk zero_padding only_write_debug_video debug_video
+show_debug_video_realtime show_block_matching_stats
 
 NOTE: residuals_output must end in a os.path.sep -> "/path/to/dir/" and not
 "/path/to/dir"
@@ -39,7 +40,8 @@ color = colors["d2xcpp"]
 
 
 class Dandere2xCPPWraper():
-    def __init__(self, context, utils, controller, video):
+
+    def __init__(self, context, utils, controller, video, stats):
 
         debug_prefix = "[Dandere2xCPPWraper.__init__]"
 
@@ -47,6 +49,7 @@ class Dandere2xCPPWraper():
         self.utils = utils
         self.controller = controller
         self.video = video
+        self.stats = stats
 
         # Get the binary of dandere2x_cpp according to the OS
         self.binary = self.utils.get_binary("dandere2x_cpp")
@@ -58,6 +61,7 @@ class Dandere2xCPPWraper():
 
         debug_prefix = "[Dandere2xCPPWraper.generate_run_command]"
 
+        # [TODO] Woof, hope I can get C++ accept something like: "dandere2x_cpp -i file -r residual_path"
         self.command = [
             self.binary,
             self.context.input_file,
@@ -69,10 +73,14 @@ class Dandere2xCPPWraper():
             self.context.residual,
             str(int(self.context.mindisk)),
             str(self.context.zero_padding),
-            str(int(self.context.write_only_debug_video)),
+            str(int(self.context.write_debug_video)),
             self.context.debug_video,
             str(self.context.dark_threshold),
-            str(self.context.bright_threshold)
+            str(self.context.bright_threshold),
+            str(self.context.show_debug_video_realtime),
+            str(self.context.show_block_matching_stats),
+            str(self.context.only_run_dandere2x_cpp),
+            str(self.context.upscale_full_frame_threshold)
         ]
 
         self.utils.log(color, 5, debug_prefix, "Run command is: %s" % self.command)
@@ -83,27 +91,29 @@ class Dandere2xCPPWraper():
 
         debug_prefix = "[Dandere2xCPPWraper.run]"
 
+        # Single run the subprocess
         self.subprocess = SubprocessUtils("d2xcpp", self.utils, self.context)
-
         self.subprocess.from_list(self.command)
-
         self.subprocess.run()
 
+        # Until it has finished
         while self.subprocess.is_alive():
     
+            # Get every line it has outputted
             for line in self.subprocess.realtime_output():
-
-                if not line.startswith("|"):
-                    if self.context.loglevel >= 2:
-                        self.utils.log(color, 1, debug_prefix, "[CPP] %s" % line)
-                else:
+                
+                # Lines with "|" are data Python needs
+                if line.startswith("|"):
                     self.parse_cpp_out_newline(line)
+                else:
+                    self.utils.log(color, 1, debug_prefix, "[CPP] %s" % line)                    
 
+            # Controller says to stop? goodbye
             if self.controller.stop == True:
                 self.subprocess.terminate()
             
-            time.sleep(0.5)
-
+            # Wait a bit for not hanging this Python GIL
+            time.sleep(0.1)
 
     # Parse newline of cpp_out, generic
     def parse_cpp_out_newline(self, line):
@@ -115,35 +125,75 @@ class Dandere2xCPPWraper():
 
         # Cut the first "|" as that means it's a data line, split
         line = line[1:]
+
+        # Split it on the ";"
         line = line.split(";")
 
+        # The type is always the first argument
         line_type = line[0]
 
-        if line_type in ["blocks", "end"]:
+        # Blocks lines are the ones with vector data from C++ block matching
+        if line_type == "blocks":
 
             line_referred_frame = line[1]
             
-            # We can have empty blocks to upscale, ie copy previous frame
-            if len(line) == 3:
-                line_data = line[2][1:].split(",")
-            else:
-                line_data = ['']
+            line_data = line[2][1:].split(",")
 
             self.controller.block_match_data[line_referred_frame] = {
                 "type": line_type,
                 "data": line_data
             }
+        
+        # Status to show on screen on how much the video has been recycled
+        elif line_type == "recycled":
+            self.stats.recycled_percentage = str(line[1])
+        
+        # Empty copies last merged frame as nothing has changed
+        elif line_type == "empty":
 
+            line_referred_frame = line[1]
+
+            self.controller.block_match_data[line_referred_frame] = {
+                "type": line_type,
+                "data": None
+            }
+
+        # fullframe lines just loads the upscaled residual and pipes it
+        elif line_type == "fullframe":
+
+            line_referred_frame = line[1]
+
+            self.controller.block_match_data[line_referred_frame] = {
+                "type": line_type,
+                "data": None
+            }
+        
+        # End lines don't have data
+        elif line_type == "end":
+
+            line_referred_frame = line[1]
+
+            self.controller.block_match_data[line_referred_frame] = {
+                "type": line_type,
+                "data": None
+            }
+
+        # Vectors are information on the blocks C++ will match and Python will replace
         elif line_type == "vector":
+
+            # The vector id is the second part of the line and the data the remaining
             vector_id = line[1]
             vector_data = line[2]
 
+            # The vector tuple are a set of 4 coordinates that says the position of the block
             vector_tuple = vector_data.split(",")
+
+            # Convert them to ints as the lines we get are decoded texts
             vector_tuple = [int(n) for n in vector_tuple]
 
+            # Assign them onto controller vectors
             self.controller.vectors[vector_id] = vector_tuple
 
-        return True
 
 if __name__ == "__main__":
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
