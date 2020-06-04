@@ -448,4 +448,5 @@ class Video():
         self.utils.log(color, 3, self.context.indentation, "Frame rate: [%s]" % self.frame_rate)
 
 if __name__ == "__main__":
+    import misc.greeter_message
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")

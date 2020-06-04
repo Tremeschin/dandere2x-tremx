@@ -101,12 +101,16 @@ class Dandere2xCPPWraper():
     
             # Get every line it has outputted
             for line in self.subprocess.realtime_output():
-                
+
                 # Lines with "|" are data Python needs
                 if line.startswith("|"):
                     self.parse_cpp_out_newline(line)
                 else:
-                    self.utils.log(color, 1, debug_prefix, "[CPP] %s" % line)                    
+                    self.utils.log(color, 1, debug_prefix, "[CPP] %s" % line)
+                    
+                    # If we have finished, exit
+                    if line.startswith("|end"):
+                        break            
 
             # Controller says to stop? goodbye
             if self.controller.stop == True:
@@ -196,4 +200,5 @@ class Dandere2xCPPWraper():
 
 
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

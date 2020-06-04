@@ -49,6 +49,11 @@ class Context():
         # Failsafe module
         self.failsafe = failsafe
 
+        if self.config["resume"]:
+            if "resume_session_context_vars_file" in self.config:
+                self.load_vars_from_file(self.config["resume_session_context_vars_file"])
+                return
+
         # Session
         self.force = self.config["danger_zone"]["force"]
 
@@ -100,8 +105,8 @@ class Context():
         self.w2x_converter_cpp_jobs = self.config["upscaler"]["w2x_converter_cpp_jobs"]
         self.linux_enable_mesa_aco_upscaler = self.config["upscaler"]["linux_enable_mesa_aco_upscaler"]
 
-        # realsr must have upscale_ratio=4 as it's the only option
-        if self.upscaler_type == "realsr":
+        # realsr-ncnn-vulkan must have upscale_ratio=4 as it's the only option
+        if self.upscaler_type == "realsr-ncnn-vulkan":
             self.utils.log(color, 0, debug_prefix, "[WARNING] USING REALSR UPSCALER, FORCING UPSCALE_RATIO=4 FOR CONVENIENCE")
             self.upscale_ratio = 4
 
@@ -116,7 +121,7 @@ class Context():
         # Output file can be auto, that is, append $UPSCALE_RATIO$x_$UPSCALER_TYPE$ at the start of the filename
         if self.output_file == "auto":
             # This is already absolute path as we just set input_file to one
-            self.output_file = self.input_file.replace(self.input_filename, str(self.upscale_ratio) + "x_" + self.config["upscaler"]["type"] + "_" + self.input_filename)
+            self.output_file = self.utils.auto_output_file(self.input_file, self.upscale_ratio, self.config["upscaler"]["type"])
             self.utils.log(color, 1, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
         else:
             # Else if it was manually set, get the absolute path for it
@@ -414,7 +419,7 @@ class Context():
                     elif isinstance(value[0], str):
                         value = [x.replace(self.ROOT, self.rootfolder_substitution) for x in value]
                 except Exception as e:
-                    self.utils.log(color_by_name("li_red"), 0, debug_prefix, "Exception ocurred on line [%s]: [%s]" % (self.utils.get_linenumber(), e))
+                    self.utils.log(colors["li_red"], 0, debug_prefix, "Exception ocurred on line [%s]: [%s]" % (self.utils.get_linenumber(), e))
 
             # Atribute
             data[item] = value
@@ -453,4 +458,5 @@ class Context():
 
 
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

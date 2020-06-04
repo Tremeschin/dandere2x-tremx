@@ -40,6 +40,8 @@ Dandere2x should work in both Linux and Windows, though I haven't done much test
 
 You can help me testing it, reporting bugs or finding fixes
 
+RESUMING SESSION IS A BIT UNSTABLE AT THE MOMENT, PREFERABLY FINISH A SESSION IN A SINGLE RUN
+
 ### Windows
 
 #### Running from a release
@@ -60,8 +62,6 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 
 
 ### Issues / TODOs / Roadmap
-
-- A GUI is slowly making progress, though I'm not sure if I'll stick with GTK, it's half working right now.. `python gui.py` if you wanna test it, might only work on Linux OS with GTK package installed tho
 
 - Minor contrast issues on a upscaled videos, this is acknowledged and affects aka's Dandere2x as well
 

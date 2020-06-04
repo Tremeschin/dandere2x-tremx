@@ -131,6 +131,12 @@ class Utils():
 
         return basename
 
+    # Returns the path of a auto output file
+    def auto_output_file(self, input_file, upscale_ratio, upscaler_type):
+        filename = os.path.basename(input_file)
+        output_file = input_file.replace(filename, f"{upscale_ratio}x_{upscaler_type}_{filename}")
+        return output_file
+
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
     def check_dirs(self):
         for directory in self.context.plain_dirs:
@@ -642,4 +648,5 @@ class SubprocessUtils():
 
 
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

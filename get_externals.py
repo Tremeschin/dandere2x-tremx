@@ -21,7 +21,13 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 # For now this file just works, should rewrite it properly
 
-import requests, zipfile, json, time, wget, os
+import misc.greeter_message
+import requests
+import zipfile
+import json
+import time
+import wget
+import os
 
 
 ROOT = os.path.dirname(os.path.abspath(__file__))

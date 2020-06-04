@@ -58,7 +58,9 @@ class Dandere2xStats():
 
         while not self.controller.stop:
             
-            for item in self.get_stats_text(self.context.last_processing_frame, self.context.frame_count):
+            self.controller.stats_list = self.get_stats_text(self.context.last_processing_frame, self.context.frame_count)
+
+            for item in self.controller.stats_list:
                 print(item)
             
             print()
@@ -87,9 +89,10 @@ class Dandere2xStats():
 
         # Percentage of completion
         percentage_completed = self.proportion(totalframes, 100, currentframe)
+        self.controller.percentage_completed = round(percentage_completed, 2)
 
         # The text to set the progressbar to
-        progress_text = "Progress: Frame [%s/%s] - %s %% " % (currentframe, totalframes, round(percentage_completed, 2))
+        progress_text = f"Progress: Frame [{currentframe}/{totalframes}]  [Recycled blocks: {self.recycled_percentage}%]"
 
         # Put the values it took to go to the next frame based on the
         # difference of last item to the current one, that's being looped
@@ -101,8 +104,17 @@ class Dandere2xStats():
 
         # Get the 10 last items by "biasing" the currentframe, sum those numbers and divide by 10
         # do not consider those who are zero otherwise wrong average value
+        
+
         average_10_list = self.frame_times[ (currentframe - 10) % self.context.average_last_N_frames : currentframe % self.context.average_last_N_frames ]
-        average_last_10 =  sum(average_10_list)/(10 - average_10_list.count(0))
+
+        average_10_denominator = 10 - average_10_list.count(0)
+
+        if not average_10_denominator == 0:
+            average_last_10 =  sum(average_10_list)/(average_10_denominator)
+            average_last_10 = "%.4f" % average_last_10
+        else:
+            average_last_10 = "NaN"
 
         # Just sum it up and divide by n_frames_average
         average_last_n_empty_spaces = self.context.average_last_N_frames - self.frame_times.count(0)
@@ -122,12 +134,12 @@ class Dandere2xStats():
         else:
             fps = f"%.{self.precision}f" % (1/average_all)
 
-        average_last_10 = "%.4f" % average_last_10
+        
         
         average_all_round = f"%.{self.precision}f" % average_all
 
         # The text to set the widget to
-        average_text = f"Average last N frames:  [10: {average_last_10} sec/frame]  [{self.context.average_last_N_frames}: {average_last_n} sec/frame]  [ALL: {average_all_round} sec/frame = {fps} fps]  [Recycled blocks: {self.recycled_percentage}%]"
+        average_text = f"Average last N frames:  [10: {average_last_10} sec/frame]  [{self.context.average_last_N_frames}: {average_last_n} sec/frame]  [ALL: {average_all_round} sec/frame = {fps} fps]"
 
 
         #   ETA
@@ -147,7 +159,6 @@ class Dandere2xStats():
         return [progress_text, average_text, eta_text]
 
 
-
-
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

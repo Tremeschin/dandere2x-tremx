@@ -56,10 +56,10 @@ class Upscaler():
         self.utils.log(color, 3, debug_prefix, "Verifying and getting binary")
 
         types_binary = {
-            "w2x-vulkan": "waifu2x-ncnn-vulkan",
-            "w2x-cpp": "waifu2x-converter-cpp",
-            "srmd": "srmd-ncnn-vulkan",
-            "realsr": "realsr-ncnn-vulkan",
+            "waifu2x-ncnn-vulkan": "waifu2x-ncnn-vulkan",
+            "waifu2x-converter-cpp": "waifu2x-converter-cpp",
+            "srmd-ncnn-vulkan": "srmd-ncnn-vulkan",
+            "realsr-ncnn-vulkan": "realsr-ncnn-vulkan",
             "fake": None
         }
 
@@ -95,7 +95,7 @@ class Upscaler():
             self.command = [self.binary]
 
             # nihui's upscalers have the same arguments
-            if self.type in ["w2x-vulkan", "srmd", "realsr"]:
+            if self.type in ["waifu2x-ncnn-vulkan", "srmd-ncnn-vulkan", "realsr-ncnn-vulkan"]:
 
                 self.command += [
                     "-t", str(self.context.tile_size),
@@ -103,12 +103,12 @@ class Upscaler():
                     "-s", str(self.context.upscale_ratio)
                 ]
 
-                # realsr doesn't have a denoiser
-                if not self.type == "realsr":
+                # realsr-ncnn-vulkan doesn't have a denoiser
+                if not self.type == "realsr-ncnn-vulkan":
                     self.command += ["-n", str(self.context.denoise_level)]
 
             # Waifu2x C++ arguments are a bit different
-            elif self.type == "w2x-cpp":
+            elif self.type == "waifu2x-converter-cpp":
 
                 self.command += [
                     "--noise-level", str(self.context.denoise_level),
@@ -126,11 +126,11 @@ class Upscaler():
                     self.command += ["-j", self.context.w2x_converter_cpp_jobs]
 
                 # TODO: Is this necessary to make Waifu2x C++ work?
-                if self.context.os == "windows" and self.type == "w2x-cpp":
+                if self.context.os == "windows" and self.type == "waifu2x-converter-cpp":
                     self.command = self.command + ["--model-dir", os.path.dirname(self.binary) + os.path.sep + "models_rgb"]
 
             # Set the model of the upscaler if one is set, TODO: C++ only has that one?
-            if not self.context.upscaler_model == None and not self.type == "w2x-cpp":
+            if not self.context.upscaler_model == None and not self.type == "waifu2x-converter-cpp":
 
                 # Windows releases has the models under the release folder
                 if self.context.os == "windows":
@@ -241,10 +241,10 @@ class Upscaler():
     # Get the expected output of the upscaled residual filename
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
 
-        if self.type in ["w2x-vulkan", "srmd", "realsr"]:
+        if self.type in ["waifu2x-ncnn-vulkan", "srmd-ncnn-vulkan", "realsr-ncnn-vulkan"]:
             return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
             
-        if self.type in ["w2x-cpp", "fake"]:
+        if self.type in ["waifu2x-converter-cpp", "fake"]:
             return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
 
     # Delete residuals that have been upscaled and upscaled residuals that are already used
@@ -319,4 +319,5 @@ class Upscaler():
 
 
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

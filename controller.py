@@ -39,6 +39,8 @@ class Controller():
 
         self.stop = False
         self.upscale_finished = False
+        self.percentage_completed = 0
+        self.stats_list = []
         self.block_match_data = {}
         self.vectors = {}
         self.threads = {}
@@ -62,4 +64,5 @@ class Controller():
 
 
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

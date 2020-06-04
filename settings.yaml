@@ -99,7 +99,7 @@ block_matching:
   #
   #   3: Not much difference from 2, only if the upscaler is bleeding A LOT (Upscaler denoise_level=3), values should not be higher than this
   #
-  # If using srmd upscaler, bleed=2 is highly recommended as it bleeds a lot
+  # If using srmd-ncnn-vulkan upscaler, bleed=2 is highly recommended as it bleeds a lot
   bleed: 1  # [1]
 
   # Let's say a frame has too many blocks to be upscaled, it is more worth upscaling the whole frame for quality rather than upscaling the blocks
@@ -115,12 +115,12 @@ upscaler:
   # fake:  WINDOWS + LINUX
   #     For testing the raw speed of Dandere2x Python implementation, standard upscaling
   # 
-  # w2x-vulkan:  WINDOWS + LINUX
+  # waifu2x-ncnn-vulkan:  WINDOWS + LINUX
   #     Uses nihui's waifu2x-ncnn-vulkan implementation
   #     We prefer this as it's the less troublesome and faster one, though you gotta have a Vulkan capable GPU
   #     https://github.com/nihui/waifu2x-ncnn-vulkan
   #
-  # w2x-cpp:  WINDOWS + LINUX
+  # waifu2x-converter-cpp:  WINDOWS + LINUX
   #     Uses DeadSix27's waifu2x-converter-cpp implementation
   #     The most compatible one (probably)
   #     https://github.com/DeadSix27/waifu2x-converter-cpp
@@ -128,34 +128,34 @@ upscaler:
   # w2x-caffe:  WINDOWS
   #     Not implemented yet
   #
-  # srmd: WINDOWS + LINUX
-  #     Uses nihui's srmd-ncnn-vulkan
-  #     https://github.com/nihui/srmd-ncnn-vulkan
+  # srmd-ncnn-vulkan: WINDOWS + LINUX
+  #     Uses nihui's srmd-ncnn-vulkan-ncnn-vulkan
+  #     https://github.com/nihui/srmd-ncnn-vulkan-ncnn-vulkan
   #
-  # realsr: WINDOWS + LINUX
-  #     Uses nihui's realsr-ncnn-vulkan
-  #     https://github.com/nihui/realsr-ncnn-vulkan
+  # realsr-ncnn-vulkan: WINDOWS + LINUX
+  #     Uses nihui's realsr-ncnn-vulkan-ncnn-vulkan
+  #     https://github.com/nihui/realsr-ncnn-vulkan-ncnn-vulkan
   #
-  type: w2x-vulkan  # fake, w2x-cpp, w2x-vulkan, srmd, realsr - [w2x-vulkan]
+  type: waifu2x-ncnn-vulkan  # fake, waifu2x-converter-cpp, waifu2x-ncnn-vulkan, srmd-ncnn-vulkan, realsr-ncnn-vulkan - [waifu2x-ncnn-vulkan]
 
   # The upscale ratio is totally dependent on the upscaler you're using
   #
   # All Waifu2x but Caffe only works with 2x upscaling
-  # srmd ranges from 2-4
-  # realsr only utilizes 4 (utilizing it forces upscale_ratio to 4 as it's the only option)
-  upscale_ratio: 2
+  # srmd-ncnn-vulkan ranges from 2-4
+  # realsr-ncnn-vulkan only utilizes 4 (utilizing it forces upscale_ratio to 4 as it's the only option)
+  upscale_ratio: 2  # [2]
 
   # How much denoise the Upscaler model will apply, generally speaking lower is sharper but less smooth
   # 
   # It all depends on the upscaler you're using
   # For Waifu2x, 2 is a good number
-  # For srmd, I personally like the 5~ range
+  # For srmd-ncnn-vulkan, I personally like the 5~ range
   denoise_level: 2  # [2]
 
   # The tile size affects total GPU VRAM usage, smaller values increases upscale time.
   # The ideal spot is somewhere in the 200 - 400 range, 200 uses about 1 GB VRAM
   # Some upscalers uses 0 to choose a auto value, consider this an option, check the upscaler repo
-  tile_size: 200  # [0]
+  tile_size: 200  # [200]
 
   # Upscaler model to use (tries to find in the folder where the upscale binary is?)
   # See your upscaler models
@@ -221,9 +221,9 @@ ffmpeg:
   # Settings for the x264 encoder on FFmpeg's libx264
   x264:
     # See https://trac.ffmpeg.org/wiki/Encode/H.264 for a guide
-    preset: slow
-    tune: animation
-    crf: 18
+    preset: slow  # [slow]
+    tune: animation  # [animation]
+    crf: 18  # [18]
 
 
 dandere2x_cpp:

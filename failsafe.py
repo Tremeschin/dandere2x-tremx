@@ -37,7 +37,7 @@ class FailSafe():
         debug_prefix = "[FailSafe.compatible_utype_uratio]"
 
         # Upscaling ratio can't be zero or negative, only natural numbers
-        # Probably can be floating points with "fake" and "w2x-cpp" but rounding errors.....
+        # Probably can be floating points with "fake" and "waifu2x-converter-cpp" but rounding errors.....
         if uratio <= 0:
             self.utils.log(colors["li_red"], 0, debug_prefix, "[ERROR] Upscale ratio is zero or negative")
             sys.exit(-1)
@@ -53,10 +53,10 @@ class FailSafe():
 
         # The compatible upscale ratios based on the upscalers
         compatible = {
-            "w2x-vulkan": [1, 2],
-            "w2x-cpp": [1, 2],
-            "realsr": [4],
-            "srmd": [2, 3, 4]
+            "waifu2x-ncnn-vulkan": [1, 2],
+            "waifu2x-converter-cpp": [1, 2],
+            "realsr-ncnn-vulkan": [4],
+            "srmd-ncnn-vulkan": [2, 3, 4]
         }
 
         # Get the one we're going to use
@@ -79,15 +79,15 @@ class FailSafe():
             sys.exit(-1)
 
         # dealsr doesn't have a denoiser, we just don't add the argument on upscaler.py
-        if upscaler in ["realsr", "fake"]:
+        if upscaler in ["realsr-ncnn-vulkan", "fake"]:
             return
 
         # The compatible denoise levels based on the upscalers
         # Note that range(a, b) is exclusive on b, ie, range(1, 5) -> [1, 2, 3, 4]
         compatible = {
-            "w2x-vulkan": [x for x in range(-1, 4)],
-            "w2x-cpp": [x for x in range(0, 4)],
-            "srmd": [x for x in range(-1, 11)]
+            "waifu2x-ncnn-vulkan": [x for x in range(-1, 4)],
+            "waifu2x-converter-cpp": [x for x in range(0, 4)],
+            "srmd-ncnn-vulkan": [x for x in range(-1, 11)]
         }
 
         # Get the one we're going to use
@@ -117,4 +117,5 @@ class FailSafe():
         
         
 if __name__ == "__main__":
-    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or the upcoming GUI")
+    import misc.greeter_message
+    print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")
