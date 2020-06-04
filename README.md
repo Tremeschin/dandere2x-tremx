@@ -42,8 +42,6 @@ You can help me testing it, reporting bugs or finding fixes
 
 Strongly recommend reading [wiki on Dandere2x settings](https://github.com/Tremeschin/dandere2x-tremx/wiki/Dandere2x-settings) before using the project.
 
-RESUMING SESSION IS A BIT UNSTABLE AT THE MOMENT, PREFERABLY FINISH A SESSION IN A SINGLE RUN
-
 ### Windows
 
 #### Running from a release
@@ -77,9 +75,9 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 
 ## Pro Tips
 
-- You can pass the argument `-f` to Dandere2x CLI to force not resume a session, ie. delete its folder and start up again if anything go wrong: `python dandere2x_cli.exe -f`
+- I cannot stress enough to read through the full wiki page on [Dandere2x settings](https://github.com/Tremeschin/dandere2x-tremx/wiki/Dandere2x-settings) with attention before changing the settings on your own
 
-- Be sure to read carefully the comments on settings.yaml file as I don't have a proper wiki yet :)
+- Be sure to read the GUI tool tips on the settings by hovering the mouse on them, those have some useful hints in a short amount of text compared to the wiki
 
 ## Links
 

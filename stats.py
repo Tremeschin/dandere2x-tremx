@@ -154,7 +154,7 @@ class Dandere2xStats():
 
         now_plus_eta = str(datetime.datetime.now() + datetime.timedelta(seconds = eta_time_number))[:-7]
 
-        eta_text = f"Total Time: [{tt_time}]  EST: [{eta_time}] --> Date will be [{now_plus_eta}]"
+        eta_text = f"Total Time: [{tt_time}]  EST: [{eta_time}] --> ETA [{now_plus_eta}]"
 
         return [progress_text, average_text, eta_text]
 

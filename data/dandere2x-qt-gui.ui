@@ -325,6 +325,12 @@
                <property name="suffix">
                 <string> Pixels</string>
                </property>
+               <property name="minimum">
+                <number>0</number>
+               </property>
+               <property name="maximum">
+                <number>100000</number>
+               </property>
               </widget>
              </item>
              <item row="1" column="0">
@@ -359,6 +365,9 @@
              </item>
              <item row="2" column="1">
               <widget class="QComboBox" name="aggressiveness">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How aggressive the block matching is, if you have a slowly moving video, a higher value is recommended, with more static videos such as anime or cartoon, medium or low should do it.&lt;/p&gt;&lt;p&gt;Heavily impacts final quality and upscale time, lower values can be visible and annoying.&lt;/p&gt;&lt;p&gt;Custom values let you chose its aggressiveness on the advanced tab.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="editable">
                 <bool>false</bool>
                </property>
@@ -752,7 +761,7 @@
         <x>400</x>
         <y>220</y>
         <width>651</width>
-        <height>101</height>
+        <height>110</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -844,8 +853,8 @@
        <rect>
         <x>400</x>
         <y>0</y>
-        <width>661</width>
-        <height>211</height>
+        <width>758</width>
+        <height>214</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">

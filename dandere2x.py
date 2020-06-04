@@ -154,7 +154,9 @@ class Dandere2x():
         # If force argument is set, force not resume session
         if self.context.force:
             self.utils.log(colors["hard_warning"], 0, debug_prefix, "FORCE MODE ENABLED, FORCING RESUME=FALSE")
+            # Set resume and force to false as both aren't true anymore
             self.context.resume = False
+            self.context.force = False
         else:
             self.utils.log(color, 1, debug_prefix, "Checking if is Resume session")
             self.context.resume = self.utils.check_resume()

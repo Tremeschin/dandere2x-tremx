@@ -478,11 +478,13 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         elif who == self.push_button_start_session:
             self.dandere2x.load_and_configure(self.config)
             self.togglewidget("progress_bar", True)
+            self.togglewidget("push_button_stop_session", True) 
             self.dandere2x.start()
 
         # Exit an upscale
         elif who == self.push_button_stop_session:
             self.togglewidget("progress_bar", False)   
+            self.togglewidget("push_button_stop_session", False) 
             self.dandere2x.stop()
 
     # Sets a dynamic output filename for convenience
@@ -516,11 +518,13 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         elif who == self.push_button_output:
             self.line_output.setText(text[0])
 
+        # Resume session
         elif who == self.push_button_load_session:
             # Set the resume from vars file, Dandere2x should handle everything
             self.config["resume_session_context_vars_file"] = text[0]
             print("config[\"resume_session_context_vars_file\"] =", text[0])
             
+            self.togglewidget("progress_bar", True)
             self.dandere2x.load_and_configure(self.config)
             self.dandere2x.start()
 

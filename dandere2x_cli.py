@@ -42,7 +42,7 @@ if __name__ == "__main__":
     args.add_argument("-i", "--input", required=False, help="(string) Input path of the video file to be upscaled")
     args.add_argument("-o", "--output", required=False, help="(string) Output path of the upscaled video | NOTE: Can be \"auto\", appends \"2x_\" at the filename of the input video")
 
-    args.add_argument("-w", "--upscaler", required=False, help="(string) What upscaler vertion to use: [fake, vulkan, cpp, caffe]")
+    args.add_argument("-u", "--upscaler", required=False, help="(string) What upscaler vertion to use: [fake, vulkan, cpp, caffe]")
 
     args.add_argument("-b", "--block_size", required=False, help="(int) Block size Dandere2x will work with")
     args.add_argument("-n", "--denoise_level", required=False, help="(int [0, 3]) How much denoise upscaler will apply")

@@ -223,10 +223,9 @@ ffmpeg:
   # Settings for the x264 encoder on FFmpeg's libx264
   x264:
     # See https://trac.ffmpeg.org/wiki/Encode/H.264 for a guide
-    preset: slow  # [slow]
-    tune: animation  # [animation]
-    crf: 18  # [18]
-
+    preset: slow  # [slow] ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow
+    tune: animation  # [animation] film, animation, stillimage, fastdecode, zerolatency
+    crf: 18  # [18] Ranges from 0-51, 0 being the lossless and 51 the worst quality possible
 
 dandere2x_cpp:
   # Without mindisk, C++ will do everything it needs to do ASAP:

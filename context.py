@@ -42,27 +42,27 @@ class Context():
         # When logging isn't a simple line but something like a list or dictionary
         self.indentation = "··· |"
 
+        # Set the (static) rootfolder substitution for changing paths session folders, so we can move the Dandere2x folder and be able to resume (?)
+        self.rootfolder_substitution = "//ROOTFOLDER//"
+
         # Context needs Utils for logging and works based on a config
         self.utils = utils
         self.config = config
+        
+        # For absolute-reffering
+        self.ROOT = self.utils.ROOT
 
         # Failsafe module
         self.failsafe = failsafe
 
-        if self.config["resume"]:
-            if "resume_session_context_vars_file" in self.config:
-                self.load_vars_from_file(self.config["resume_session_context_vars_file"])
-                return
+        self.utils.log(color, 3, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
+
+        if "resume_session_context_vars_file" in self.config:
+            self.load_vars_from_file(self.config["resume_session_context_vars_file"])
+            return
 
         # Session
         self.force = self.config["danger_zone"]["force"]
-
-        # Set the (static) rootfolder substitution for changing paths session folders
-        self.rootfolder_substitution = "//ROOTFOLDER//"
-        self.utils.log(color, 3, debug_prefix, "Rootfolder substitution is [%s] on Context and context_vars file" % self.rootfolder_substitution)
-
-        # For absolute-reffering
-        self.ROOT = self.utils.ROOT
 
         # Get the operating system we're working with
         self.os = self.utils.get_os()
@@ -219,7 +219,6 @@ class Context():
             "debug_video": "//ROOT//|sessions|//SESSION//|debug_video.mkv",
             "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
             "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
-            "noisy_video": "//ROOT//|sessions|//SESSION//|processing|noisy_//INPUTVIDEOFILENAME//",
             "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
             "joined_audio": "//ROOT//|sessions|//SESSION//|processing|joined_audio_//INPUTVIDEOFILENAME//",
             "logfile": "//ROOT//|sessions|//SESSION//|log.log",
@@ -243,7 +242,6 @@ class Context():
         self.debug_video = None
         self.context_vars = None
         self.temp_vpy_script = None
-        self.noisy_video = None
         self.vapoursynth_processing = None
         self.joined_audio = None
         self.logfile = None
@@ -398,7 +396,15 @@ class Context():
             "write_debug_video",
             "only_run_dandere2x_cpp",
             "upscale_full_frame_threshold",
-            "w2x_converter_cpp_jobs"
+            "w2x_converter_cpp_jobs",
+            "upscaler_model",
+            "linux_enable_mesa_aco_upscaler",
+            "force",
+            "partial",
+            "resume_video_frame",
+            "joined_audio",
+            "partial_video",
+            "debug_video"
         ]
 
         data = {}
@@ -440,6 +446,7 @@ class Context():
         self.utils.log(color, 4, debug_prefix, "Loaded context_vars yaml file, here's the self vars and loaded values:")
 
         for item in context_data:
+
             value = context_data[item]
 
             # As to revert back substituting <ROOTFOLDER>
