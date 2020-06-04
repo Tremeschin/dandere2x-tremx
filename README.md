@@ -40,6 +40,8 @@ Dandere2x should work in both Linux and Windows, though I haven't done much test
 
 You can help me testing it, reporting bugs or finding fixes
 
+Strongly recommend reading [wiki on Dandere2x settings](https://github.com/Tremeschin/dandere2x-tremx/wiki/Dandere2x-settings) before using the project.
+
 RESUMING SESSION IS A BIT UNSTABLE AT THE MOMENT, PREFERABLY FINISH A SESSION IN A SINGLE RUN
 
 ### Windows
