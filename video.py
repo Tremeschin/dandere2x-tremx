@@ -224,14 +224,17 @@ class FFmpegWrapper():
                 '-an',
                 '-crf', str(self.context.x264_crf),
                 '-preset', self.context.x264_preset,
-                '-tune', self.context.x264_tune,
                 '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
                 '-vf', 'format=yuvj444p',
                 '-color_range', 'jpeg',
                 '-framerate', self.context.frame_rate,
-                output
         ]
+
+        if not self.context.x264_tune == None:
+            command += ['-tune', self.context.x264_tune]
+        
+        command += [output]
 
         self.utils.log(color, 1, debug_prefix, "Creating FFmpeg one time pipe, output [%s]" % output)
 

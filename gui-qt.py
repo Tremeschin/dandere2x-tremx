@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, Qt, pyqtSignal
 from PyQt5 import QtWidgets, uic
 from dandere2x import Dandere2x
 from functools import partial
@@ -35,12 +35,12 @@ import os
 # QT needs to know this is a QThread otherwise it'll hand main thread
 class Dandere2xStarter(QThread):
 
+    new_stats = pyqtSignal(str)
+    percentage_completed = pyqtSignal(int)
+
     # QT needs to start the QThread
-    def __init__(self, statslabel, progress_bar, stop_button):
+    def __init__(self):
         QThread.__init__(self)
-        self.statslabel = statslabel
-        self.progress_bar = progress_bar
-        self.stop_button = stop_button
 
     # Load config and create Dandere2x() main thread
     def load_and_configure(self, config):
@@ -49,31 +49,10 @@ class Dandere2xStarter(QThread):
 
     # When main application quits
     def __del__(self):
-        # Stop (resume session) and wait to be finished
+        # Stop (resume session) and wait to be finished        
         self.stop()
         self.wait()
-
-    # Update the status label on the main window
-    def keep_updating_status(self):
-        while not self.dandere2x.controller.stop:
-            # Get the stats text from main Dandere2x
-            stats = "\n".join(self.dandere2x.controller.stats_list)
-
-            # Set the label and progress bar accordinly
-            self.statslabel.setText(stats)
-            self.progress_bar.setValue(int(self.dandere2x.controller.percentage_completed))
-
-            # Don't hang this thread with an stupid updates per second
-            time.sleep(0.1)
-        
-        self.progress_bar.setEnabled(False)
-        self.stop_button.setEnabled(False)
-
-        # Controller says to stop, did we finish the upscale or was it stopped / crashed?
-        if int(self.dandere2x.controller.percentage_completed) == 100:
-            self.statslabel.setText("Upscale finished\nGoodbye Dandere!!\n")
-        else:
-            self.statslabel.setText("Upscale was stopped or crashed\nGoodbye Dandere!!\n")
+        self.clear()
 
     # Main routine on running Dandere2x
     def run(self):
@@ -82,11 +61,37 @@ class Dandere2xStarter(QThread):
         self.dandere2x.setup()
 
         # Thread to update gui status label and progress bar
-        threading.Thread(target=self.keep_updating_status).start()
+        update_gui_thread = threading.Thread(target=self.dandere2x.run, daemon=True)
+        update_gui_thread.start()
 
-        # Run a Dandere2x session (either new or resume)
-        self.dandere2x.run()
+        while not self.dandere2x.controller.stop:
+
+            # Get the stats text from main Dandere2x
+            stats = "\n".join(self.dandere2x.controller.stats_list)
+
+            #print("WRAPPER STATS,", stats)
+
+            self.new_stats.emit(stats)
+            self.percentage_completed.emit(self.dandere2x.controller.percentage_completed)
+
+            # Don't hang this thread with an stupid updates per second
+            time.sleep(0.1)
+            #QThread.sleep(0.1)
+
+        if self.dandere2x.controller.percentage_completed:
+            self.new_stats.emit("Upscale finished!!")
+        else:
+            self.new_stats.emit("Session was stopped or crashed!!")
+        
+        self.clear()
+
+        print("Exiting Dandere2xStarter.run")
     
+    # Destroy Dandere2x main class
+    def clear(self):
+        print("Clearning main Dandere2x class")
+        self.dandere2x = None
+
     # Run controller.exit function to stop Dandere2x() and mark as resume session
     def stop(self):
         self.dandere2x.controller.exit()
@@ -115,6 +120,22 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
         # # # Basic configuration
 
+        # # Profile
+        self.combobox_profile = self.findChild(QtWidgets.QComboBox, 'profile')
+
+        # Put every profile .yaml into the combobox
+        self.combobox_profile.clear()
+        self.combobox_profile.addItems(
+            [item.replace(".yaml", "") for item in os.listdir(self.ROOT + os.path.sep + "profiles")]
+        )
+
+        self.combobox_profile.currentTextChanged.connect(partial(self.value_changed, self.combobox_profile))
+
+        # # # Resume session combobox
+
+        self.combobox_available_resume_session = self.findChild(QtWidgets.QComboBox, 'available_resume_session')
+        self.update_resume_able_sessions()
+
         # # The sliders
         self.slider_upscale_ratio = self.findChild(QtWidgets.QSlider, 'upscale_ratio')
         self.slider_upscale_ratio.valueChanged.connect(partial(self.value_changed, self.slider_upscale_ratio))
@@ -135,7 +156,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
         # Session controls
         self.push_button_load_session = self.findChild(QtWidgets.QPushButton, 'load_session')
-        self.push_button_load_session.clicked.connect(partial(self.select_file, self.push_button_load_session))
+        self.push_button_load_session.clicked.connect(partial(self.value_changed, self.push_button_load_session))
 
         self.push_button_start_session = self.findChild(QtWidgets.QPushButton, 'start_session')
         self.push_button_start_session.clicked.connect(partial(self.value_changed, self.push_button_start_session))
@@ -231,23 +252,46 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         self.check_box_mesaaco = self.findChild(QtWidgets.QCheckBox, 'mesaaco')
         self.check_box_mesaaco.stateChanged.connect(partial(self.value_changed, self.check_box_mesaaco))
 
+        # Create Dandere2xStarter class and load config, set resume to False by default
+        # Resuming is done via "load session" button or same input video filename as session=auto
+        self.dandere2x = Dandere2xStarter()
+
+        self.dandere2x.new_stats.connect(self.update_status_label)
+        self.dandere2x.percentage_completed.connect(self.update_progress_bar)
+
+        # Load a config file and change the gui accordingly
+        self.load_config("user")
+        self.update_widgets_by_config()
+
+        # Load the widgets into a dictionary
+        self.get_values()
+
         # Default set to yn_moving_480 sample file
         self.line_input.setText(self.ROOT + os.path.sep + "samples" + os.path.sep + "yn_moving_480.mkv")
         self.auto_output()
 
-        # Create Dandere2xStarter class and load config, set resume to False by default
-        # Resuming is done via "load session" button or same input video filename as session=auto
-        self.dandere2x = Dandere2xStarter(self.label_stats, self.progress_bar, self.push_button_stop_session)
-        self.config = self.utils.load_yaml(self.utils.ROOT + os.path.sep + "settings.yaml", log=False)
-        self.config["resume"] = False
-
-        # Load default values the gui starts with
-        # TODO: Remember last settings?
-        self.get_values()
-    
         # Stopping session / progress bar should be only active while a session is running
         self.togglewidget("progress_bar", False)
         self.togglewidget("push_button_stop_session", False)
+
+        self.show()
+
+    # Puts the sessions under sessions folder into the load session combobox
+    def update_resume_able_sessions(self):
+        self.combobox_available_resume_session.clear()
+        
+        self.combobox_available_resume_session.addItems(
+            ["null"] + [item for item in os.listdir(self.ROOT + os.path.sep + "sessions")]
+        )
+
+    def make_input_output_absolute(self):
+        self.input = os.path.abspath(self.input)
+        self.output = os.path.abspath(self.output)
+
+        self.config["basic"]["input_file"] = self.input
+        self.config["basic"]["output_file"] = self.output
+    
+        self.update_widgets_by_config()
 
     # Get and store values of everything
     def get_values(self, reload_compatible=True):
@@ -293,9 +337,17 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         # Use ACO (RADV_PERFTEST=aco)
         self.mesaaco = self.check_box_mesaaco.isChecked()
 
+        # # Resume
+
+        self.load_session_name = self.combobox_available_resume_session.currentText()
+
+        if self.load_session_name == "null":
+            self.load_session_name = None
+
         # # # # Create a dictionary with the widgets name for easier handling
 
         self.widgets = {
+            "load_session_name": self.load_session_name,
             "slider_upscale_ratio": self.slider_upscale_ratio,
             "slider_denoise_level": self.slider_denoise_level,
             "progress_bar": self.progress_bar,
@@ -335,8 +387,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
         self.update_config()
         self.auto_output()
-
-        self.show()
 
     # Some options are incompatible with some upscalers so we fix them here
     # Or put a mode like Upscale started and we lock everything
@@ -394,6 +444,9 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             self.dark_threshold = 0.0035
             self.bright_threshold = 0.0045
 
+        self.make_input_output_absolute()
+        
+
     # Changes the settings.yaml equivalent options based on the ones from this gui
     def update_config(self):
 
@@ -431,8 +484,85 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
         self.config["ffmpeg"]["deblock_filter"] = self.deblock_filter
         self.config["ffmpeg"]["x264"]["preset"] = self.x264_preset
-        self.config["ffmpeg"]["x264"]["tune"] = self.x264_tune
         self.config["ffmpeg"]["x264"]["crf"] = self.x264_crf        
+
+        if not self.x264_tune == "null":
+            self.config["ffmpeg"]["x264"]["tune"] = self.x264_tune
+        else:
+            self.config["ffmpeg"]["x264"]["tune"] = None
+
+    # 
+    def update_widgets_by_config(self):
+
+        self.loading_finished = False
+
+        # By default force=True
+        self.check_box_force.setChecked(True)
+
+        # Upscaler related        
+        self.combobox_upscaler.setCurrentIndex(
+            self.combobox_upscaler.findText(self.config["upscaler"]["type"], Qt.MatchFixedString)
+        )
+        
+        self.slider_upscale_ratio.setValue(self.config["upscaler"]["upscale_ratio"])
+        self.slider_denoise_level.setValue(self.config["upscaler"]["denoise_level"])
+
+        self.spinbox_tile_size.setValue(self.config["upscaler"]["tile_size"])
+        self.line_load_proc_save.setText(self.config["upscaler"]["load:proc:save"])
+        self.check_box_mesaaco.setChecked(self.config["upscaler"]["linux_enable_mesa_aco_upscaler"])
+
+        # Basic settings
+        self.line_input.setText(self.config["basic"]["input_file"])
+        self.line_output.setText(self.config["basic"]["output_file"])
+        
+        # Block matching
+        self.spinbox_bleed.setValue(self.config["block_matching"]["bleed"])
+        self.doublespinbox_dark_threshold.setValue(self.config["block_matching"]["dark_threshold"])
+        self.doublespinbox_bright_threshold.setValue(self.config["block_matching"]["bright_threshold"])
+        self.doublespinbox_fullframe_threshold.setValue(self.config["block_matching"]["upscale_full_frame_threshold"])
+
+        # Dandere2x C++ settings
+        self.check_box_only_run_dandere2x_cpp.setChecked(self.config["dandere2x_cpp"]["only_run_dandere2x_cpp"])
+        self.check_box_write_debug_video.setChecked(self.config["dandere2x_cpp"]["write_debug_video"])
+        self.check_box_show_debug_video_realtime.setChecked(self.config["dandere2x_cpp"]["show_debug_video_realtime"])
+        self.check_box_show_block_matching_stats.setChecked(self.config["dandere2x_cpp"]["show_block_matching_stats"])
+
+        # Deblock filter is a bit annoying because if the item doesn't exist on the combobox (ie, edited by user) we have to add it
+        index = self.combobox_deblock_filter.findText(self.config["ffmpeg"]["deblock_filter"])
+        
+        if index >= 0:
+            self.combobox_deblock_filter.setCurrentIndex(index)
+        else:
+            self.combobox_deblock_filter.addItems(self.config["ffmpeg"]["deblock_filter"])
+            
+            self.combobox_deblock_filter.setCurrentIndex(
+                self.combobox_deblock_filter.findText(self.config["ffmpeg"]["x264"]["preset"], Qt.MatchFixedString)
+            )
+        
+        self.combobox_x264_preset.setCurrentIndex(
+            self.combobox_x264_preset.findText(self.config["ffmpeg"]["x264"]["preset"], Qt.MatchFixedString)
+        )
+
+        tune = self.config["ffmpeg"]["x264"]["tune"]
+
+        if tune == None:
+            tune = "null"
+
+        self.combobox_x264_tune.setCurrentIndex(
+            self.combobox_x264_tune.findText(tune, Qt.MatchFixedString)
+        )
+
+        self.spinbox_x264_crf.setValue(self.config["ffmpeg"]["x264"]["crf"])
+        
+        self.loading_finished = True
+
+    # Here we load a settings file and update the GUI values to match them, used for 
+    def load_config(self, config_file):
+
+        if not ".yaml" in config_file:
+            config_file += ".yaml"
+
+        self.config = self.utils.load_yaml(self.utils.ROOT + os.path.sep + "profiles" + os.path.sep + config_file, log=False)
 
     # Enable or disable widgets, who = to (T/F)
     def togglewidget(self, who, to):
@@ -463,10 +593,30 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         except Exception:
             pass
 
-        self.get_values()
+        # While loading a config from a file don't let the values being changed affect the config
+        if self.loading_finished:
+            self.get_values()
+
+        # Changing profiles
+        if who == self.combobox_profile:
+            self.load_config(self.combobox_profile.currentText())
+            self.update_widgets_by_config()
+            self.get_values()
+            self.auto_output()
+
+        elif who == self.push_button_load_session:
+            if not self.load_session_name == "null":
+                # Set the resume from vars file, Dandere2x should handle everything
+                resume_file = self.ROOT + os.path.sep + "sessions" + os.path.sep + self.load_session_name + os.path.sep + "context_vars.yaml"
+                self.config["resume_session_context_vars_file"] = resume_file
+                print("config[\"resume_session_context_vars_file\"] =", resume_file)
+                
+                self.togglewidget("progress_bar", True)
+                self.dandere2x.load_and_configure(self.config)
+                self.dandere2x.start()
 
         # Sliders we have to update a label saying their value
-        if who == self.slider_denoise_level:
+        elif who == self.slider_denoise_level:
             value = self.slider_denoise_level.value()
             self.label_denoise_level.setText(f"x{value}")
 
@@ -486,6 +636,14 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             self.togglewidget("progress_bar", False)   
             self.togglewidget("push_button_stop_session", False) 
             self.dandere2x.stop()
+        
+        self.update_resume_able_sessions()
+
+    def update_progress_bar(self, value):
+        self.progress_bar.setValue(value)
+
+    def update_status_label(self, stats):
+        self.label_stats.setText(stats)
 
     # Sets a dynamic output filename for convenience
     def auto_output(self):
@@ -504,6 +662,8 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         # We got no file selected from the user, cancelled dialog
         if text == ('', ''):
             return
+
+        self.get_values()
         
         # Some input file has been recieved
         if who == self.push_button_input:
@@ -517,16 +677,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         # User chose some output file PATH
         elif who == self.push_button_output:
             self.line_output.setText(text[0])
-
-        # Resume session
-        elif who == self.push_button_load_session:
-            # Set the resume from vars file, Dandere2x should handle everything
-            self.config["resume_session_context_vars_file"] = text[0]
-            print("config[\"resume_session_context_vars_file\"] =", text[0])
-            
-            self.togglewidget("progress_bar", True)
-            self.dandere2x.load_and_configure(self.config)
-            self.dandere2x.start()
 
 # Qt stuff
 app = QtWidgets.QApplication(sys.argv)

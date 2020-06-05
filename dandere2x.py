@@ -355,6 +355,8 @@ class Dandere2x():
             # Save progress for later resuming
             self.context.save_vars()
 
+            self.utils.log(color, 0, debug_prefix, "Exiting Dandere2x.run")
+
 
 if __name__ == "__main__":
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

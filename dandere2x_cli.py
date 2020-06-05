@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     args.add_argument("-d", "--debug_video", required=False, action="store_true", help="(solo) Only generate the debug video, WILL NOT UPSCALE")
 
-    args.add_argument("-c", "--config_file", required=False, help="(path) Use this config file, defaults to \"settings.yaml\" where this script is, can be absolute or relative path")
+    args.add_argument("-p", "--profile", required=False, help="(string) Load this config file under /dandere2x/profiles/$name$.yaml, defaults to \"user\"")
 
 
     # Parse args and make dictionary
@@ -65,21 +65,25 @@ if __name__ == "__main__":
         "denoise_level": args.denoise_level,
         "tile_size": args.tile_size,
         "debug_video": args.debug_video,
-        "config_file": args.config_file
+        "profile": args.profile
     }
 
     user_modified = []
 
     # Build the config based on arguments
 
-    config_file = args["config_file"]
+    config_file = args["profile"]
 
-    if args["config_file"] == None:
-        config_file = utils.ROOT + os.path.sep + "settings.yaml"
+    if args["profile"] == None:
+        config_file = utils.ROOT + os.path.sep + "profiles" + os.path.sep + "user.yaml"
     else:
+        
+        if not ".yaml" in config_file:
+            config_file += ".yaml"
+
         # If the user did not sent us a absolute path
         if not os.path.isabs(config_file):
-            config_file = utils.ROOT + os.path.sep + config_file
+            config_file = utils.ROOT + os.path.sep + "profiles" + os.path.sep + config_file
 
     print("Loading Dandere2x with config file: [%s]" % config_file)
 

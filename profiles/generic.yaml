@@ -1,0 +1,89 @@
+# ===============================================================================
+#
+# Purpose: General settings for a Dandere2x session
+#
+# ===============================================================================
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# ===============================================================================
+
+
+basic:
+  input_file: samples/yn_moving_480.mkv
+  output_file: auto
+  session_name: auto
+
+block_matching:
+  block_size: auto
+  dark_threshold: 0.01
+  bright_threshold: 0.015
+  bleed: 1
+  upscale_full_frame_threshold: 80 
+
+upscaler:
+  type: waifu2x-ncnn-vulkan
+  upscale_ratio: 2
+  denoise_level: 0
+  tile_size: 200
+  model: null
+  load:proc:save: "4:4:4"
+  w2x_converter_cpp_jobs: null
+  linux_enable_mesa_aco_upscaler: true
+
+stats:
+  show_stats: true
+  average_last_N_frames: 120
+
+danger_zone:
+  force: false
+
+video:
+  get_video_info_method: ffmpeg
+  get_frame_count_method: null_copy
+  get_frame_rate_method: ffprobe
+  get_resolution_method: ffprobe
+  
+ffmpeg:
+  deblock_filter: pp=hb/vb/dr/fq|32, deband=range=22:blur=false
+  encode_codec: libx264
+
+  x264:
+    preset: slow
+    tune: null
+    crf: 18
+
+dandere2x_cpp:
+  mindisk: true
+  only_run_dandere2x_cpp: false
+  write_debug_video: false
+  show_debug_video_realtime: false
+  show_block_matching_stats: false
+
+# AVOID VAPOURSYNTH FOR NOW
+vapoursynth:
+  enabled: false
+  pre: transpose
+  pos: transpose
+
+developer:
+  write_log: true 
+  loglevel: 1
+  safety_ruthless_residual_eliminator_range: 2
+  wait_time_exists: 0.05
+  upscaler_wait_for_residuals: 0.1
+
+specific:
+  colors_output: true
+
+debug:
+  enable_upscaler: true 

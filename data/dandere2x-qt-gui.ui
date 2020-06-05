@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1067</width>
-    <height>550</height>
+    <width>1145</width>
+    <height>635</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -22,8 +22,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>1081</width>
-      <height>531</height>
+      <width>1141</width>
+      <height>611</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -41,8 +41,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1061</width>
-        <height>495</height>
+        <width>1141</width>
+        <height>573</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -76,9 +76,39 @@
           <number>10</number>
          </property>
          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>Profile</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="profile">
+             <property name="sizeAdjustPolicy">
+              <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <property name="spacing">
-            <number>0</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
@@ -275,7 +305,7 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <property name="spacing">
-            <number>0</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
@@ -481,6 +511,38 @@
           </widget>
          </item>
          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QComboBox" name="available_resume_session"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="load_session">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Load session</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
           <layout class="QHBoxLayout" name="horizontalLayout_8">
            <property name="spacing">
             <number>12</number>
@@ -497,19 +559,6 @@
            <property name="bottomMargin">
             <number>10</number>
            </property>
-           <item>
-            <widget class="QPushButton" name="load_session">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Load session</string>
-             </property>
-             <property name="checkable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QPushButton" name="stop_session">
              <property name="enabled">
@@ -556,6 +605,11 @@
          </property>
          <item>
           <widget class="QLabel" name="stats">
+           <property name="font">
+            <font>
+             <family>Monospace</family>
+            </font>
+           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
@@ -758,9 +812,9 @@
      <widget class="QWidget" name="verticalLayoutWidget_8">
       <property name="geometry">
        <rect>
-        <x>400</x>
-        <y>220</y>
-        <width>651</width>
+        <x>0</x>
+        <y>310</y>
+        <width>401</width>
         <height>110</height>
        </rect>
       </property>
@@ -853,7 +907,7 @@
        <rect>
         <x>400</x>
         <y>0</y>
-        <width>758</width>
+        <width>738</width>
         <height>214</height>
        </rect>
       </property>
@@ -915,7 +969,7 @@
          <item>
           <layout class="QFormLayout" name="formLayout_5">
            <property name="horizontalSpacing">
-            <number>30</number>
+            <number>10</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
@@ -933,6 +987,9 @@
             <widget class="QLabel" name="label_22">
              <property name="text">
               <string>Deblock filter</string>
+             </property>
+             <property name="indent">
+              <number>0</number>
              </property>
             </widget>
            </item>
@@ -1035,11 +1092,16 @@
            <item row="2" column="1">
             <widget class="QComboBox" name="x264_tune">
              <property name="currentText">
-              <string>animation</string>
+              <string>null</string>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
+             <item>
+              <property name="text">
+               <string>null</string>
+              </property>
+             </item>
              <item>
               <property name="text">
                <string>film</string>
@@ -1108,10 +1170,10 @@
      <widget class="QWidget" name="verticalLayoutWidget_11">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>300</y>
+        <x>110</x>
+        <y>420</y>
         <width>171</width>
-        <height>110</height>
+        <height>71</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_11">
