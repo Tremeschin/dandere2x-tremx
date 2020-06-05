@@ -278,6 +278,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
     # Puts the sessions under sessions folder into the load session combobox
     def update_resume_able_sessions(self):
+
         self.combobox_available_resume_session.clear()
         
         self.combobox_available_resume_session.addItems(
@@ -377,6 +378,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             "check_box_mesaaco": self.check_box_mesaaco
         }
 
+        self.update_config()
         self.compatibilize()
 
         # We potentially changed some minimum / maximum ranges so
@@ -385,7 +387,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             self.get_values(reload_compatible=False)
             return
 
-        self.update_config()
+        
         self.auto_output()
 
     # Some options are incompatible with some upscalers so we fix them here
