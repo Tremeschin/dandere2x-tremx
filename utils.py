@@ -596,9 +596,9 @@ class SubprocessUtils():
         
         # Runs the subprocess based on if we set or not a working_directory
         if working_directory == None:
-            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE)
+            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE, shell=False)
         else:
-            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE)
+            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE, shell=False)
 
     # Get the newlines from the subprocess
     # This is used for communicating Dandere2x C++ with Python, simplifies having dealing with files

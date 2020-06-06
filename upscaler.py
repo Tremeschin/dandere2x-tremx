@@ -174,6 +174,10 @@ class Upscaler():
         if self.context.os == "linux":
             if self.context.linux_enable_mesa_aco_upscaler:
                 env["RADV_PERFTEST"] = "aco"
+
+        # Failsafe Windows executing the upscaler?
+        if self.context.os == "windows":
+            os.chdir(self.working_directory)
         
         # Run the subprocess with the working directory and envs we've set
         upscaler_subprocess.run(working_directory=self.working_directory, env=env)
