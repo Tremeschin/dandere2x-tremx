@@ -279,11 +279,14 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
     # Puts the sessions under sessions folder into the load session combobox
     def update_resume_able_sessions(self):
 
-        self.combobox_available_resume_session.clear()
+        sessions_folder = self.ROOT + os.path.sep + "sessions"
+
+        if os.path.exists(sessions_folder):
+            self.combobox_available_resume_session.clear()
         
-        self.combobox_available_resume_session.addItems(
-            ["null"] + [item for item in os.listdir(self.ROOT + os.path.sep + "sessions")]
-        )
+            self.combobox_available_resume_session.addItems(
+                ["null"] + [item for item in os.listdir(sessions_folder)]
+            )
 
     def make_input_output_absolute(self):
         self.input = os.path.abspath(self.input)
