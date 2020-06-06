@@ -348,7 +348,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         # # # # Create a dictionary with the widgets name for easier handling
 
         self.widgets = {
-            "load_session_name": self.load_session_name,
             "slider_upscale_ratio": self.slider_upscale_ratio,
             "slider_denoise_level": self.slider_denoise_level,
             "progress_bar": self.progress_bar,
@@ -568,6 +567,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
     # Enable or disable widgets, who = to (T/F)
     def togglewidget(self, who, to):
+        print(who)
         self.widgets[who].setEnabled(to)
 
     # Set the maximum value of a widget (slider)
@@ -608,12 +608,17 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
         elif who == self.push_button_load_session:
             if not self.load_session_name == "null":
+
+                for widget in self.widgets:
+                    self.togglewidget(widget, False)
+
                 # Set the resume from vars file, Dandere2x should handle everything
                 resume_file = self.ROOT + os.path.sep + "sessions" + os.path.sep + self.load_session_name + os.path.sep + "context_vars.yaml"
                 self.config["resume_session_context_vars_file"] = resume_file
                 print("config[\"resume_session_context_vars_file\"] =", resume_file)
                 
                 self.togglewidget("progress_bar", True)
+                self.togglewidget("push_button_stop_session", True) 
                 self.dandere2x.load_and_configure(self.config)
                 self.dandere2x.start()
 
@@ -629,12 +634,20 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         # Start an upscale
         elif who == self.push_button_start_session:
             self.dandere2x.load_and_configure(self.config)
+
+            for widget in self.widgets:
+                self.togglewidget(widget, False)
+
             self.togglewidget("progress_bar", True)
             self.togglewidget("push_button_stop_session", True) 
             self.dandere2x.start()
 
         # Exit an upscale
         elif who == self.push_button_stop_session:
+
+            for widget in self.widgets:
+                self.togglewidget(widget, True)
+
             self.togglewidget("progress_bar", False)   
             self.togglewidget("push_button_stop_session", False) 
             self.dandere2x.stop()

@@ -540,6 +540,8 @@ class Utils():
                         # Get the full path by joining the root search and the target executable
                         full_path_executable = os.path.join(root, executable)
 
+                        full_path_executable = os.path.abspath(full_path_executable)
+
                         self.log(colors["good"], 2, debug_prefix, "Got executable, full path: [%s]" % full_path_executable)
 
                         # Exit "for every file in a folder" loop

@@ -6,6 +6,7 @@
 *.d2x
 *.code-workspace
 *.flac
+*.svg
 
 .vscode
 

@@ -40,7 +40,7 @@ class Context():
         debug_prefix = "[Context.__init__]"
 
         # When logging isn't a simple line but something like a list or dictionary
-        self.indentation = "··· |"
+        self.indentation = "··· | "
 
         # Set the (static) rootfolder substitution for changing paths session folders, so we can move the Dandere2x folder and be able to resume (?)
         self.rootfolder_substitution = "//ROOTFOLDER//"
@@ -115,8 +115,7 @@ class Context():
         self.failsafe.compatible_upscaler_denoise(self.upscaler_type, self.denoise_level)
 
         # If the user did not sent us a absolute path
-        if not os.path.isabs(self.input_file):
-            self.input_file = self.ROOT + os.path.sep + self.input_file
+        self.input_file = os.path.abspath(self.input_file)
 
         # Output file can be auto, that is, append $UPSCALE_RATIO$x_$UPSCALER_TYPE$ at the start of the filename
         if self.output_file == "auto":
@@ -125,8 +124,7 @@ class Context():
             self.utils.log(color, 1, debug_prefix, "Output file set to \"auto\", assigning: [%s]" % self.output_file)
         else:
             # Else if it was manually set, get the absolute path for it
-            if not os.path.isabs(self.output_file):
-                self.output_file = self.ROOT + self.output_file
+            self.output_file = os.path.abspath(self.output_file)
         
         # Get the new output filename if it was set to auto
         self.output_filename = self.utils.get_basename(self.output_file)
