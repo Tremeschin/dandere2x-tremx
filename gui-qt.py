@@ -69,6 +69,10 @@ class Dandere2xStarter(QThread):
             # Get the stats text from main Dandere2x
             stats = "\n".join(self.dandere2x.controller.stats_list)
 
+            n = 150
+            line = self.dandere2x.utils.last_log
+            stats += "\n" + '\n'.join([line[i:i+n] for i in range(0, len(line), n)])
+
             #print("WRAPPER STATS,", stats)
 
             self.new_stats.emit(stats)
@@ -653,7 +657,13 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
             self.togglewidget("progress_bar", False)   
             self.togglewidget("push_button_stop_session", False) 
-            self.dandere2x.stop()
+
+            try:
+                self.dandere2x.stop()
+            except AttributeError:
+                pass
+            except Exception as e:
+                raise(e)
         
         self.update_resume_able_sessions()
 

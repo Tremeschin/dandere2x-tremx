@@ -119,7 +119,7 @@ class Dandere2x():
 
         # On where everything is controlled and starts
         self.utils.log(color, 3, debug_prefix, "Creating Core()")
-        self.core = Core(self.context, self.utils, self.controller, self.upscaler, self.d2xcpp, self.processing, self.stats)
+        self.core = Core(self.context, self.utils, self.controller, self.upscaler, self.d2xcpp, self.processing, self.stats, self.video)
 
         # Vapoursynth wrapper
         self.utils.log(color, 3, debug_prefix, "Creating VapourSynthWrapper()")

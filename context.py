@@ -201,6 +201,7 @@ class Context():
         # Here we name the coresponding context.* directory var and set its "plain form"
         dirs = {
             "residual": "//ROOT//|sessions|//SESSION//|residual|",
+            "externals": "//ROOT//|externals",
             "upscaled": "//ROOT//|sessions|//SESSION//|upscaled|",
             "partial": "//ROOT//|sessions|//SESSION//|partial|",
             "merged": "//ROOT//|sessions|//SESSION//|merged|",
@@ -227,6 +228,7 @@ class Context():
         # dynamic variable setting workaround and for autocompleting
 
         self.residual = None
+        self.externals = None
         self.upscaled = None
         self.partial = None
         self.merged = None
@@ -328,6 +330,7 @@ class Context():
 
         wanted = [
             "residual",
+            "externals",
             "ROOT",
             "resume",
             "os",

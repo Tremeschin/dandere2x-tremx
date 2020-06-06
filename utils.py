@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from inspect import currentframe
-from color import colors, fg
+from color import colors, fg, bg
 import subprocess
 import threading
 import datetime
@@ -41,6 +41,9 @@ class Utils():
     # Init the log file
     def __init__(self):
         self.ROOT = self.get_root()
+
+        # To display on the gui the last status of the session
+        self.last_log = ""
 
     # On where the session name is set to "auto"
     def get_auto_session_name(self, input_file):
@@ -287,7 +290,10 @@ class Utils():
         # As we add that extra space at the end, gotta remove it
         processed_message = processed_message[:-1]
         
-        print(color + processed_message + fg.rs)
+        print(color + processed_message + fg.rs + bg.rs)
+
+        # Display on the GUI the latest status
+        self.last_log = processed_message
 
         # We give Utils, Context later on so we'll have to wait to see if write_log is T or F
         try:
@@ -593,12 +599,18 @@ class SubprocessUtils():
         # Copy the environment if nothing was changed and passed as argument
         if env is None:
             env = os.environ.copy()
+
+        # Yes, shell=True is not at all recommended but in my tests on Windows it was kinda necessary?
+        if self.context.os == "windows":
+            shell = True
+        else:
+            shell = False
         
         # Runs the subprocess based on if we set or not a working_directory
         if working_directory == None:
-            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE, shell=False)
+            self.process = subprocess.Popen(self.command, env=env, stdout=subprocess.PIPE, shell=shell)
         else:
-            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE, shell=False)
+            self.process = subprocess.Popen(self.command, env=env, cwd=working_directory, stdout=subprocess.PIPE, shell=shell)
 
     # Get the newlines from the subprocess
     # This is used for communicating Dandere2x C++ with Python, simplifies having dealing with files

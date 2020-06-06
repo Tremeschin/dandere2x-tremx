@@ -22,7 +22,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 from color import colors
 from PIL import Image
 import subprocess
+import time
 import cv2
+import sys
 import os
 
 
@@ -142,7 +144,7 @@ class FFmpegWrapper():
         self.utils.log(color, 5, debug_prefix, "Command to check frame_rate is: [%s]" % ' '.join(command))
 
         # We have to use subprocess here as os.popen doesn't catch the output correctly
-        frame_rate = self.utils.command_output_subprocess(command).replace("\n", "")
+        frame_rate = self.utils.command_output_subprocess(command).replace("\n", "").replace("\r", "")
 
         self.utils.log(color, 2, debug_prefix, "Got frame rate output: [%s]" % frame_rate)
 
@@ -218,17 +220,17 @@ class FFmpegWrapper():
                 '-vcodec', 'rawvideo',
                 '-video_size', '%sx%s' % (self.context.resolution[0]*self.context.upscale_ratio, self.context.resolution[1]*self.context.upscale_ratio),
                 '-pix_fmt', 'rgb24',
-                '-color_range', '2',
-                '-framerate', self.context.frame_rate,
+                #'-color_range', '2',
+                '-r', self.context.frame_rate,
                 '-i', '-',
                 '-an',
                 '-crf', str(self.context.x264_crf),
                 '-preset', self.context.x264_preset,
                 '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
-                '-vf', 'format=yuvj444p',
+                #'-vf', 'format=yuvj444p',
                 '-color_range', 'jpeg',
-                '-framerate', self.context.frame_rate,
+                '-r', self.context.frame_rate
         ]
 
         if not self.context.x264_tune == None:
@@ -240,15 +242,31 @@ class FFmpegWrapper():
 
         self.utils.log(color, 5, debug_prefix, "Full command is: [%s]" % command)
 
-        self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8)
+        self.pipe_subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8, cwd=os.path.dirname(self.ffmpeg_binary))
 
         self.utils.log(color, 3, debug_prefix, "Created FFmpeg one time pipe")
 
+        self.stop_piping = False
+        self.images_to_pipe = []
 
     # Write images into pipe
     def write_to_pipe(self, image):
-        self.pipe_subprocess.stdin.write(image)
+        self.images_to_pipe.append(image)
+        #self.pipe_subprocess.stdin.write(image)
 
+    # Thread save the images to the pipe, this way processing.py can do its job while we write the images
+    def pipe_writer_loop(self):
+
+        debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
+
+        while not self.stop_piping:
+            if len(self.images_to_pipe) > 0:
+                while len(self.images_to_pipe) > 0:
+                    image = self.images_to_pipe.pop(0)
+                    self.pipe_subprocess.stdin.write(image)
+                    self.utils.log(color, 8, debug_prefix, "Write new image from buffer to pipe")
+            self.utils.log(color, 8, debug_prefix, "Waiting new images on buffer list")
+            time.sleep(0.1)
 
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):
@@ -257,6 +275,11 @@ class FFmpegWrapper():
 
         self.utils.log(color, 1, debug_prefix, "Closing pipe")
 
+        while not len(self.images_to_pipe) == 0:
+            self.utils.log(color, 1, debug_prefix, "Waiting for image buffer list to end, len [%s]" % len(self.images_to_pipe))
+            time.sleep(0.1)
+
+        self.stop_piping = True
         self.pipe_subprocess.stdin.close()
         self.pipe_subprocess.stderr.close()
 

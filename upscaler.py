@@ -69,13 +69,14 @@ class Upscaler():
         if not search_binary == None:
 
             self.binary = self.utils.get_binary(search_binary)
-
             self.utils.log(color, 1, debug_prefix, "Got binary: [%s]" % self.binary)
+
+            self.binary_filename = self.utils.get_basename(self.binary)
+            self.utils.log(color, 1, debug_prefix, "Got binary filename: [%s]" % self.binary_filename)
 
             # Where the binary is located, for getting necessary dlls and libraries
             # It's the cwd or working directory of the upscaler subprocess
             self.working_directory = os.path.dirname(self.binary)
-                
             self.utils.log(color, 2, debug_prefix, "Working directory is [%s]" % self.working_directory)
 
         else:
@@ -92,7 +93,7 @@ class Upscaler():
         if not self.binary == None:
 
             # Start the command with only calling the binary
-            self.command = [self.binary]
+            self.command = [self.binary_filename]
 
             # nihui's upscalers have the same arguments
             if self.type in ["waifu2x-ncnn-vulkan", "srmd-ncnn-vulkan", "realsr-ncnn-vulkan"]:
@@ -115,7 +116,7 @@ class Upscaler():
                     "--block-size", str(self.context.tile_size),
                     "--scale-ratio", str(self.context.upscale_ratio),
                     "-a", "0",
-                    "-j", "16",
+                    "-j", "4",
                     "-f", "jpg",
                     "-q", "101",
                     "-v", "1"
@@ -206,7 +207,7 @@ class Upscaler():
                     self.upscale(input_path, output_path)
                     self.utils.log(color, 5, debug_prefix, "Upscaled everything, looping again..")
                 else:
-                    self.utils.log(color, 2, debug_prefix, "Input [\"%s\"] is empty" % input_path)
+                    self.utils.log(color, 8, debug_prefix, "Input [\"%s\"] is empty" % input_path)
 
                 # Do not call it, otherwise would spam too much
                 time.sleep(self.context.upscaler_wait_for_residuals)
@@ -255,6 +256,8 @@ class Upscaler():
     def ruthless_residual_eliminator(self):
         
         debug_prefix = "[Upscaler.ruthless_residual_eliminator]"
+
+        self.utils.log(color, 6, debug_prefix, "Alive!")
 
         # While Dandere2x is running
         while not self.controller.stop:

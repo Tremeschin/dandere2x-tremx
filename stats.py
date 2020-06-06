@@ -60,10 +60,10 @@ class Dandere2xStats():
             
             self.controller.stats_list = self.get_stats_text(self.context.last_processing_frame, self.context.frame_count)
 
-            for item in self.controller.stats_list:
-                print(item)
+            #for item in self.controller.stats_list:
+            #    print(item)
             
-            print()
+            #print()
 
             #while last_frame == self.context.last_processing_frame:
             time.sleep(0.1)

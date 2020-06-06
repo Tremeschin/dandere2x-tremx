@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     if not args["upscaler"] == None:
         user_modified.append("upscaler=\"%s\"" % args["upscaler"])
-        config["upscaler"]["upscaler_type"] = args["upscaler"]
+        config["upscaler"]["type"] = args["upscaler"]
 
     if not args["block_size"] == None:
         user_modified.append("block_size=\"%s\"" % args["block_size"])

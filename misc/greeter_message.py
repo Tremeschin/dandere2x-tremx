@@ -25,7 +25,7 @@ message = f"""
 {bias}               Fast video upscaling
 {bias}{(49-len("Version")-len(version))*" "}Version {version}
 {"-"*terminal_width}
- > Tremx version, made with ❤︎
+ > Tremx version, made with <3
 {"-"*terminal_width}
 """
 

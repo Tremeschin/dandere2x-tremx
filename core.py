@@ -29,7 +29,7 @@ color = colors["core"]
 
 class Core():
     
-    def __init__(self, context, utils, controller, upscaler, d2xcpp, processing, stats):
+    def __init__(self, context, utils, controller, upscaler, d2xcpp, processing, stats, video):
         self.context = context
         self.utils = utils
         self.controller = controller
@@ -37,6 +37,7 @@ class Core():
         self.d2xcpp = d2xcpp
         self.processing = processing
         self.stats = stats
+        self.video = video
 
         self.ROOT = self.context.ROOT
 
@@ -80,6 +81,10 @@ class Core():
         # Create the ruthless residual eliminator thread, see its code for more info
         self.controller.threads["ruthless_residual_eliminator"] = threading.Thread(target=self.upscaler.ruthless_residual_eliminator)
         self.utils.log(color, 3, debug_prefix, "Created thread upscaler.ruthless_residual_eliminator")
+
+        # Create the pipe write thread
+        self.controller.threads["pipe_writer_loop"] = threading.Thread(target=self.video.ffmpeg.pipe_writer_loop)
+        self.utils.log(color, 3, debug_prefix, "Created thread video.ffmpeg.pipe_writer_loop")
         
         # # Start the threads, warn the user that the output is no more linear
 

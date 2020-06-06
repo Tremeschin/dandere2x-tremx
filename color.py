@@ -22,6 +22,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 from sty import fg, bg, ef, rs
 
+# Windows PowerShell we gotta init the colors
+import colorama; colorama.init()
 
 def rgb(r, g, b):
     return fg(r, g, b)
@@ -29,32 +31,32 @@ def rgb(r, g, b):
 # Dictionary that controls the colors of the Dandere2x files
 colors = {
     # global
-    "error": rgb(255, 0, 0),
-    "hard_warning": rgb(255,100,0),
-    "warning": fg.li_red,
-    "debug": rgb(0, 255, 247),
-    "good": rgb(0, 255, 0),
+    "error": fg.li_red,
+    "hard_warning": fg.li_yellow,
+    "warning": fg.yellow,
+    "debug": fg.yellow,
+    "good": fg.li_green,
 
     # basic
-    "white": rgb(255, 255, 255),
-    "blue": rgb(0, 0, 255),
+    "white": fg.li_white,
+    "blue": fg.li_blue,
     "li_magenta": fg.li_magenta,
     "li_red": fg.li_red,
 
     # files
-    "dandere2x": rgb(200, 255, 80),  # dandere2x.py
-    "phases": rgb(84, 255, 87),  # dandere2x.py
+    "dandere2x": fg.li_cyan,  # dandere2x.py
+    "phases": fg.li_yellow,  # dandere2x.py
     "utils": fg.li_blue,  # utils.py
-    "controller": rgb(240, 100, 64),  # controller.py
+    "controller": fg.green,  # controller.py
     "context": fg.li_yellow,  # context.py   
-    "processing": rgb(0, 255, 0),  # processing.py
-    "frame": rgb(196, 255, 33),  # frame.py
-    "core": rgb(0, 115, 255),  # core.py
-    "stats": rgb(50, 80, 255),  # stats.py
-    "d2xcpp": rgb(240, 100, 64),  # d2xcpp.py
-    "video": rgb(30, 200, 60),  # video.py
-    "upscaler": rgb(255, 200, 10),  # waifu2x.py
-    "vp": rgb(120, 230, 200)  # vp.py 
+    "processing": fg.li_cyan,  # processing.py
+    "frame": fg.li_white,  # frame.py
+    "core": fg.cyan,  # core.py
+    "stats": fg.li_white,  # stats.py
+    "d2xcpp": fg.white,  # d2xcpp.py
+    "video": fg.green,  # video.py
+    "upscaler": fg.li_cyan,  # waifu2x.py
+    "vp": fg.li_white  # vp.py 
 }
 
 if __name__ == "__main__":
