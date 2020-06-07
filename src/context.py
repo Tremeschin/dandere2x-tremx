@@ -26,6 +26,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 ===============================================================================
 """
 
+from directories import Directories
 from color import colors
 import os
 
@@ -198,125 +199,37 @@ class Context():
                 
         self.utils.log(color, 4, debug_prefix, "Configuring context.* directories and static files")
 
-        # Here we name the coresponding context.* directory var and set its "plain form"
-        dirs = {
-            "residual": "//ROOT//|sessions|//SESSION//|residual|",
-            "externals": "//ROOT//|externals",
-            "upscaled": "//ROOT//|sessions|//SESSION//|upscaled|",
-            "partial": "//ROOT//|sessions|//SESSION//|partial|",
-            "merged": "//ROOT//|sessions|//SESSION//|merged|",
-            "processing": "//ROOT//|sessions|//SESSION//|processing",
-            "session": "//ROOT//|sessions|//SESSION//",
-            "sessions_folder": "//ROOT//|sessions"
-        }
+        # Directories will handle for us a few tweaks we can do to the Dandere2x runtime
+        self.directories = Directories()
+        self.directories.input_filename = self.input_filename
+        self.directories.session_name = self.session_name
+        self.directories.generate_dirs()
 
-        # "Static" files location
-        files = {
-            "upscaled_video": "//ROOT//|sessions|//SESSION//|upscaled_//INPUTVIDEOFILENAME//",
-            "partial_video": "//ROOT//|sessions|//SESSION//|partial|//NUM//.mkv",  # We make an exception on this in Utils.reset_files
-            "resume_video_frame": "//ROOT//|sessions|//SESSION//|processing|resume_video_frame.jpg",  # We make an exception on this in Utils.reset_files
-            "debug_video": "//ROOT//|sessions|//SESSION//|debug_video.mkv",
-            "context_vars": "//ROOT//|sessions|//SESSION//|context_vars.yaml",
-            "temp_vpy_script": "//ROOT//|sessions|//SESSION//|temp_vpy_script.vpy",
-            "vapoursynth_processing": "//ROOT//|sessions|//SESSION//|processing|vapoursynth_//INPUTVIDEOFILENAME//",
-            "joined_audio": "//ROOT//|sessions|//SESSION//|processing|joined_audio_//INPUTVIDEOFILENAME//",
-            "logfile": "//ROOT//|sessions|//SESSION//|log.log",
-            "logfile_last_session": "//ROOT//|last_session_log.log",
-        }
+        self.plain_dirs = self.directories.plain_dirs
+        self.plain_files = self.directories.plain_files
 
         # We declare these as none just for annoying errors on this
         # dynamic variable setting workaround and for autocompleting
 
-        self.residual = None
-        self.externals = None
-        self.upscaled = None
-        self.partial = None
-        self.merged = None
-        self.session = None
-        self.sessions_folder = None
+        self.residual = self.directories.get("residual")
+        self.externals = self.directories.get("externals")
+        self.upscaled = self.directories.get("upscaled")
+        self.partial = self.directories.get("partial")
+        self.processing = self.directories.get("processing")
+        self.merged = self.directories.get("merged")
+        self.session = self.directories.get("session")
+        self.sessions_folder = self.directories.get("sessions_folder")
 
-        self.d2x_cpp_vectors_out = None
-        self.d2x_cpp_plugins_out = None
-        self.upscaled_video = None
-        self.resume_video_frame = None
-        self.debug_video = None
-        self.context_vars = None
-        self.temp_vpy_script = None
-        self.vapoursynth_processing = None
-        self.joined_audio = None
-        self.logfile = None
-        self.logfile_last_session = None
-
-        # # #
-
-        self.plain_dirs = []
-        self.plain_files = []
-
-        # This is a really neat* way of micromanaging lots of self vars, we basically
-        # set the self.$name$ with setattr, not much else is happening here other than
-        # replacing [//SESSION// with self.session_name], ["|" with os.path.sep] and
-        # [//ROOT// with the ROOT folder Dandere2x is on] while also enumarating both
-        # dictionaries to save double the lines of code for dirs and files
-        # *and weird?
-
-        # List we're iterate
-        dir_and_file = [("dirs", dirs), ("files", files)]
-
-        for _, reference in enumerate(dir_and_file):
-            '''
-            print(i, reference)
-
-            0 ('dirs', {'residual': 'wor...
-            1 ('files', {'d2x_cpp_plugins_out...
-
-            This way we can have the reference[0] which is the name and reference[1]
-            which is the full dictionary
-            '''
-
-            name = reference[0]
-            dic = reference[1]
-
-            for category in dic:
-
-                # # # Getting the full directory and add it to plain_{dirs,files} list # # #
-
-                # Replace our syntax with system-specific one, you'll know
-                # seeing the dictionary in the next line:
-
-                # We use //NAME// because either on Windows or Linux dirs can't have this name
-                # so instead of using a nullbyte or something else for replacing the "dynamic stuff"
-                # se simply use this workaround, note the "|" = os.path.sep MUST BE THE LAST
-
-                replace = {
-                    "//SESSION//": self.session_name,
-                    "//INPUTVIDEOFILENAME//": self.input_filename,
-                    "//ROOT//": self.ROOT,
-
-                    "|": os.path.sep,  # THIS MUST BE THE LAST
-                }
-
-                # The "path" itself, with the "|" and "SESSION"
-                subname = dic[category]
-
-                for item in replace:
-                    subname = subname.replace(item, replace[item])
-
-                # # Pretty logging
-
-                if name == "dirs":
-                    self.plain_dirs.append(subname)
-                    printname = "directory"
-
-                elif name == "files":
-                    self.plain_files.append(subname)
-                    printname = "static files"
-
-                # #
-
-                # Set the value based on the "category" -> self.residual, self.upscaled, self.merged
-                setattr(self, category, subname)
-
-                self.utils.log(color, 4, self.indentation, "(%s) self.%s = \"%s\"" % (printname, category, subname))
+        self.upscaled_video = self.directories.get("upscaled_video")
+        self.resume_video_frame = self.directories.get("resume_video_frame")
+        self.debug_video = self.directories.get("debug_video")
+        self.context_vars = self.directories.get("context_vars")
+        self.temp_vpy_script = self.directories.get("temp_vpy_script")
+        self.vapoursynth_processing = self.directories.get("vapoursynth_processing")
+        self.joined_audio = self.directories.get("joined_audio")
+        self.partial_video = self.directories.get("partial_video")
+        self.logfile = self.directories.get("logfile")
+        self.logfile_last_session = self.directories.get("logfile_last_session")
 
     # We save some selected vars for dandere2x_cpp to read them and work
     # properly based on where stuff actually is
@@ -347,7 +260,6 @@ class Context():
             "session",
             "upscaled",
             "merged",
-            "d2x_cpp_plugins_out",
             "context_vars",
             "plain_dirs",
             "plain_files",
@@ -377,7 +289,6 @@ class Context():
             "upscaled_video",
             "upscale_ratio",
             "processing",
-            "d2x_cpp_vectors_out",
             "deblock_filter",
             "encode_codec",
             "safety_ruthless_residual_eliminator_range",

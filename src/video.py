@@ -23,6 +23,7 @@ from color import colors
 from PIL import Image
 import subprocess
 import time
+import copy
 import cv2
 import sys
 import os
@@ -216,12 +217,13 @@ class FFmpegWrapper():
                 '-nostats',
                 '-hide_banner',
                 '-y',
-                '-f', 'rawvideo',
-                '-vcodec', 'rawvideo',
-                '-video_size', '%sx%s' % (self.context.resolution[0]*self.context.upscale_ratio, self.context.resolution[1]*self.context.upscale_ratio),
-                '-pix_fmt', 'rgb24',
+                '-f', "image2pipe",
+                #'-f', 'rawvideo',
+                #'-vcodec', 'rawvideo',
+                #'-video_size', '%sx%s' % (self.context.resolution[0]*self.context.upscale_ratio, self.context.resolution[1]*self.context.upscale_ratio),
+                #'-pix_fmt', 'rgb24',
                 #'-color_range', '2',
-                '-r', self.context.frame_rate,
+                #'-r', self.context.frame_rate,
                 '-i', '-',
                 '-an',
                 '-c:v', self.context.encode_codec,
@@ -248,40 +250,33 @@ class FFmpegWrapper():
         self.utils.log(color, 3, debug_prefix, "Created FFmpeg one time pipe")
 
         self.stop_piping = False
-        self.images_to_pipe = {}
-        self.count = 0
+        self.lock_writing = False
+        self.images_to_pipe = []
 
     # Write images into pipe
     def write_to_pipe(self, image):
-        #self.images_to_pipe[self.count] = image
-        #self.count += 1
-        self.pipe_subprocess.stdin.write(image)
+        self.images_to_pipe.append(copy.deepcopy(image.image_array()))
+        #self.pipe_subprocess.stdin.write(image)
 
     # Thread save the images to the pipe, this way processing.py can do its job while we write the images
-    # WIP
     def pipe_writer_loop(self):
-        return
 
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
         count = 0
 
-        while True:
-            if self.stop_piping:
-                break
-            
-            while not count in self.images_to_pipe:
-                self.utils.log(color, 8, debug_prefix, "Waiting new images on buffer list")
+        while not self.stop_piping:
+            if len(self.images_to_pipe) > 0:
+                self.lock_writing = True
+                image = self.images_to_pipe.pop(0)
+                image.save(self.pipe_subprocess.stdin, format="jpeg", quality=100)
+                self.lock_writing = False
+            else:
                 time.sleep(0.1)
-
-            image = self.images_to_pipe[count]
-            self.pipe_subprocess.stdin.write(image)
-
-            del self.images_to_pipe[count]
 
             count += 1
 
-            self.utils.log(color, 8, debug_prefix, "Write new image from buffer to pipe")
+            self.utils.log(color, 8, debug_prefix, "Write new image from buffer to pipe, count=[%s]" % count)
 
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):
@@ -292,6 +287,10 @@ class FFmpegWrapper():
 
         while not len(self.images_to_pipe) == 0:
             self.utils.log(color, 1, debug_prefix, "Waiting for image buffer list to end, len [%s]" % len(self.images_to_pipe))
+            time.sleep(0.1)
+
+        while self.lock_writing:
+            self.utils.log(color, 1, debug_prefix, "Lock writing is on, should only have one image?")
             time.sleep(0.1)
 
         self.stop_piping = True

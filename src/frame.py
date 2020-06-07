@@ -180,7 +180,7 @@ class Frame():
 
     # Get PIL image array from this object frame
     def image_array(self):
-        return Image.fromarray(self.frame.astype(np.uint8), "RGB")
+        return Image.fromarray(self.frame.astype(np.uint8))
 
     # Gets the (other_frame), (self.frame), and set to this (self.frame) the other's (self.frame)
     def duplicate(self, other_frame):

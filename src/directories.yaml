@@ -1,0 +1,31 @@
+
+tweaks:
+  linux:
+    # This sets ROOT = ~/.dandere2x to stote the session
+    # Otherwise ROOT = where "utils.py" is
+    release_rootfolder_homepath: false
+
+# Static directories
+directories:
+  sessions_folder: "//ROOT//|sessions"
+  externals: "//ROOT//|externals"
+  residual: "//SESSIONFOLDER//|upscaler|residual|"
+  upscaled: "//SESSIONFOLDER//|upscaler|upscaled|"
+  partial: "//SESSIONFOLDER//|partial|"
+  merged: "//SESSIONFOLDER//|merged|"
+  processing: "//SESSIONFOLDER//|processing"
+  session: "//SESSIONFOLDER//"
+
+# Static files
+files:
+  logfile_last_session: "//ROOT//|last_session_log.log"
+  upscaled_video: "//SESSIONFOLDER//|upscaled_//INPUTVIDEOFILENAME//"
+  partial_video: "//SESSIONFOLDER//|partial|//NUM//.mkv"
+  resume_video_frame: "//SESSIONFOLDER//|processing|resume_video_frame.jpg"
+  debug_video: "//SESSIONFOLDER//|debug_video.mkv"
+  context_vars: "//SESSIONFOLDER//|context_vars.yaml"
+  temp_vpy_script: "//SESSIONFOLDER//|temp_vpy_script.vpy"
+  vapoursynth_processing: "//SESSIONFOLDER//|processing|vapoursynth_//INPUTVIDEOFILENAME//"
+  joined_audio: "//SESSIONFOLDER//|processing|joined_audio_//INPUTVIDEOFILENAME//"
+  logfile: "//SESSIONFOLDER//|log.log"
+

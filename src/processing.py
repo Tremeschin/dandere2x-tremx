@@ -261,7 +261,7 @@ class Processing():
             # self.merged.save("merged/merged.png")
 
             # Write the self.merged.frame to the encoding pipe
-            self.video.ffmpeg.write_to_pipe(self.merged.frame)
+            self.video.ffmpeg.write_to_pipe(self.merged)
             
             self.utils.log(color, 8, debug_prefix, "Wrote merged frame")
 

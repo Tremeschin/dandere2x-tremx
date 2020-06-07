@@ -2,15 +2,15 @@
 
 ## What is Dandere2x
 
-Dandere2x is a Linux / Windows video "compressor" that detects image redundancies between every successive frames, generating a "residual" image (the differences) between then and builds the whole video back with this compressed information.
+Dandere2x is a free (as in freedom), open source Linux / Windows "video compressor" that detects image redundancies between every successive frames, generating a "residual" image (the differences) between them and builds the whole video back with this compressed information.
 
-All of this is to make more efficient for computation expensive upscalers (we use Waifu2x) to process a video as there will be only the need to compute these residual images, the "only-needed" parts of the content rather than each frame individually.
+All of this is to make more efficient for expensive raw compute power upscalers (like Waifu2x, SRMD, RealSR) to process a video as they'll only have to process the residual image, the "only-needed" parts of the content rather than each frame individually.
 
-You can get more info on the intuition of this project on the original Dandere2x wiki https://github.com/aka-katto/dandere2x/wiki/How-Dandere2x-Works
+You can get more info on the intuition of this project on the [original Dandere2x wiki](https://github.com/aka-katto/dandere2x/wiki/How-Dandere2x-Works)
 
 Check out aka-katto's repo as well :)
 
-"What is Dandere2x" video is work in progress
+* "What is Dandere2x" video is work in progress
 
 ## Tremx version what does that mean?  
 
@@ -20,13 +20,15 @@ In the past I contributed to the original Dandere2x both with code and ideas, ho
 
 ## Why it is used, performance?
 
-Waifu2x is a good upscaler, though it's really slow for videos. Let's take that 10 seconds sample of the anime Your Name: there's 240 total frames, a 480p file takes 1.8 seconds in average to upscale on my GPU, that would be 240 frames * 1.8 seconds = 432 seconds to upscale a 10 second video.
+Waifu2x, SRMD, RealSR all are good upscalers, a LOT better than image editing ones though they're also a LOT slower. Let's take that 10 seconds sample of the anime Your Name included in the `src/samples` folder: there's 240 total frames, a 480p file takes 1.8 seconds in average to upscale on my GPU, that would be 240 frames * 1.8 seconds = 432 seconds to upscale a 10 second video.
 
-Running Dandere2x block matching only on the video, reveals that there is 246,649 total blocks, 52,399 of those need upscaling, that is 78.75% of "block recycling" through the video, which should lower that 8 minutes by this amount: 432 seconds * ( 1 - 0.785 ) = 92 seconds, which is about right, upscaling this video takes about 83 seconds on a Dandere2x session here.
+Running only the Dandere2x block matching on the video reveals that there are 246.649 total blocks, 52.399 of those need upscaling.
 
-Fun number: 240 frames / 92 seconds = 2.6 frames per second on average we're processing the video.
+That is 78.75% of "block recycling" through the video, which should lower that 8 minutes by this amount: 432 seconds * ( 100% - 78.5% ) = 92 seconds, which is about right, upscaling this video takes about 83 seconds on a Dandere2x session here.
 
-So we went from 432 seconds to only 83 seconds. Note that this sample video isn't as "static" as most anime, so numbers can be higher or lower. It will work best with anime as there are more static images comparing to something like an IRL video.
+So we went from 432 seconds to only 92 seconds, that is 2.6 frames per second!!
+
+Note that this sample video isn't as "static" as most anime, so numbers can be much higher or lower. It will work best with anime as there are less moving images comparing to something like an IRL video.
 
 Generally speaking here's the order of upscaling speed in descending order:
 
@@ -52,7 +54,6 @@ No releases available right now, it's still very much in WIP and changing quite 
 
 Check out the wiki on [running Dandere2x on Windows](https://github.com/Tremeschin/dandere2x-tremx/wiki/Windows) from the source code!!
 
-
 ### Linux
 
 Dandere2x on Linux must be run directly from the source code, head over to our wiki on [running Dandere2x on Linux](https://github.com/Tremeschin/dandere2x-tremx/wiki/Linux)!!
@@ -60,8 +61,18 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 
 ## What is being worked on? 
 
+### Road to a 1.0 release
 
-### Issues / TODOs / Roadmap
+- [ ] Fix aggressiveness not scaling up with larger block sizes or down with smaller
+- [ ] Rewrite `get-externals.py` for a better UX and maintainability
+- [ ] Make the GUI more presentable, elegant
+- [ ] Automation scripts for making a Windows release with ease (using Wine for pyinstaller?)
+- [ ] Write better Failsafe class?
+- [ ] GUI hangs one CPU core after upscale finishes sometimes (lol?)
+- [ ] Add GUI tooltips on most options
+- [ ] Concatenate the partial video files without re-encoding
+
+### Issues
 
 - Minor contrast issues on a upscaled videos, this is acknowledged and affects aka's Dandere2x as well
 

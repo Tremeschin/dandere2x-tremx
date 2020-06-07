@@ -383,7 +383,9 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             "spinbox_x264_crf": self.spinbox_x264_crf,
             "spinbox_tile_size": self.spinbox_tile_size,
             "line_load_proc_save": self.line_load_proc_save,
-            "check_box_mesaaco": self.check_box_mesaaco
+            "check_box_mesaaco": self.check_box_mesaaco,
+            "combobox_profile": self.combobox_profile,
+            "combobox_available_resume_session": self.combobox_available_resume_session
         }
 
         self.update_config()
@@ -576,7 +578,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
     # Enable or disable widgets, who = to (T/F)
     def togglewidget(self, who, to):
-        print(who)
         self.widgets[who].setEnabled(to)
 
     # Set the maximum value of a widget (slider)
@@ -589,6 +590,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
     # When a value of a widget changes, combobox, slider
     def value_changed(self, who):
+        '''
         try:
             print(who.objectName(), who.currentText())
         except Exception:
@@ -603,6 +605,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             print(who.objectName(), who.text())
         except Exception:
             pass
+        '''
 
         # While loading a config from a file don't let the values being changed affect the config
         if self.loading_finished:
