@@ -20,7 +20,7 @@ In the past I contributed to the original Dandere2x both with code and ideas, ho
 
 ## Why it is used, performance?
 
-Waifu2x is a good upscaler, though it's really slow for videos. Let's take that 10 seconds sample of the anime Your Name: there's 240 total frames, a 480p file takes 1.8 seconds in average to upscale on my GPU, that would be 240 frames * 2 seconds = 432 seconds to upscale a 10 second video.
+Waifu2x is a good upscaler, though it's really slow for videos. Let's take that 10 seconds sample of the anime Your Name: there's 240 total frames, a 480p file takes 1.8 seconds in average to upscale on my GPU, that would be 240 frames * 1.8 seconds = 432 seconds to upscale a 10 second video.
 
 Running Dandere2x block matching only on the video, reveals that there is 246,649 total blocks, 52,399 of those need upscaling, that is 78.75% of "block recycling" through the video, which should lower that 8 minutes by this amount: 432 seconds * ( 1 - 0.785 ) = 92 seconds, which is about right, upscaling this video takes about 83 seconds on a Dandere2x session here.
 
@@ -36,7 +36,7 @@ Generally speaking here's the order of upscaling speed in descending order:
 
 ## Instructions
 
-Dandere2x should work in both Linux and Windows, though I haven't done much testing on the Windows OS, it's a bit unstable at the moment.  
+Dandere2x should work in both Linux and Windows, though I haven't done much testing on the Windows OS but generally speaking it works with minor issues depending on your setup.
 
 You can help me testing it, reporting bugs or finding fixes
 
@@ -65,13 +65,9 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 
 - Minor contrast issues on a upscaled videos, this is acknowledged and affects aka's Dandere2x as well
 
-- Waifu2x is acting weird on Windows, investigating this now as it's the _(last)_ thing to be usable, though some "beta testers" run it fine and others don't
+- The best settings and defaults / recommended ones aren't really optimal, they need some love
 
-- The best settings and defaults / recommended ones are rough, they need some love
-
-- I'm not completely sure how compatible OpenCV is reading different video codecs / obscure formats, it worked well on MKV and MP4 though MKV is preferred here IMO.
-
-- There's some tweaks we can do to better IRL video quality and speed, those aren't top priority but might come next, maybe a "tldr mode" like: dandere2x_mode: {anime, irl, cartoon} on the settings?  
+- I'm not completely sure how compatible OpenCV is reading different video codecs / obscure formats, it worked well on MKV and MP4, there can be some videos that don't get fully upscaled (?)
 
 ## Pro Tips
 
@@ -89,9 +85,13 @@ We also have a [Telegram server](https://t.me/joinchat/KTRznBIPPNCbHkUqnwT8pA)
 
 Dandere2x utilizes some community driven projects such as:
 
-nihui's Waifu2x https://github.com/nihui/waifu2x-ncnn-vulkan
+nihui's Waifu2x Vulkan port https://github.com/nihui/waifu2x-ncnn-vulkan
 
-DeadSix27's Waifu2x https://github.com/DeadSix27/waifu2x-converter-cpp  
+nihui's SRMD Vulkan port https://github.com/nihui/srmd-ncnn-vulkan 
+
+nihui's RealSR Vulkan port https://github.com/nihui/realsr-ncnn-vulkan
+
+DeadSix27's Waifu2x C++ port https://github.com/DeadSix27/waifu2x-converter-cpp  
 
 opencv https://github.com/opencv/opencv
 
