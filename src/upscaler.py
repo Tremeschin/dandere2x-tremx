@@ -69,6 +69,10 @@ class Upscaler():
         if not search_binary == None:
 
             self.binary = self.utils.get_binary(search_binary)
+
+            if self.binary == None:
+                self.utils.log(colors["error"], 0, debug_prefix, "UPSCALER BINARY NOT FOUND IN EXTERNALS")
+
             self.utils.log(color, 1, debug_prefix, "Got binary: [%s]" % self.binary)
 
             self.binary_filename = self.utils.get_basename(self.binary)

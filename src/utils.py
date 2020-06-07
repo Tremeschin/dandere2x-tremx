@@ -136,8 +136,8 @@ class Utils():
 
     # Returns the path of a auto output file
     def auto_output_file(self, input_file, upscale_ratio, upscaler_type):
-        filename = os.path.basename(input_file)
-        output_file = input_file.replace(filename, f"{upscale_ratio}x_{upscaler_type}_{filename}")
+        filename, file_extension = os.path.splitext(input_file)
+        output_file = input_file.replace(filename, f"{filename}_{upscaler_type}_{upscale_ratio}x")
         return output_file
 
     # Wrapper for self.mkdir_dne, checks the plain dirs from context

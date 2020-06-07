@@ -1,5 +1,6 @@
 # Tremx
 *.mp4
+*.mkv
 *.log
 *.jpg
 *.png
@@ -10,48 +11,27 @@
 
 .vscode
 
-sessions/*
-frames/*
-deviation/*
-
-externals/*
-externals-static
-
-tremxsamples
-
-samples
-!samples/yn_moving_480.mkv
-!samples/yn_moving.mkv
-!samples/legal
-
-tremxsettings.yaml
-
-d2x_introduction_video/
-
-docs/
-trivia
-rnd/
-
-dandere2x_cpp_tremx/opencv
-
-dandere2x_cpp_tremx/blocks
-dandere2x_cpp_tremx/frames
-dandere2x_cpp_tremx/CMakeFiles
-
-test.py
-prototype.py
-last_session_log.log
-dandere2x_cpp_tremx/CMakeCache.txt
-dandere2x_cpp_tremx/dandere2x_cpp
-dandere2x_cpp_tremx/Makefile
-dandere2x_cpp_tremx/cmake_install.cmake
-dandere2x_cpp_tremx/oldreference.cpp
-
-vpys/sample*
-
-vsrepo
 
 
+src/sessions/*
+
+src/externals/*
+
+src/samples/tremxsamples
+
+!src/samples/yn_moving_480.mkv
+!src/samples/yn_moving.mkv
+!src/samples/legal
+
+src/introduction_video/
+
+src/docs/
+
+src/dandere2x_cpp/CMakeCache.txt
+src/dandere2x_cpp/Makefile
+src/dandere2x_cpp/cmake_install.cmake
+src/dandere2x_cpp/opencv
+src/dandere2x_cpp/CMakeFiles
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -224,11 +224,12 @@ class FFmpegWrapper():
                 '-r', self.context.frame_rate,
                 '-i', '-',
                 '-an',
+                '-c:v', self.context.encode_codec,
                 '-crf', str(self.context.x264_crf),
                 '-preset', self.context.x264_preset,
-                '-vcodec', self.context.encode_codec,
                 '-vf', self.context.deblock_filter,
                 #'-vf', 'format=yuvj444p',
+                '-pix_fmt', 'yuv420p',
                 '-color_range', 'jpeg',
                 '-r', self.context.frame_rate
         ]
@@ -247,26 +248,40 @@ class FFmpegWrapper():
         self.utils.log(color, 3, debug_prefix, "Created FFmpeg one time pipe")
 
         self.stop_piping = False
-        self.images_to_pipe = []
+        self.images_to_pipe = {}
+        self.count = 0
 
     # Write images into pipe
     def write_to_pipe(self, image):
-        self.images_to_pipe.append(image)
-        #self.pipe_subprocess.stdin.write(image)
+        #self.images_to_pipe[self.count] = image
+        #self.count += 1
+        self.pipe_subprocess.stdin.write(image)
 
     # Thread save the images to the pipe, this way processing.py can do its job while we write the images
+    # WIP
     def pipe_writer_loop(self):
+        return
 
         debug_prefix = "[FFmpegWrapper.pipe_writer_loop]"
 
-        while not self.stop_piping:
-            if len(self.images_to_pipe) > 0:
-                while len(self.images_to_pipe) > 0:
-                    image = self.images_to_pipe.pop(0)
-                    self.pipe_subprocess.stdin.write(image)
-                    self.utils.log(color, 8, debug_prefix, "Write new image from buffer to pipe")
-            self.utils.log(color, 8, debug_prefix, "Waiting new images on buffer list")
-            time.sleep(0.1)
+        count = 0
+
+        while True:
+            if self.stop_piping:
+                break
+            
+            while not count in self.images_to_pipe:
+                self.utils.log(color, 8, debug_prefix, "Waiting new images on buffer list")
+                time.sleep(0.1)
+
+            image = self.images_to_pipe[count]
+            self.pipe_subprocess.stdin.write(image)
+
+            del self.images_to_pipe[count]
+
+            count += 1
+
+            self.utils.log(color, 8, debug_prefix, "Write new image from buffer to pipe")
 
     # Close stdin and stderr of pipe_subprocess and wait for it to finish properly
     def close_pipe(self):

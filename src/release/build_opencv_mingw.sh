@@ -1,6 +1,9 @@
 # cd into where this file is located
 cd ${BASH_SOURCE%/*}
 
+# cd to dandere2x_cpp dir
+cd ../dandere2x_cpp
+
 # Get OpenCV source file
 git clone https://github.com/opencv/opencv
 

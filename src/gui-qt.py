@@ -76,7 +76,7 @@ class Dandere2xStarter(QThread):
             #print("WRAPPER STATS,", stats)
 
             self.new_stats.emit(stats)
-            self.percentage_completed.emit(self.dandere2x.controller.percentage_completed)
+            self.percentage_completed.emit(int(self.dandere2x.controller.percentage_completed))
 
             # Don't hang this thread with an stupid updates per second
             time.sleep(0.1)
@@ -86,6 +86,8 @@ class Dandere2xStarter(QThread):
             self.new_stats.emit("Upscale finished!!")
         else:
             self.new_stats.emit("Session was stopped or crashed!!")
+        
+        self.percentage_completed.emit(-1)
         
         self.clear()
 
@@ -668,7 +670,14 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         self.update_resume_able_sessions()
 
     def update_progress_bar(self, value):
-        self.progress_bar.setValue(value)
+        # Value -1 we say we finished
+        if not value == -1:
+            self.progress_bar.setValue(value)
+        else:
+            self.progress_bar.setValue(100)
+            for widget in self.widgets:
+                self.togglewidget(widget, True)
+            self.compatibilize()
 
     def update_status_label(self, stats):
         self.label_stats.setText(stats)

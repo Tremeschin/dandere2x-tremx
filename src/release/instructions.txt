@@ -16,7 +16,7 @@ Linux:
             - make
             - gcc (a compiler, g++ preferred)
 
-        Then just run linux_compile.sh
+        Then just run compile_d2xcpp_linux.sh
     
 
     2. Cross compile to Windows:
@@ -53,6 +53,6 @@ Linux:
 
         Takes some time, be patiet!!
 
-        Then run linux_crosscompile_for_windows.sh
+        Then run compile_d2xcpp_windows.sh
 
         And that should be it
