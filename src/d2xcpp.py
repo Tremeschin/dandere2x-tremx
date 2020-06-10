@@ -108,9 +108,9 @@ class Dandere2xCPPWraper():
                 else:
                     self.utils.log(color, 1, debug_prefix, "[CPP] %s" % line)
                     
-                    # If we have finished, exit
-                    if line.startswith("|end"):
-                        break            
+                # If we have finished, exit
+                if line.startswith("|end"):
+                    break            
 
             # Controller says to stop? goodbye
             if self.controller.stop == True:

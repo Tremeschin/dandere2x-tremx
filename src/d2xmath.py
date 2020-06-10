@@ -50,14 +50,14 @@ class Dandere2xMath():
 
         debug_prefix = "[Dandere2xMath.set_block_size]"
 
+        block_size = self.context.block_size
+        resolution = self.context.resolution
+        width = resolution[0]
+        height = resolution[1]
+
         # As percentages annoying to set manually
         # This one looks like a good number
         if self.context.block_size == "auto":
-
-            # self.context.* too long
-            resolution = self.context.resolution
-            width = resolution[0]
-            height = resolution[1]
 
             # If the block_size is percentage-based, we basically round,
             # divide, multiply a few stuff to get a theoric block size
@@ -89,6 +89,7 @@ class Dandere2xMath():
             return
 
         self.utils.log(color, 1, debug_prefix, "[ERROR] BLOCK_SIZE AUTO: THERE IS NO ALGORITHM TO FIX NOT PERFECT BLOCK_SIZE MATCH ACCORDING TO THE RESOLUTION: HERE'S THE REMAINDERS [Width: %s] [Height: %s], UPSCALE SHALL CONTINUE, BUT IF THOSE ARE LOW VALUES (EXCEPT ZERO) CONSIDER CHANGING BLOCK_SIZE" % (width % block_size, height % block_size)) 
+
 
 
 if __name__ == "__main__":

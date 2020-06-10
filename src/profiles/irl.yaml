@@ -27,8 +27,8 @@ block_matching:
   block_size: auto
   dark_threshold: 0.01
   bright_threshold: 0.015
-  bleed: 1
-  upscale_full_frame_threshold: 80 
+  bleed: 2
+  upscale_full_frame_threshold: 100
 
 upscaler:
   type: srmd-ncnn-vulkan

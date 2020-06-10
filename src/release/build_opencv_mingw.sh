@@ -8,9 +8,18 @@ cd ../dandere2x_cpp
 git clone https://github.com/opencv/opencv
 
 cd opencv
-#git pull
+
+[ -e CMakeFiles ] && rm -r CMakeFiles
+[ -e CMakeCache.txt ] && rm CMakeCache.txt
+[ -e cmake_install.cmake ] && rm cmake_install.cmake
+
+git pull
 mkdir build
 cd build
+
+[ -e CMakeFiles ] && rm -r CMakeFiles
+[ -e CMakeCache.txt ] && rm CMakeCache.txt
+[ -e cmake_install.cmake ] && rm cmake_install.cmake
 
 # Compile OpenCV
 x86_64-w64-mingw32-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./

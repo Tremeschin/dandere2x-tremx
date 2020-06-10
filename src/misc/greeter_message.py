@@ -8,7 +8,7 @@ terminal_width = shutil.get_terminal_size()[0]
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
-with open(ROOT + os.path.sep + "version.txt", "r") as f:
+with open(ROOT + os.path.sep + "version.txt", "r", encoding="utf-8") as f:
     version = f.read()
 
 bias = " "*(math.floor(terminal_width/2) - 25)

@@ -21,7 +21,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from color import colors
-
 import threading
 import math
 import time
@@ -159,7 +158,7 @@ class Processing():
                 pass
             
             # Here we have to load a new upscaled residual so both "blocks" and "fullframe"
-            elif (working_type in ["blocks", "fullframe"]):
+            elif working_type in ["blocks", "fullframe"]:
                 
                 self.utils.log(color, 8, debug_prefix, "Merged image is from upscaled residual")
 

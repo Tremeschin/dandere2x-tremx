@@ -66,7 +66,7 @@ class Dandere2xStats():
             #print()
 
             #while last_frame == self.context.last_processing_frame:
-            time.sleep(0.1)
+            time.sleep(1/60)
             
             last_frame = self.context.last_processing_frame
 

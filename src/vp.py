@@ -78,8 +78,8 @@ class VapourSynthWrapper():
 
         if not filter_name in ["null", "none"]:
             # Open
-            with open(self.context.ROOT + os.path.sep + "vpys" + os.path.sep + filter_name + ".vpy", "r") as sc:
-                with open(self.context.temp_vpy_script, "w") as temp:
+            with open(self.context.ROOT + os.path.sep + "vpys" + os.path.sep + filter_name + ".vpy", "r", encoding="utf-8") as sc:
+                with open(self.context.temp_vpy_script, "w", encoding="utf-8") as temp:
                     temp.write(sc.read().replace("[INPUT]", input_video))
 
             # Couldn't get it working with subprocess...?

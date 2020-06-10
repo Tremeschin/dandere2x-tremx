@@ -17,7 +17,7 @@ src/sessions/*
 
 src/externals/*
 
-src/samples/tremxsamples
+src/samples/*
 
 !src/samples/yn_moving_480.mkv
 !src/samples/yn_moving.mkv
@@ -32,6 +32,10 @@ src/dandere2x_cpp/Makefile
 src/dandere2x_cpp/cmake_install.cmake
 src/dandere2x_cpp/opencv
 src/dandere2x_cpp/CMakeFiles
+
+src/release/releases
+
+dandere2x-tremx-venv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

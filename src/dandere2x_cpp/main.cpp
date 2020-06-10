@@ -35,13 +35,27 @@ namespace utils {
     }
 
     double proportion(double a, double b, double c) {
-        // A is to B
-        // C is to what
+        // ^ A is to B    ^
+        // ^ C is to what ^
+        // Left side go up / right side go up
+        // C * B = A * what
         // what = B*C/A
         if (a == 0) { // This shouldn't happen but welp
             return 0;
         }
         return (b*c)/a;
+    }
+
+    double invproportion(double a, double b, double c) {
+        // ^ A is to B    v
+        // ^ C is to what v
+        // Left side go up / right side go down
+        // A * B = C * what
+        // what = A*B/C
+        if (c == 0) { // This shouldn't happen but welp
+            return 0;
+        }
+        return (a*b)/c;
     }
 }
 
@@ -265,7 +279,21 @@ double calculate_mse(cv::Mat I1, cv::Mat I2)
     double mse  = sse / (double)(I1.channels() * I1.total());
 
     return mse;
- }
+}
+
+// C = (A*k + B*j) / (k + j), tries to avoid video compression
+cv::Mat mean_image(cv::Mat I1, cv::Mat I2, const int proportion_a, const int proportion_b)
+{
+    cv::Mat A = I1.clone();
+    cv::Mat B = I2.clone();
+
+    A.convertTo(A, CV_32S);
+    B.convertTo(B, CV_32S);
+
+    cv::Mat mean = ((A*proportion_a) + (B*proportion_b))/(proportion_a + proportion_b);
+
+    return mean;
+}
 
 
 // Main implementation of Dandere2x block matching
@@ -496,6 +524,8 @@ int process_video(const std::string video_path,
                 // x = 255, bright
                 mse_threshhold = ((bright_mse_threshhold - dark_mse_threshhold)/255)*mean_pixels_value + dark_mse_threshhold;
 
+                // The thresholds we pass to Dandere2x C++ are for a 20x20 block, so we have to apply an proportion
+                mse_threshhold = utils::invproportion(400, mse_threshhold, block.total());
                 
                 total_blocks++;
 
@@ -525,9 +555,17 @@ int process_video(const std::string video_path,
                     }
 
                 } else {
+
+                    // <++> EXPERIMENTAL
+                    // Try to bypass some encoding compression / noises
+                    mean_image(last_matched_block, block, 10, 1).copyTo(
+                        last_matched(
+                            crop
+                        )
+                    );
+
                     dont_need_upscaling++;
                 }
-
                 block_id++;
             }
         }
@@ -540,20 +578,9 @@ int process_video(const std::string video_path,
             // Press  ESC on keyboard to exit
             char c=(char)cv::waitKey(25);
             if(c==27)
-                break;
+                std::exit(0);
             cv::imshow("Frame", debug_frame);
         }
-
-        recycled_percentage = static_cast<double>(100)*dont_need_upscaling / total_blocks;
-
-        if (show_block_matching_stats) {
-            std::cout << "Debug frame: [" << count_frame << "/" << total_frame_count << "]"
-                      << ", (Need / Don't need) upscaling: [" << need_upscaling << "/" << dont_need_upscaling << "]"
-                      << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << recycled_percentage << std::endl;
-        }
-
-        // Python get the status on recycled blocks
-        std::cout << "|recycled;" << recycled_percentage << std::endl;
 
         // // Make the input residual image
         if ( !only_run_dandere2x_cpp ) {
@@ -573,15 +600,30 @@ int process_video(const std::string video_path,
 
                 // If the percentage of blocks needing upscale compared to the total blocks is less than threshold, make residual
                 // Otherwise the residual is the frame itself
-                this_frame_upscale_percentage = utils::proportion(total_blocks, 100, matched_blocks.size());
+                
+                // Make an residual, we'll see its proportion based on the pixel count of it
+                cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed, mean_color);
 
-                if ( this_frame_upscale_percentage < upscale_full_frame_threshold ) {
-                    cv::Mat residual = residual_functions::make_residual::from_block_vectors(matched_blocks, block_size, bleed, mean_color);
+                // Calculate the proportion of pixels that will be upscaled compared to the frame itself
+                this_frame_upscale_percentage = utils::proportion(frame.total(), 100, residual.total());
+
+                // Let the threshold be user selected for some interesting modes like a upscale all frames, no block matching mode
+                if ( upscale_full_frame_threshold >= this_frame_upscale_percentage ) {
+
+                    // Write the residual                
                     std::cout << next_output_newline << std::endl;
                     cv::imwrite(residual_name, residual);
+
                 } else {
-                    cv::imwrite(residual_name, frame);
+
+                    // The residual is the fullframe itself
                     std::cout << "|fullframe;" + std::to_string(count_frame) << std::endl;
+                    cv::imwrite(residual_name, frame);
+
+                    // The stats changes a bit as we upscale blocks we weren't going at first
+                    int difference = blocks_per_frame - matched_blocks.size();
+                    need_upscaling += difference;
+                    dont_need_upscaling -= difference;
                 }
 
                 // Mindisk utility, wait for the file - max_frames_ahead to be deleted
@@ -590,6 +632,18 @@ int process_video(const std::string video_path,
                 }
             }
         }
+
+        // Update our recycled stats
+        recycled_percentage = static_cast<double>(100)*dont_need_upscaling / total_blocks;
+
+        if (show_block_matching_stats) {
+            std::cout << "Debug frame: [" << count_frame << "/" << total_frame_count << "]"
+                      << ", (Need / Don't need) upscaling: [" << need_upscaling << "/" << dont_need_upscaling << "]"
+                      << ", Total blocks: [" << total_blocks << "]" << ", Recylcled percentage: " << recycled_percentage << std::endl;
+        }
+
+        // Python get the status on recycled blocks
+        std::cout << "|recycled;" << recycled_percentage << std::endl;
 
         // Empty the vector
         for (cv::Mat item : matched_blocks)

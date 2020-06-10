@@ -183,9 +183,14 @@ class Upscaler():
         # Failsafe Windows executing the upscaler?
         if self.context.os == "windows":
             os.chdir(self.working_directory)
+
+            # Was more stable..? not really optimal but welp
+            shell = True
+        else:
+            shell = False
         
         # Run the subprocess with the working directory and envs we've set
-        upscaler_subprocess.run(working_directory=self.working_directory, env=env)
+        upscaler_subprocess.run(working_directory=self.working_directory, env=env, shell=shell)
 
         # Wait until its process finishes or controller says to stop
         while upscaler_subprocess.is_alive():

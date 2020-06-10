@@ -102,12 +102,13 @@ block_matching:
   #   3: Not much difference from 2, only if the upscaler is bleeding A LOT (Upscaler denoise_level=3), values should not be higher than this
   #
   # If using srmd-ncnn-vulkan upscaler, bleed=2 is highly recommended as it bleeds a lot
-  bleed: 1  # [1]
+  bleed: 2  # [2]
 
   # Let's say a frame has too many blocks to be upscaled, it is more worth upscaling the whole frame for quality rather than upscaling the blocks
-  # This number is given in a percentage level, 80 for example would upscale full frames that have X >= 80 % of blocks needing upscale
-  # Proper math with an "auto" mode WIP
-  upscale_full_frame_threshold: 80  # [80]
+  # So this threshold is the proportion of the residual image pixels to the frame itself being compared to
+  # ie, if pixel_count_proportion(residual, frame) > threshold: upscale full frame instead
+  # See wiki for more details, this is a tricky setting to understand, leave 100 for optimal results both quality and performance
+  upscale_full_frame_threshold: 100 # [100]
 
 
 upscaler:

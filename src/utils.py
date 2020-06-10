@@ -44,6 +44,7 @@ class Utils():
 
         # To display on the gui the last status of the session
         self.last_log = ""
+        self.logfile = None
 
     # On where the session name is set to "auto"
     def get_auto_session_name(self, input_file):
@@ -101,7 +102,7 @@ class Utils():
         else:
             self.log(color, 2, debug_prefix, "File does NOT exist, creating empty: [%s]" % filename)
 
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write("")
 
     # Delete the file if it exists
@@ -135,9 +136,23 @@ class Utils():
         return basename
 
     # Returns the path of a auto output file
-    def auto_output_file(self, input_file, upscale_ratio, upscaler_type):
+    def auto_output_file(self, input_file, upscale_ratio=None, upscaler_type=None, denoise_level=None):
+        
         filename, file_extension = os.path.splitext(input_file)
-        output_file = input_file.replace(filename, f"{filename}_{upscaler_type}_{upscale_ratio}x")
+
+        output_file = input_file.replace(filename, f"{filename}").replace(file_extension, "")
+        
+        if not upscaler_type == None:
+            output_file += f"_{upscaler_type}"
+            
+        if not upscale_ratio == None:
+            output_file += f"_{upscale_ratio}x"
+
+        if not denoise_level == None:
+            output_file += f"_{denoise_level}n"
+
+        output_file += file_extension
+
         return output_file
 
     # Wrapper for self.mkdir_dne, checks the plain dirs from context
@@ -179,6 +194,18 @@ class Utils():
             self.log(color, 4, debug_prefix, "Removed successfully")
         else:
             self.log(color, 3, debug_prefix, "Directory exists, skipping... [%s]" % directory)
+
+    # $ mv A B
+    def bash_move(self, src, dst, shell=False):
+        command = ["mv", src, dst]
+        print(' '.join(command))
+        subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
+    
+    # $ cp A B
+    def bash_copy(self, src, dst, shell=False):
+        command = ["cp", src, dst]
+        print(' '.join(command))
+        subprocess.run(command, stdout=subprocess.PIPE, shell=shell)
 
     # Debugging, show context static files
     def show_static_files(self):
@@ -244,7 +271,7 @@ class Utils():
         else:
             print(color, debug_prefix, "Log file does NOT exist", fg.rs)
 
-        with open(self.logfile, "w") as f:
+        with open(self.logfile, "w", encoding="utf-8") as f:
             f.write("")
 
         self.log(color, 0, debug_prefix, "Reseted log file")
@@ -296,13 +323,14 @@ class Utils():
         self.last_log = processed_message
 
         # We give Utils, Context later on so we'll have to wait to see if write_log is T or F
-        try:
-            if self.context.write_log:
-                with open(self.logfile, "a") as f:
+        if not self.logfile == None:
+            try:
+                if self.context.write_log:
+                    with open(self.logfile, "a", encoding="utf-8") as f:
+                        f.write(processed_message + "\n")
+            except Exception:
+                with open(self.logfile, "a", encoding="utf-8") as f:
                     f.write(processed_message + "\n")
-        except Exception:
-            with open(self.logfile, "a") as f:
-                f.write(processed_message + "\n")
 
     # Safely load yaml file, just for cleaness of code
     def load_yaml(self, filename, log=True):
@@ -313,7 +341,7 @@ class Utils():
             self.log(color, 2, debug_prefix, "Loading YAML file: [%s]" % filename)
 
         # Open and load the YAML
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         return data
@@ -326,7 +354,7 @@ class Utils():
         self.log(color, 4, debug_prefix, "Saving to YAML file: [%s]" % filename)
 
         # Open and save to YAML
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             yaml.dump(data, f)
 
     # Check if context_vars file exist and returns the "resume" key value
@@ -590,7 +618,7 @@ class SubprocessUtils():
         self.command = list
 
     # Run the subprocess with or without a env / working directory
-    def run(self, working_directory=None, env=None):
+    def run(self, working_directory=None, env=None, shell=False):
 
         debug_prefix = "[SubprocessUtils.run]"
         
@@ -599,12 +627,6 @@ class SubprocessUtils():
         # Copy the environment if nothing was changed and passed as argument
         if env is None:
             env = os.environ.copy()
-
-        # Yes, shell=True is not at all recommended but in my tests on Windows it was kinda necessary?
-        if self.context.os == "windows":
-            shell = True
-        else:
-            shell = False
         
         # Runs the subprocess based on if we set or not a working_directory
         if working_directory == None:

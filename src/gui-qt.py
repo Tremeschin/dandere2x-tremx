@@ -79,7 +79,7 @@ class Dandere2xStarter(QThread):
             self.percentage_completed.emit(int(self.dandere2x.controller.percentage_completed))
 
             # Don't hang this thread with an stupid updates per second
-            time.sleep(0.1)
+            time.sleep(1/60)
             #QThread.sleep(0.1)
 
         if self.dandere2x.controller.percentage_completed:
@@ -132,7 +132,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         # Put every profile .yaml into the combobox
         self.combobox_profile.clear()
         self.combobox_profile.addItems(
-            [item.replace(".yaml", "") for item in os.listdir(self.ROOT + os.path.sep + "profiles")]
+            sorted([item.replace(".yaml", "") for item in os.listdir(self.ROOT + os.path.sep + "profiles")])
         )
 
         self.combobox_profile.currentTextChanged.connect(partial(self.value_changed, self.combobox_profile))
@@ -291,7 +291,7 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             self.combobox_available_resume_session.clear()
         
             self.combobox_available_resume_session.addItems(
-                ["null"] + [item for item in os.listdir(sessions_folder)]
+                ["null"] + sorted([item for item in os.listdir(sessions_folder)])
             )
 
     def make_input_output_absolute(self):
@@ -479,9 +479,9 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         
         # Block matching
         if self.block_size == 0:
-            self.config["block_matching"]["bleed"] = "auto"
+            self.config["block_matching"]["block_size"] = "auto"
         else:
-            self.config["block_matching"]["bleed"] = self.block_size
+            self.config["block_matching"]["block_size"] = self.block_size
 
         self.config["block_matching"]["bleed"] = self.bleed
         self.config["block_matching"]["dark_threshold"] = self.dark_threshold
@@ -689,8 +689,9 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
     def auto_output(self):
         auto_output = self.utils.auto_output_file(
                 self.line_input.text(),
-                self.slider_upscale_ratio.value(),
-                self.combobox_upscaler.currentText()
+                upscale_ratio = self.slider_upscale_ratio.value(),
+                upscaler_type = self.combobox_upscaler.currentText(),
+                denoise_level = self.slider_denoise_level.value()
             )
         self.line_output.setText(auto_output)
 
