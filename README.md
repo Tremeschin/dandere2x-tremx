@@ -66,7 +66,7 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 - [x] Fix aggressiveness not scaling up with larger block sizes or down with smaller
 - [ ] Rewrite `get-externals.py` for a better UX and maintainability
 - [ ] Make the GUI more presentable, elegant
-- [x] (80%) Automation scripts for making a Windows release with ease (using Wine for pyinstaller?)
+- [x] (90%) Automation scripts for making a Windows release with ease (using Wine for pyinstaller?)
 - [ ] Write better Failsafe class?
 - [ ] GUI hangs one CPU core after upscale finishes sometimes (lol?)
 - [ ] Add GUI tooltips on most options

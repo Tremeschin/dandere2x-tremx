@@ -101,12 +101,8 @@ class Utils():
     # Get this file "absolute" path for relative reference
     def get_root(self):
         # https://stackoverflow.com/questions/404744 :)
-
         if getattr(sys, 'frozen', False):    
-            # If the application is run as a bundle, the PyInstaller bootloader
-            # extends the sys module by a flag frozen=True and sets the app 
-            # path into variable _MEIPASS'.
-            return sys._MEIPASS
+            return os.path.dirname(os.path.abspath(sys.executable))
         else:
             return os.path.dirname(os.path.abspath(__file__))
             
