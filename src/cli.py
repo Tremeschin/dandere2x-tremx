@@ -20,7 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from dandere2x import Dandere2x
-import misc.greeter_message
+from utils import Miscellaneous
 from utils import Utils
 
 import argparse

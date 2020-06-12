@@ -29,6 +29,7 @@
 
 // Namespace of utils we might end up needing to use
 namespace utils {
+
     bool file_exists (const std::string& fname) {
         std::ifstream f(fname.c_str());
         return f.good();
@@ -63,13 +64,16 @@ namespace utils {
 namespace residual_functions {
 
     namespace best_fit {
+        
         std::vector<int> best_grid_fit(const int N) {
 
             // The size variables
             int a, b;
 
+            // The "closest" square side grid we can make
             long double root_n = std::sqrt(N);
 
+            // Check if that root is a perfect square
             if ( std::pow( static_cast<int>(root_n), 2) == N) {
                 // The number is a perfect square (because int(root_n)**2 is N itself)
                 a = root_n;
@@ -86,36 +90,9 @@ namespace residual_functions {
                 a = best_square_side;
                 b = best_square_side;
 
+                // Subtract not needed rows at the bottom as both (a, b) are equal yielding a square
                 b -= ((a*b)-N)/b;
             }
-            return std::vector<int> {a, b};
-        }
-
-
-        std::vector<int> square_fit(const int N) {
-
-            // The size variables
-            int a, b;
-
-            long double root_n = std::sqrt(N);
-
-            if (std::pow(static_cast<int>(root_n), 2) == 0) {
-                // The number is a perfect square (because int(root_n)**2 is N itself)
-                a = root_n;
-                b = root_n;
-
-            } else {
-                // The number is not a perfect square, calculate the next perfect square
-                // We do this by the following: get the lowest near int of its root,
-                // add one and then square it so for example, N is 2:
-                // floor(1.41) = 1 --> 1 + 1 --> 2 -> 2^2 -> 4
-                // But we actually want to get the square (a, b) length so we don't square it
-                int best_square_side = std::floor(root_n) + 1;
-
-                a = best_square_side;
-                b = best_square_side;
-            }
-
             return std::vector<int> {a, b};
         }
     }
@@ -580,6 +557,7 @@ int process_video(const std::string video_path,
             if(c==27)
                 std::exit(0);
             cv::imshow("Frame", debug_frame);
+            cv::imshow("Last Matched", last_matched);
         }
 
         // // Make the input residual image

@@ -27,6 +27,7 @@ import datetime
 import random
 import shutil
 import yaml
+import math
 import time
 import sys
 import os
@@ -34,6 +35,38 @@ import re
 
 
 color = colors["utils"]
+
+
+class Miscellaneous():
+
+    def __init__(self):
+        self.version = "1.0rc4"
+        self.greeter_message()
+
+    def greeter_message(self):
+
+        terminal_width = shutil.get_terminal_size()[0]
+
+        bias = " "*(math.floor(terminal_width/2) - 25)
+
+        message = f"""
+{"-"*terminal_width}
+{bias} _____                  _               ___       
+{bias}|  __ \\                | |             |__ \\      
+{bias}| |  | | __ _ _ __   __| | ___ _ __ ___   ) |_  __
+{bias}| |  | |/ _` | '_ \\ / _` |/ _ \\ '__/ _ \\ / /\\ \\/ /
+{bias}| |__| | (_| | | | | (_| |  __/ | |  __// /_ >  < 
+{bias}|_____/ \\__,_|_| |_|\\__,_|\\___|_|  \\___|____/_/\\_\\
+
+{bias}               Fast video upscaling
+{bias}{(49-len("Version")-len(self.version))*" "}Version {self.version}
+{"-"*terminal_width}
+> Tremx version, made with <3
+{"-"*terminal_width}
+        """
+        # That expression makes sure the end of that line matches the end of the ASCII art :)
+
+        print(message)
 
 
 class Utils():
@@ -684,5 +717,5 @@ class SubprocessUtils():
 
 
 if __name__ == "__main__":
-    import misc.greeter_message
+    from utils import Miscellaneous
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

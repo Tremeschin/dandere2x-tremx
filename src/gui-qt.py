@@ -24,7 +24,7 @@ from PyQt5.QtCore import QThread, Qt, pyqtSignal
 from PyQt5 import QtWidgets, uic
 from dandere2x import Dandere2x
 from functools import partial
-import misc.greeter_message
+from utils import Miscellaneous
 from utils import Utils
 import threading
 import time
@@ -69,17 +69,22 @@ class Dandere2xStarter(QThread):
             # Get the stats text from main Dandere2x
             stats = "\n".join(self.dandere2x.controller.stats_list)
 
-            n = 150
+            n = 130
             line = self.dandere2x.utils.last_log
-            stats += "\n" + '\n'.join([line[i:i+n] for i in range(0, len(line), n)])
+            
+            last_log_split = "\n" + '\n'.join([line[i:i+n] for i in range(0, len(line), n)])
+            
+            for _ in range(3 - len(last_log_split)):
+                last_log_split += "\n"
 
+            stats += last_log_split
             #print("WRAPPER STATS,", stats)
 
             self.new_stats.emit(stats)
             self.percentage_completed.emit(int(self.dandere2x.controller.percentage_completed))
 
             # Don't hang this thread with an stupid updates per second
-            time.sleep(1/60)
+            time.sleep(1/24)
             #QThread.sleep(0.1)
 
         if self.dandere2x.controller.percentage_completed:

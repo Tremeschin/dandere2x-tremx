@@ -21,7 +21,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 # For now this file just works, should rewrite it properly
 
-import misc.greeter_message
+from utils import Miscellaneous
 import requests
 import zipfile
 import json

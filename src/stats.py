@@ -66,7 +66,7 @@ class Dandere2xStats():
             #print()
 
             #while last_frame == self.context.last_processing_frame:
-            time.sleep(1/60)
+            time.sleep(1/24)
             
             last_frame = self.context.last_processing_frame
 
@@ -150,7 +150,9 @@ class Dandere2xStats():
         eta_time = str(datetime.timedelta(seconds=round(eta_time_number, 2)))[:-7]
 
         tt_time = time_took_until_now
-        tt_time = str(datetime.timedelta(seconds=round(time_took_until_now,2)))[:-5]
+        tt_time = str(
+            datetime.timedelta(seconds=round(time_took_until_now))
+        )
 
         now_plus_eta = str(datetime.datetime.now() + datetime.timedelta(seconds = eta_time_number))[:-7]
 
@@ -160,5 +162,5 @@ class Dandere2xStats():
 
 
 if __name__ == "__main__":
-    import misc.greeter_message
+    from utils import Miscellaneous
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")
