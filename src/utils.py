@@ -100,8 +100,16 @@ class Utils():
 
     # Get this file "absolute" path for relative reference
     def get_root(self):
-        return os.path.dirname(os.path.abspath(__file__))
+        # https://stackoverflow.com/questions/404744 :)
 
+        if getattr(sys, 'frozen', False):    
+            # If the application is run as a bundle, the PyInstaller bootloader
+            # extends the sys module by a flag frozen=True and sets the app 
+            # path into variable _MEIPASS'.
+            return sys._MEIPASS
+        else:
+            return os.path.dirname(os.path.abspath(__file__))
+            
     # Get line number which this function is called, debugging
     def get_linenumber(self):
         return currentframe().f_back.f_lineno
