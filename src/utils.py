@@ -621,7 +621,7 @@ class Utils():
             # Nothing was found, exit
             if full_path_executable == None:
                 self.log(color, 0, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, executable))
-                exit()
+                sys.exit()
 
             # This will yield false on Linux if forcing windows mode for debugging
             # because Windows is case insensitive and Linux case sensitive

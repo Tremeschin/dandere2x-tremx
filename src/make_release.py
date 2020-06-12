@@ -25,6 +25,7 @@ sys.path.append('../')
 
 from utils import Miscellaneous
 from utils import Utils
+import urllib.request
 import argparse
 import os
 
@@ -142,6 +143,18 @@ class ReleaseMaker():
         # Create the WINEPREFIX if it doesn't exist
         os.system("WINEPREFIX=\"%s\" WINEDEBUG=-all wine wineboot" % WINEPREFIX)
 
+        # # Install Python
+
+        save_python = self.ROOT + os.path.sep + "python-3.8.3-amd64.exe"
+
+        # Download python 3.8 64 bit
+        print("DOWNLOADING PYTHON")
+        urllib.request.urlretrieve("https://www.python.org/ftp/python/3.8.3/python-3.8.3-amd64.exe", save_python)
+
+        # Install our downloaded python in quiet mode and append to the Wine path
+        print("INSTALLING PYTHON QUIET, UNATTENDED")
+        os.system("WINEPREFIX=\"%s\" WINEDEBUG=-all wine \"%s\" /quiet InstallAllUsers=1 PrependPath=1" % (WINEPREFIX, save_python))
+
         # Upgrade pip if there is an available version
         os.system("WINEPREFIX=\"%s\" WINEDEBUG=-all wine python -m pip install --upgrade pip" % WINEPREFIX)
 
@@ -155,7 +168,7 @@ class ReleaseMaker():
         os.system("WINEPREFIX=\"%s\" winetricks --unattended vcrun2015" % WINEPREFIX)
 
         # The files we want to compile and put on our release
-        release_files = ["cli.py", "gui-qt.py"]
+        release_files = ["cli.py", "gui-qt.py", "get_externals.py"]
 
         for f in release_files:
             binary = f.replace(".py", ".exe")
