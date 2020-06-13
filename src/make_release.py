@@ -98,7 +98,7 @@ class ReleaseMaker():
 
         print("MAKE SURE YOU HAVE PYTHON INSTALLED IN THE WINEPREFIX GLOBAL VARIABLE IN THIS FILE")
 
-        self.release_dir = self.ROOT + os.path.sep + "release" + os.path.sep + "releases" + os.path.sep + "windows" + os.path.sep + self.version + os.path.sep
+        self.release_dir = self.ROOT + os.path.sep + "release" + os.path.sep + "releases" + os.path.sep + "windows" + os.path.sep + "dandere2x_" + self.version + os.path.sep
         print("Release directory is:", self.release_dir)
 
         self.make_release_dirs()
@@ -168,7 +168,7 @@ class ReleaseMaker():
         os.system("WINEPREFIX=\"%s\" winetricks --unattended vcrun2015" % WINEPREFIX)
 
         # The files we want to compile and put on our release
-        release_files = ["cli.py", "gui-qt.py", "get_externals.py"]
+        release_files = ["cli.py", "gui_qt.py", "get_externals.py"]
 
         for f in release_files:
             binary = f.replace(".py", ".exe")

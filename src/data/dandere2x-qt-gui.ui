@@ -49,44 +49,17 @@
        <property name="spacing">
         <number>10</number>
        </property>
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>10</number>
        </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>10</number>
          </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>10</number>
            </property>
            <item>
@@ -98,6 +71,9 @@
            </item>
            <item>
             <widget class="QComboBox" name="profile">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Which profile to configure this GUI settings on (basically a preset), see &amp;quot;profiles&amp;quot; directory for adding, modifying, removing.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="sizeAdjustPolicy">
               <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
              </property>
@@ -110,16 +86,7 @@
            <property name="spacing">
             <number>6</number>
            </property>
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>10</number>
            </property>
            <item>
@@ -161,6 +128,9 @@
              </item>
              <item row="0" column="1">
               <widget class="QComboBox" name="upscaler">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The upscaler Dandere2x will use.&lt;/p&gt;&lt;p&gt;Please have it either downloaded into externals (Windows + Linux) or installed on your system (Linux) before using it.&lt;/p&gt;&lt;p&gt;For anime Waifu2x works better.&lt;/p&gt;&lt;p&gt;RealSR is painfully slow.&lt;/p&gt;&lt;p&gt;SRMD is a &amp;quot;20%~ faster Waifu2x&amp;quot; with less detail overhaul but with denoise=10 the images are butter smooth. USE BLEED=2 AT MINIMUM WITH SRMD. &lt;/p&gt;&lt;p&gt;See wiki on upscalers on main repository page for more information.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="editable">
                 <bool>false</bool>
                </property>
@@ -207,6 +177,9 @@
                 <widget class="QSlider" name="upscale_ratio">
                  <property name="acceptDrops">
                   <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Upscale ratio the upscaler will upscale.&lt;/p&gt;&lt;p&gt;This slider will auto limit itself based on which upscaler you choose.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="autoFillBackground">
                   <bool>true</bool>
@@ -256,6 +229,9 @@
                 <widget class="QSlider" name="denoise_level">
                  <property name="acceptDrops">
                   <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Denoise level (if any) the upscaler will use.&lt;/p&gt;&lt;p&gt;This slider auto limits itself based on the upscaler you use.&lt;/p&gt;&lt;p&gt;Higher values generally speaking yields more plastic images while lower values less smooth edges and more &amp;quot;detail&amp;quot;.&lt;/p&gt;&lt;p&gt;See wiki on settings on main repository page for more information.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="autoFillBackground">
                   <bool>true</bool>
@@ -307,16 +283,7 @@
            <property name="spacing">
             <number>6</number>
            </property>
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>10</number>
            </property>
            <item>
@@ -347,7 +314,7 @@
              <item row="0" column="1">
               <widget class="QSpinBox" name="block_size">
                <property name="toolTip">
-                <string>0 is auto block size</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What block size Dandere2x will split and process the video on.&lt;/p&gt;&lt;p&gt;Number 0 is &amp;quot;auto&amp;quot; block size.&lt;/p&gt;&lt;p&gt;See wiki on settings on main repository page for more information&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="autoFillBackground">
                 <bool>false</bool>
@@ -373,7 +340,7 @@
              <item row="1" column="1">
               <widget class="QSpinBox" name="bleed">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;An &amp;quot;over crop&amp;quot; of the block, prevents blockiness.&lt;/p&gt;&lt;p&gt;Values should not be set higher than 3 generally.&lt;/p&gt;&lt;p&gt;For Waifu2x, 1 is a good number for medium/high quality, 2 yields almost no blockiness, 3 for the best results.&lt;/p&gt;&lt;p&gt;For srmd, at least 2 is required or there will be a lot of visible blocks.&lt;/p&gt;&lt;p&gt;Increases upscale times exponentially.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;An &amp;quot;over crop&amp;quot; of the block, prevents blockiness.&lt;/p&gt;&lt;p&gt;Values should not be set higher than 3 generally.&lt;/p&gt;&lt;p&gt;Increases upscale times exponentially.&lt;/p&gt;&lt;p&gt;See wiki on settings on main repository page for more information.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="suffix">
                 <string> Pixels</string>
@@ -396,12 +363,12 @@
              <item row="2" column="1">
               <widget class="QComboBox" name="aggressiveness">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How aggressive the block matching is, if you have a slowly moving video, a higher value is recommended, with more static videos such as anime or cartoon, medium or low should do it.&lt;/p&gt;&lt;p&gt;Heavily impacts final quality and upscale time, lower values can be visible and annoying.&lt;/p&gt;&lt;p&gt;Custom values let you chose its aggressiveness on the advanced tab.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How aggressive the block matching is, if you have a slowly moving video, a higher value is recommended, with more static videos such as anime or cartoon, medium or low should do it.&lt;/p&gt;&lt;p&gt;Heavily impacts final quality and upscale time, lower values can make blocks very visible and annoying.&lt;/p&gt;&lt;p&gt;Custom values let you chose its aggressiveness on the advanced tab.&lt;/p&gt;&lt;p&gt;&amp;quot;Medium&amp;quot; should be good in a general context.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="editable">
                 <bool>false</bool>
                </property>
-               <property name="currentText">
+               <property name="currentText" stdset="0">
                 <string>Medium</string>
                </property>
                <property name="currentIndex">
@@ -452,6 +419,9 @@
          </item>
          <item row="1" column="2">
           <widget class="QPushButton" name="select_output">
+           <property name="toolTip">
+            <string>Pop up to select the path for a video output</string>
+           </property>
            <property name="text">
             <string>Select</string>
            </property>
@@ -459,8 +429,14 @@
          </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="output">
+           <property name="toolTip">
+            <string>Output (final) video save location path</string>
+           </property>
            <property name="text">
             <string/>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -473,13 +449,23 @@
          </item>
          <item row="0" column="2">
           <widget class="QPushButton" name="select_input">
+           <property name="toolTip">
+            <string>Pop up to select the path for a video input</string>
+           </property>
            <property name="text">
             <string>Select</string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLineEdit" name="input"/>
+          <widget class="QLineEdit" name="input">
+           <property name="toolTip">
+            <string>Input video path</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -488,20 +474,14 @@
          <property name="spacing">
           <number>10</number>
          </property>
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>10</number>
          </property>
          <item>
           <widget class="QCheckBox" name="force">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When clicking on &amp;quot;Upscale&amp;quot;, delete the session folder with the video filename if it exists, for resuming preferably use the Load Session button.&lt;/p&gt;&lt;p&gt;If you have this option off and input a video filename which already exists a session folder, it'll try to resume it.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Force resume=False</string>
            </property>
@@ -512,25 +492,23 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>10</number>
            </property>
            <item>
-            <widget class="QComboBox" name="available_resume_session"/>
+            <widget class="QComboBox" name="available_resume_session">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Found resumable sessions on sessions_folder set on directories.yaml.&lt;/p&gt;&lt;p&gt;Click the Load Session button to resume the one listed on this combobox.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QPushButton" name="load_session">
              <property name="enabled">
               <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tries to resume the listed session on the combobox at the left.&lt;/p&gt;&lt;p&gt;&amp;quot;null&amp;quot; is None, ignore, don't resume anything.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Load session</string>
@@ -547,22 +525,16 @@
            <property name="spacing">
             <number>12</number>
            </property>
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>10</number>
            </property>
            <item>
             <widget class="QPushButton" name="stop_session">
              <property name="enabled">
               <bool>true</bool>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stops the current session and saves progress.&lt;/p&gt;&lt;p&gt;WARNING: Don't stop too early because FFmpeg takes a bit to write the first bit of the images piped video and it will destroy the current buffer if it didn't &amp;quot;flushed&amp;quot; the starting ones into the partial video.&lt;/p&gt;&lt;p&gt;In other words, check if the size of $session$/partial/biggest_number.mkv is at least 100 kB or so.&lt;/p&gt;&lt;p&gt;This is an acknowledged issue regarding the partials video. Solution or research needed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Stop Session</string>
@@ -574,6 +546,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="start_session">
+             <property name="toolTip">
+              <string>With the settings configured on this GUI, start a session, its name will be the filename of the input video.</string>
+             </property>
              <property name="text">
               <string>Upscale</string>
              </property>
@@ -591,16 +566,7 @@
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_12">
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>10</number>
          </property>
          <item>
@@ -650,16 +616,7 @@
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_7">
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>10</number>
        </property>
        <item>
@@ -674,16 +631,7 @@
        </item>
        <item>
         <layout class="QFormLayout" name="formLayout_4">
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>10</number>
          </property>
          <item row="0" column="0">
@@ -696,7 +644,7 @@
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="dark_threshold">
            <property name="toolTip">
-            <string>Can only be set if aggressiveness is Custom</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Can only be set if aggressiveness is Custom.&lt;/p&gt;&lt;p&gt;See wiki on settings for more information, too complex to explain here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="decimals">
             <number>4</number>
@@ -719,7 +667,7 @@
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="bright_threshold">
            <property name="toolTip">
-            <string>Can only be set if aggressiveness is Custom</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Can only be set if aggressiveness is Custom.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;See wiki on settings for more information, too complex to explain here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="decimals">
             <number>4</number>
@@ -742,7 +690,7 @@
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="fullframe_threshold">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the matched blocks are this X % of the full frame, upscale the full frame instead.&lt;/p&gt;&lt;p&gt;&amp;quot;-1&amp;quot; auto sets this number for optimized results based on some math.&lt;/p&gt;&lt;p&gt;&amp;quot;0&amp;quot; can be seen as &amp;quot;full video frame by frame upscaled&amp;quot; as every frame will be considered &amp;quot;full upscale&amp;quot; needed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the residual &amp;quot;area&amp;quot; compared to the video frame &amp;quot;area&amp;quot; is at least this percentage, upscale the whole frame rather than building a residual.&lt;/p&gt;&lt;p&gt;If a frame 100x100 have a residual that is 120x120 because bleed, the residual will be the 100x100 frame itself because its area is bigger because bleed.&lt;/p&gt;&lt;p&gt;&amp;quot;0&amp;quot; can be seen as &amp;quot;full video frame by frame upscaled&amp;quot; as every frame will be considered &amp;quot;full upscale&amp;quot; needed as they are more than &amp;quot;at least 0%&amp;quot; of the area of the frame except when copying the last one.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="suffix">
             <string> %</string>
@@ -765,20 +713,14 @@
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>10</number>
          </property>
          <item>
           <widget class="QCheckBox" name="only_run_dandere2x_cpp">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;On Dandere2x.run function, just call Dandere2x C++ and nothing else, wait for it to finish and quit.&lt;/p&gt;&lt;p&gt;Used for debugging / fun times with Dandere2x block matching.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Only run Dandere2x C++</string>
            </property>
@@ -786,6 +728,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="write_debug_video">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Write the debug video block matching process on the session folder of that input video.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Write debug video</string>
            </property>
@@ -793,6 +738,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="show_debug_video_realtime">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show the block matching realtime and the last_matched frame as well.&lt;/p&gt;&lt;p&gt;Will block OpenCV to block match faster than the video fps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Show debug video realtime</string>
            </property>
@@ -800,6 +748,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="show_block_matching_stats">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;On the shell and status messages of the GUI, show block matching status such as total blocks, don't need upscaling, need upscaling about the video.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Show block matching full stats</string>
            </property>
@@ -822,16 +773,7 @@
        <property name="spacing">
         <number>10</number>
        </property>
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>10</number>
        </property>
        <item>
@@ -870,6 +812,9 @@
          </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="tile_size">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tile size if the upscaler utilizes it, generally speaking higher values = more speed* and higher video memory usage.&lt;/p&gt;&lt;p&gt;Tile size = 200 (default) utilizes about 1 GB VRAM and about the same speed as tile size = 400 which uses about 4 GB.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;* the speed gains are a bit similar to a sigmoid function, bad speed on lower values that speeds up quite fast on low jumps on values and stagnates with few to none performance gain between a medium - high value. Search this function graph, interpret it as X = tile size and Y = speed of upscaling a image (higher = better)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="suffix">
             <string> Pixels</string>
            </property>
@@ -893,6 +838,9 @@
          </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="load_proc_save">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;nihui's upscalers implementation using the ncnn toolkit have this option of load threads, process threads and save threads.&lt;/p&gt;&lt;p&gt;On the repos of them a value of 4:4:4 is recommended for many small images.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>4:4:4</string>
            </property>
@@ -915,16 +863,7 @@
        <property name="spacing">
         <number>10</number>
        </property>
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>10</number>
        </property>
        <item>
@@ -954,16 +893,7 @@
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_10">
-         <property name="leftMargin">
-          <number>10</number>
-         </property>
-         <property name="topMargin">
-          <number>10</number>
-         </property>
-         <property name="rightMargin">
-          <number>10</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>10</number>
          </property>
          <item>
@@ -971,16 +901,7 @@
            <property name="horizontalSpacing">
             <number>10</number>
            </property>
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>10</number>
            </property>
            <item row="0" column="0">
@@ -995,6 +916,9 @@
            </item>
            <item row="0" column="1">
             <widget class="QComboBox" name="deblock_filter">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;I don't have any clue how to build a filter like this.&lt;/p&gt;&lt;p&gt;Other suggestions on filters are open, mainly for different profiles like one that might work better on IRL footage or reduce even more anime blockiness.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="editable">
               <bool>true</bool>
              </property>
@@ -1024,7 +948,10 @@
            </item>
            <item row="1" column="1">
             <widget class="QComboBox" name="x264_preset">
-             <property name="currentText">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;x264 preset to encode the partial videos.&lt;/p&gt;&lt;p&gt;Search for &amp;quot;ffmpeg encode h264&amp;quot;, you'll find a guide.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="currentText" stdset="0">
               <string>slow</string>
              </property>
              <property name="currentIndex">
@@ -1091,7 +1018,10 @@
            </item>
            <item row="2" column="1">
             <widget class="QComboBox" name="x264_tune">
-             <property name="currentText">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;x264 preset to &amp;quot;tune&amp;quot; the partial videos encoding.&lt;/p&gt;&lt;p&gt;Search for &amp;quot;ffmpeg encode h264&amp;quot;, you'll find a guide.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="currentText" stdset="0">
               <string>null</string>
              </property>
              <property name="currentIndex">
@@ -1153,6 +1083,9 @@
            </item>
            <item row="3" column="1">
             <widget class="QSpinBox" name="x264_crf">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;x264 CRF - Constant Rate Factor.&lt;/p&gt;&lt;p&gt;Ranges for 0-51, 0 being lossless and 51 the worst quality possible.&lt;/p&gt;&lt;p&gt;Search for &amp;quot;ffmpeg encode h264&amp;quot;, you'll find a guide.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="maximum">
               <number>51</number>
              </property>
@@ -1180,16 +1113,7 @@
        <property name="spacing">
         <number>10</number>
        </property>
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>10</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>10</number>
        </property>
        <item>
@@ -1221,6 +1145,9 @@
         <layout class="QFormLayout" name="formLayout_7">
          <item row="0" column="1">
           <widget class="QCheckBox" name="mesaaco">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Only AMD GPUS!!&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Use RADV_PERFTEST=aco environment variable when calling the upscaler.&lt;/p&gt;&lt;p&gt;Potentially will crash RealSR, works fine for me on Waifu2x, SRmd.&lt;/p&gt;&lt;p&gt;Please have a compatible MESA driver that supports ACO, mainstream mesa 20 should do it.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;The same happened on my tests and some users involved in testing this, speeds up about 80% to 100% the Waifu2x and SRmd upscaling time, if it'd took 10 seconds on RADV_PERFTEST=llvm, it'll take about 5.4 or so on RADV_PERFTEST=aco&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Mesa use ACO</string>
            </property>

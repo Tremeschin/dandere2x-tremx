@@ -65,14 +65,15 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 
 - [x] Fix aggressiveness not scaling up with larger block sizes or down with smaller
 - [ ] Rewrite `get-externals.py` for a better UX and maintainability
-- [ ] Make the GUI more presentable, elegant
+- [x] (70%) Make the GUI more presentable, elegant 
 - [x] (95%) Automation scripts for making a Windows release with ease (using Wine for pyinstaller?)
 - [ ] Write better Failsafe class?
 - [ ] GUI hangs one CPU core after upscale finishes sometimes (lol?)
-- [ ] Add GUI tooltips on most options
+- [x] (100%) Add GUI tooltips on most options
 - [ ] Concatenate the partial video files without re-encoding
-- [ ] (SERIOUS) Can't exit sesssion if FFmpeg haven't write the start of the piped video, errors when concatenating later on and if remove bad video audio desync
+- [ ] (Research needed) (SERIOUS) Can't exit sesssion if FFmpeg haven't write the start of the piped video, errors when concatenating later on and if remove bad video audio desync
 - [x] Add proper math to decide best value for `upscale_full_frame_threshold`
+- [ ] An icon for the app :)
 
 ### Issues
 
