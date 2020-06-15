@@ -27,6 +27,7 @@ from utils import Miscellaneous
 from utils import Utils
 import urllib.request
 import argparse
+import shutil
 import os
 
 
@@ -98,7 +99,8 @@ class ReleaseMaker():
 
         print("MAKE SURE YOU HAVE PYTHON INSTALLED IN THE WINEPREFIX GLOBAL VARIABLE IN THIS FILE")
 
-        self.release_dir = self.ROOT + os.path.sep + "release" + os.path.sep + "releases" + os.path.sep + "windows" + os.path.sep + "dandere2x_" + self.version + os.path.sep
+        self.release_dir = self.ROOT + os.path.sep + "release" + os.path.sep + "releases" + os.path.sep + "windows" + os.path.sep + "dandere2x-tremx_" + self.version + "_windows" + os.path.sep
+        self.release_zipped_dir = self.ROOT + os.path.sep + "release" + os.path.sep + "releases" + os.path.sep + "windows" + os.path.sep + "dandere2x-tremx_" + self.version + "_windows"
         print("Release directory is:", self.release_dir)
 
         self.make_release_dirs()
@@ -120,6 +122,11 @@ class ReleaseMaker():
                 self.utils.bash_move(
                     d + os.path.sep + f,
                     self.release_dir + "externals" + os.path.sep + "dandere2x_cpp" + os.path.sep + f
+                )
+            if f in ["ffmpeg.exe", "ffprobe.exe"]:
+                self.utils.bash_copy(
+                    d + os.path.sep + f,
+                    self.release_dir + "externals" + os.path.sep + f
                 )
             
         d = self.ROOT + os.path.sep + "release" + os.path.sep + "thedlls"
@@ -179,6 +186,11 @@ class ReleaseMaker():
                 self.utils.ROOT + os.path.sep + "dist" + os.path.sep + binary,
                 self.release_dir + binary
             )
+
+
+        # Zip the directory
+        print("Zipping the release directory..")
+        shutil.make_archive(self.release_zipped_dir, 'zip', self.release_dir)
 
 
 if __name__ == "__main__":

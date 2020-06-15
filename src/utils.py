@@ -40,7 +40,7 @@ color = colors["utils"]
 class Miscellaneous():
 
     def __init__(self):
-        self.version = "1.0rc4"
+        self.version = "1.0.0rc6"
         self.greeter_message()
 
     def greeter_message(self):
@@ -621,7 +621,7 @@ class Utils():
             # Nothing was found, exit
             if full_path_executable == None:
                 self.log(color, 0, debug_prefix, "[ERROR]: Binary [%s] not found in [\"%s\"]" % (wanted, executable))
-                sys.exit()
+                return None
 
             # This will yield false on Linux if forcing windows mode for debugging
             # because Windows is case insensitive and Linux case sensitive
@@ -722,4 +722,5 @@ class SubprocessUtils():
 
 if __name__ == "__main__":
     from utils import Miscellaneous
+    Miscellaneous()
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

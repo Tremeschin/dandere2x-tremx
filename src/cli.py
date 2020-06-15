@@ -29,6 +29,7 @@ import os
 
 if __name__ == "__main__":
 
+    Miscellaneous()
     utils = Utils()
 
     # Create ArgumentParser

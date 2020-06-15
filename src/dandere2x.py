@@ -51,7 +51,7 @@ class Dandere2x():
     def __init__(self, config):
         self.config = config
 
-        os.system("sh release/compile_d2xcpp_linux.sh")
+        #os.system("sh release/compile_d2xcpp_linux.sh")
         #os.system("sh dandere2x_cpp_tremx/linux_cross_compile_windows.sh")
         #exit()
 

@@ -336,4 +336,5 @@ class Upscaler():
 
 if __name__ == "__main__":
     from utils import Miscellaneous
+    Miscellaneous()
     print("You shouldn't be running this file directly, Dandere2x is class based and those are handled by dandere2x.py which is controlled by dandere2x_cli.py or a gui")

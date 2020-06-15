@@ -48,7 +48,21 @@ Strongly recommend reading [wiki on Dandere2x settings](https://github.com/Treme
 
 #### Running from a release
 
-No releases available right now, it's still very much in WIP and changing quite some core code, it'll be hard to micro manage it :(
+Head over to the [releases tab](https://github.com/Tremeschin/dandere2x-tremx/releases) and preferably get the latest one.
+
+Be aware that "rc" (release candidate) versions can have some issues as they usually have some experimental feature that wasn't extensivley tested but they should _work fine (tm)._
+
+Extract the zip into a folder.
+
+The binary for Dandere2x C++ and FFmpeg / FFprobe are already bundled on all releases under the externals folder as they are required dependencies, so you just have to download a upscaler.
+
+Run `get_externals.exe` and choose one or more options. See [wiki on upscalers](https://github.com/Tremeschin/dandere2x-tremx/wiki/Upscalers) for more info about them.
+
+After that you can run the `gui_qt.exe` and guide yourself through the GUI tooltips by hovering the options with the mouse or preferably read the settings wiki linked before.
+
+The `cli.exe` run it with an `-h` argument with a shell to see the available options. You probably can guide yourself through it as you probably know a bit of working with commands if trying this.
+
+Try upscaling the `yn_moving_480.mkv` (loaded automatically on the GUI) first to check if everything is working before running a long session.
 
 #### Running from source
 
@@ -61,7 +75,7 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 
 ## What is being worked on? 
 
-### Road to a 1.0 release
+### Road to a 1.0.0 release
 
 - [x] Fix aggressiveness not scaling up with larger block sizes or down with smaller
 - [ ] Rewrite `get-externals.py` for a better UX and maintainability
@@ -74,6 +88,7 @@ Dandere2x on Linux must be run directly from the source code, head over to our w
 - [ ] (Research needed) (SERIOUS) Can't exit sesssion if FFmpeg haven't write the start of the piped video, errors when concatenating later on and if remove bad video audio desync
 - [x] Add proper math to decide best value for `upscale_full_frame_threshold`
 - [ ] An icon for the app :)
+- [ ] Implement batch processing of multiple videos
 
 ### Issues
 
