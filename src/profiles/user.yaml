@@ -164,6 +164,11 @@ upscaler:
   # See your upscaler models
   # TODO: Set models to their absolute paths in the upscale folder?
   model: null  # [null uses the default as no argument passed?]
+  # vvv see next line
+
+  # Uncomment this and comment the other model, this is way faster for waifu2x ncnn vulkan on Linux
+  # or download nihui's repo, extract, point to this model file on Windows
+  # model: /usr/share/waifu2x-ncnn-vulkan/models-upconv_7_anime_style_art_rgb
 
   # nihui's ncnn Vulkan implementations have this options, see the upscaler repo for more info
   # load processes : processing processes ; saving processes, nihui recommends 4:4:4 for many small images

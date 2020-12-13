@@ -108,6 +108,9 @@ class Upscaler():
                     "-s", str(self.context.upscale_ratio)
                 ]
 
+                if not self.context.upscaler_model == None:
+                    self.command += ["-m", self.context.upscaler_model]
+
                 # realsr-ncnn-vulkan doesn't have a denoiser
                 if not self.type == "realsr-ncnn-vulkan":
                     self.command += ["-n", str(self.context.denoise_level)]
@@ -174,11 +177,6 @@ class Upscaler():
 
         # Copy the environment, compatibility purposes
         env = os.environ.copy()
-
-        # Linux AMD GPUs is preferred RADV_PERFTEST=aco var as it speeds Vulkan performance a lot
-        if self.context.os == "linux":
-            if self.context.linux_enable_mesa_aco_upscaler:
-                env["RADV_PERFTEST"] = "aco"
 
         # Failsafe Windows executing the upscaler?
         if self.context.os == "windows":
@@ -256,7 +254,7 @@ class Upscaler():
     def get_residual_upscaled_file_path_output_frame_number(self, frame_number):
 
         if self.type in ["waifu2x-ncnn-vulkan", "srmd-ncnn-vulkan", "realsr-ncnn-vulkan"]:
-            return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg.png"
+            return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".png"
             
         if self.type in ["waifu2x-converter-cpp", "fake"]:
             return self.context.upscaled + "residual_" + self.utils.pad_zeros(frame_number) + ".jpg"
