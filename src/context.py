@@ -104,7 +104,6 @@ class Context():
         self.upscaler_model = self.config["upscaler"]["model"]
         self.load_proc_save = self.config["upscaler"]["load:proc:save"]
         self.w2x_converter_cpp_jobs = self.config["upscaler"]["w2x_converter_cpp_jobs"]
-        self.linux_enable_mesa_aco_upscaler = self.config["upscaler"]["linux_enable_mesa_aco_upscaler"]
 
         # realsr-ncnn-vulkan must have upscale_ratio=4 as it's the only option
         if self.upscaler_type == "realsr-ncnn-vulkan":
@@ -310,7 +309,6 @@ class Context():
             "upscale_full_frame_threshold",
             "w2x_converter_cpp_jobs",
             "upscaler_model",
-            "linux_enable_mesa_aco_upscaler",
             "force",
             "partial",
             "resume_video_frame",

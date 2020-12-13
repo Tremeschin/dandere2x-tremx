@@ -257,12 +257,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         self.line_load_proc_save = self.findChild(QtWidgets.QLineEdit, 'load_proc_save')
         self.line_load_proc_save.textChanged.connect(partial(self.value_changed, self.line_load_proc_save))
 
-        # # Linux
-
-        # Use ACO (RADV_PERFTEST=aco)
-        self.check_box_mesaaco = self.findChild(QtWidgets.QCheckBox, 'mesaaco')
-        self.check_box_mesaaco.stateChanged.connect(partial(self.value_changed, self.check_box_mesaaco))
-
         # Create Dandere2xStarter class and load config, set resume to False by default
         # Resuming is done via "load session" button or same input video filename as session=auto
         self.dandere2x = Dandere2xStarter()
@@ -347,11 +341,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         self.tile_size = self.spinbox_tile_size.value()
         self.load_proc_save = self.line_load_proc_save.text()
 
-        # # Linux
-
-        # Use ACO (RADV_PERFTEST=aco)
-        self.mesaaco = self.check_box_mesaaco.isChecked()
-
         # # Resume
 
         self.load_session_name = self.combobox_available_resume_session.currentText()
@@ -388,7 +377,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
             "spinbox_x264_crf": self.spinbox_x264_crf,
             "spinbox_tile_size": self.spinbox_tile_size,
             "line_load_proc_save": self.line_load_proc_save,
-            "check_box_mesaaco": self.check_box_mesaaco,
             "combobox_profile": self.combobox_profile,
             "combobox_available_resume_session": self.combobox_available_resume_session
         }
@@ -473,7 +461,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
         self.config["upscaler"]["denoise_level"] = self.denoise_level
         self.config["upscaler"]["tile_size"] = self.tile_size
         self.config["upscaler"]["load:proc:save"] = self.load_proc_save
-        self.config["upscaler"]["linux_enable_mesa_aco_upscaler"] = self.mesaaco
 
         # Basic settings
         self.config["basic"]["input_file"] = self.input
@@ -526,7 +513,6 @@ class Dandere2xQTUI(QtWidgets.QMainWindow):
 
         self.spinbox_tile_size.setValue(self.config["upscaler"]["tile_size"])
         self.line_load_proc_save.setText(self.config["upscaler"]["load:proc:save"])
-        self.check_box_mesaaco.setChecked(self.config["upscaler"]["linux_enable_mesa_aco_upscaler"])
 
         # Basic settings
         self.line_input.setText(self.config["basic"]["input_file"])
